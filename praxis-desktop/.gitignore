@@ -7,9 +7,19 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Build output
+dist/
+dist-electron/
+dist-ssr/
+main.cjs
+__vite-browser-external-*.cjs
+__vite-browser-external-*.js
+
+# Vite
+.vite/
+
+# Node
+node_modules/
 *.local
 
 # Editor directories and files
