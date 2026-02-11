@@ -17,3 +17,5 @@ The following files are untracked legacy copies from the stash and must **not** 
 - docs/stage3_persistence.md
 
 (These are untracked legacy copies from stash — do not commit.)
+
+Note: Unit tests may regenerate `dist-electron` outputs (main.js/preload.mjs); revert after tests. Do not modify `.gitignore` (Stage 9D locked).
