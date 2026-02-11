@@ -1,0 +1,37 @@
+﻿{
+    "warning":  "THIS ARCHIVE IS A BACKUP EXPORT. RESTORE IS NOT AUTOMATIC.",
+    "createdAt":  "2026-02-07T00:00:00Z",
+    "formatVersion":  1,
+    "app":  {
+                "version":  "0.0.0",
+                "build":  null
+            },
+    "platform":  {
+                     "arch":  "x64",
+                     "platform":  "win32",
+                     "release":  "test"
+                 },
+    "contents":  [
+                     {
+                         "sizeBytes":  0,
+                         "path":  "praxis-backup/state/db/eventlog.sqlite"
+                     },
+                     {
+                         "sizeBytes":  7,
+                         "path":  "praxis-backup/state/config/config.json"
+                     }
+                 ],
+    "checksums":  {
+                      "algorithm":  "sha256",
+                      "files":  [
+                                    {
+                                        "checksum":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                                        "path":  "praxis-backup/state/db/eventlog.sqlite"
+                                    },
+                                    {
+                                        "checksum":  "9e1ab83190bccc9ea53ba40f856fbe5e5718bbc45eaf43a0cbd4f42fd4f01657",
+                                        "path":  "praxis-backup/state/config/config.json"
+                                    }
+                                ]
+                  }
+}

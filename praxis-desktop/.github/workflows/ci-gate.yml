@@ -1,0 +1,108 @@
+name: CI Gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  hygiene-doc-deletion:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Block required doc deletions
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          git fetch --no-tags origin "${BASE_SHA}" --depth=1
+
+          REQUIRED_DOCS=(
+            "README.md"
+            "docs/Roadmap.md"
+            "docs/Spec.md"
+            "docs/DECISIONS.md"
+          )
+
+          deleted_docs="$(git diff --name-status "${BASE_SHA}"...HEAD | awk '$1=="D"{print $2}')"
+          failed=0
+
+          for required_doc in "${REQUIRED_DOCS[@]}"; do
+            if echo "${deleted_docs}" | grep -Fxq "${required_doc}"; then
+              echo "ERROR: required doc deleted: ${required_doc}"
+              failed=1
+            fi
+          done
+
+          if [ "${failed}" -ne 0 ]; then
+            echo "Required docs must not be deleted in PRs."
+            exit 1
+          fi
+
+          echo "Required docs present (no forbidden deletions)."
+
+  hygiene-scope-warning:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Warn on monitored runtime scope changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          git fetch --no-tags origin "${BASE_SHA}" --depth=1
+
+          MONITORED_FILES=(
+            "electron/main.ts"
+            "electron/preload.ts"
+            "src/App.tsx"
+            "src/App.css"
+          )
+
+          changed_files="$(git diff --name-only "${BASE_SHA}"...HEAD)"
+          warned=0
+
+          for monitored_file in "${MONITORED_FILES[@]}"; do
+            if echo "${changed_files}" | grep -Fxq "${monitored_file}"; then
+              echo "::warning::Monitored runtime file changed in PR: ${monitored_file}"
+              warned=1
+            fi
+          done
+
+          if [ "${warned}" -eq 0 ]; then
+            echo "No monitored runtime scope changes detected."
+          fi
+
+  test-verify-safety:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run Stage verify gate
+        run: npm run test:verify-safety

@@ -1,0 +1,24 @@
+﻿{
+    "warning":  "test inventory",
+    "generatedAt":  "2026-02-07T00:00:00Z",
+    "statePaths":  [
+                       {
+                           "label":  "Primary DB",
+                           "path":  "eventlog.sqlite",
+                           "absolutePath":  "C:\\Dev\\Praxis Project\\praxis-desktop\\electron\\verify\\fixtures\\appdata\\praxis-desktop\\eventlog.sqlite",
+                           "exists":  true
+                       },
+                       {
+                           "label":  "Mirror Config",
+                           "path":  "config.json",
+                           "absolutePath":  "C:\\Dev\\Praxis Project\\praxis-desktop\\electron\\verify\\fixtures\\appdata\\praxis-desktop\\config.json",
+                           "exists":  true
+                       },
+                       {
+                           "label":  "Mirror Root",
+                           "path":  "mirror",
+                           "absolutePath":  "C:\\Dev\\Praxis Project\\praxis-desktop\\electron\\verify\\fixtures\\appdata\\praxis-desktop\\mirror",
+                           "exists":  true
+                       }
+                   ]
+}
