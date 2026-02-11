@@ -30,6 +30,11 @@ export type PersistencePaths = {
   dbPath: string;
 };
 
+export type DbStatus = {
+  exists: boolean;
+  path: string;
+};
+
 export type DbIntegritySummary = {
   ok: boolean;
   integrityCheck?: string;

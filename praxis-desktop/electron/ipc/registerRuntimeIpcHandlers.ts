@@ -1,17 +1,27 @@
 import {
+  PERSISTENCE_GET_DB_INTEGRITY,
+  PERSISTENCE_GET_DB_STATUS,
+  PERSISTENCE_GET_PATHS,
   RUNTIME_GET_STATUS,
   RUNTIME_PING,
 } from "../../shared/ipc/runtimeChannels";
 import type {
+  DbIntegritySummary,
+  DbStatus,
   IpcFailure,
   IpcResult,
+  PersistencePaths,
   RuntimePingResponse,
   RuntimeStatus,
 } from "../../shared/ipc/runtimeTypes";
+import type { ReadOnlyResult } from "../../shared/persistence/readOnlyService";
 
 export type RuntimeIpcDeps = {
   getVersion: () => string;
   getStatus: () => RuntimeStatus;
+  getPersistencePaths: () => Promise<ReadOnlyResult<PersistencePaths>>;
+  getDbStatus: () => Promise<ReadOnlyResult<DbStatus>>;
+  getDbIntegritySummary: () => Promise<ReadOnlyResult<DbIntegritySummary>>;
 };
 
 export type IpcMainLike = {
@@ -31,6 +41,9 @@ const toErrorResult = (error: unknown): IpcFailure => {
     },
   };
 };
+
+const toIpcResult = <T>(result: ReadOnlyResult<T>): IpcResult<T> =>
+  result.ok ? { ok: true, data: result.value } : { ok: false, error: result.error };
 
 export const registerRuntimeIpcHandlers = (
   ipcMain: IpcMainLike,
@@ -57,4 +70,31 @@ export const registerRuntimeIpcHandlers = (
       return toErrorResult(error);
     }
   });
+
+  ipcMain.handle(PERSISTENCE_GET_PATHS, async (): Promise<IpcResult<PersistencePaths>> => {
+    try {
+      return toIpcResult(await deps.getPersistencePaths());
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
+
+  ipcMain.handle(PERSISTENCE_GET_DB_STATUS, async (): Promise<IpcResult<DbStatus>> => {
+    try {
+      return toIpcResult(await deps.getDbStatus());
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
+
+  ipcMain.handle(
+    PERSISTENCE_GET_DB_INTEGRITY,
+    async (): Promise<IpcResult<DbIntegritySummary>> => {
+      try {
+        return toIpcResult(await deps.getDbIntegritySummary());
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    }
+  );
 };
