@@ -13,31 +13,19 @@ export type BackupError = {
 
 export type BackupResult<T> = { ok: true; value: T } | { ok: false; error: BackupError };
 
-export type BackupScopeSummary = {
-  includes: string[];
-  excludes?: Array<{ label: string; reason?: string }>;
-};
-
-export type BackupInventoryPath = {
-  label: string;
-  path: string;
-  exists: boolean;
-  type: "file" | "dir" | "missing";
-};
-
 export type BackupInventoryPreview = {
-  generatedAt: string;
-  scope: BackupScopeSummary;
-  statePaths: BackupInventoryPath[];
+  items: Array<{
+    category: string;
+    path: string;
+    exists: boolean;
+    sizeBytes?: number;
+  }>;
+  warnings: string[];
 };
 
 export type RestorePlanPreview = {
-  backupZipPath: string;
-  generatedAt: string;
-  summary: {
-    files: number;
-    dirs: number;
-    conflicts: number;
-  };
   conflicts: Array<{ path: string; reason: string }>;
+  willOverwriteCount: number;
+  missingCount: number;
+  warnings: string[];
 };
