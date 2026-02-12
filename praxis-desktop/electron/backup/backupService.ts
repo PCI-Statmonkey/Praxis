@@ -6,6 +6,9 @@ type InventoryBuilder = {
 
 type Deps = {
   inventory: InventoryBuilder;
+  fs: {
+    stat: (path: string) => Promise<{ isFile: () => boolean }>;
+  };
 };
 
 export type BackupService = {
