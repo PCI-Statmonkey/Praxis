@@ -6,6 +6,7 @@ export const PERSISTENCE_GET_DB_INTEGRITY = "praxis:runtime:persistence.getDbInt
 export const SYNC_GET_MIRROR_STATUS = "praxis:runtime:sync.getMirrorStatus";
 export const SYNC_GET_STATUS = "praxis:runtime:sync.getStatus";
 export const BACKUP_GET_INVENTORY_PREVIEW = "praxis:runtime:backup.getInventoryPreview";
+export const RESTORE_GET_PLAN_PREVIEW = "praxis:runtime:restore.getPlanPreview";
 
 export const RUNTIME_CHANNELS = {
   RUNTIME_PING,
@@ -16,6 +17,7 @@ export const RUNTIME_CHANNELS = {
   SYNC_GET_MIRROR_STATUS,
   SYNC_GET_STATUS,
   BACKUP_GET_INVENTORY_PREVIEW,
+  RESTORE_GET_PLAN_PREVIEW,
 } as const;
 
 export type RuntimeChannel = (typeof RUNTIME_CHANNELS)[keyof typeof RUNTIME_CHANNELS];

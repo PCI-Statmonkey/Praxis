@@ -1,21 +1,26 @@
 import {
+  BACKUP_GET_INVENTORY_PREVIEW,
   PERSISTENCE_GET_DB_INTEGRITY,
   PERSISTENCE_GET_DB_STATUS,
   PERSISTENCE_GET_PATHS,
+  RESTORE_GET_PLAN_PREVIEW,
   RUNTIME_GET_STATUS,
   RUNTIME_PING,
   SYNC_GET_STATUS,
 } from "../../shared/ipc/runtimeChannels";
 import type {
+  BackupInventoryPreview,
   DbIntegritySummary,
   DbStatus,
   IpcFailure,
   IpcResult,
   PersistencePaths,
+  RestorePlanPreview,
   RuntimePingResponse,
   RuntimeStatus,
   SyncSummary,
 } from "../../shared/ipc/runtimeTypes";
+import type { BackupResult } from "../../shared/backup/backupTypes";
 import type { ReadOnlyResult } from "../../shared/persistence/readOnlyService";
 
 export type RuntimeIpcDeps = {
@@ -25,10 +30,15 @@ export type RuntimeIpcDeps = {
   getDbStatus: () => Promise<ReadOnlyResult<DbStatus>>;
   getDbIntegritySummary: () => Promise<ReadOnlyResult<DbIntegritySummary>>;
   getSyncStatus: () => SyncSummary;
+  getBackupInventoryPreview: () => Promise<BackupResult<BackupInventoryPreview>>;
+  getRestorePlanPreview: (backupZipPath: string) => Promise<BackupResult<RestorePlanPreview>>;
 };
 
 export type IpcMainLike = {
-  handle: (channel: string, handler: () => Promise<unknown> | unknown) => void;
+  handle: (
+    channel: string,
+    handler: (event: unknown, request?: unknown) => Promise<unknown> | unknown
+  ) => void;
 };
 
 const toErrorResult = (error: unknown): IpcFailure => {
@@ -46,6 +56,9 @@ const toErrorResult = (error: unknown): IpcFailure => {
 };
 
 const toIpcResult = <T>(result: ReadOnlyResult<T>): IpcResult<T> =>
+  result.ok ? { ok: true, data: result.value } : { ok: false, error: result.error };
+
+const toBackupIpcResult = <T>(result: BackupResult<T>): IpcResult<T> =>
   result.ok ? { ok: true, data: result.value } : { ok: false, error: result.error };
 
 export const registerRuntimeIpcHandlers = (
@@ -111,4 +124,30 @@ export const registerRuntimeIpcHandlers = (
       return toErrorResult(error);
     }
   });
+
+  ipcMain.handle(
+    BACKUP_GET_INVENTORY_PREVIEW,
+    async (): Promise<IpcResult<BackupInventoryPreview>> => {
+      try {
+        return toBackupIpcResult(await deps.getBackupInventoryPreview());
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    }
+  );
+
+  ipcMain.handle(
+    RESTORE_GET_PLAN_PREVIEW,
+    async (
+      _event,
+      request: { backupZipPath?: string } = {}
+    ): Promise<IpcResult<RestorePlanPreview>> => {
+      try {
+        const backupZipPath = request.backupZipPath ?? "";
+        return toBackupIpcResult(await deps.getRestorePlanPreview(backupZipPath));
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    }
+  );
 };

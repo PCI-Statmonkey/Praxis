@@ -1,20 +1,25 @@
 import { expect, test } from "vitest";
 import {
+  BACKUP_GET_INVENTORY_PREVIEW,
   PERSISTENCE_GET_DB_INTEGRITY,
   PERSISTENCE_GET_DB_STATUS,
   PERSISTENCE_GET_PATHS,
+  RESTORE_GET_PLAN_PREVIEW,
   RUNTIME_GET_STATUS,
   RUNTIME_PING,
   SYNC_GET_STATUS,
 } from "../../shared/ipc/runtimeChannels";
 import type {
+  BackupInventoryPreview,
   DbIntegritySummary,
   DbStatus,
   IpcResult,
   PersistencePaths,
+  RestorePlanPreview,
   RuntimeStatus,
   SyncSummary,
 } from "../../shared/ipc/runtimeTypes";
+import type { BackupResult } from "../../shared/backup/backupTypes";
 import type { ReadOnlyResult } from "../../shared/persistence/readOnlyService";
 import {
   registerRuntimeIpcHandlers,
@@ -25,6 +30,7 @@ import {
 type Handler = () => Promise<unknown> | unknown;
 
 const okResult = <T>(value: T): ReadOnlyResult<T> => ({ ok: true, value });
+const okBackupResult = <T>(value: T): BackupResult<T> => ({ ok: true, value });
 
 const errorResult = (message: string): ReadOnlyResult<never> => ({
   ok: false,
@@ -46,6 +52,19 @@ test("registers runtime IPC handlers", () => {
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
     getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -56,6 +75,8 @@ test("registers runtime IPC handlers", () => {
   expect(handlers.has(PERSISTENCE_GET_DB_STATUS)).toBe(true);
   expect(handlers.has(PERSISTENCE_GET_DB_INTEGRITY)).toBe(true);
   expect(handlers.has(SYNC_GET_STATUS)).toBe(true);
+  expect(handlers.has(BACKUP_GET_INVENTORY_PREVIEW)).toBe(true);
+  expect(handlers.has(RESTORE_GET_PLAN_PREVIEW)).toBe(true);
 });
 
 test("runtime.ping returns version payload", async () => {
@@ -73,6 +94,19 @@ test("runtime.ping returns version payload", async () => {
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
     getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -103,6 +137,19 @@ test("runtime.getStatus returns contract error on failure", async () => {
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
     getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -132,6 +179,19 @@ test("persistence.getDbStatus passes through error results", async () => {
     getDbStatus: async () => errorResult("db missing"),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
     getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -161,6 +221,19 @@ test("persistence.getPaths returns read-only data", async () => {
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
     getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -190,6 +263,19 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: false, integrityCheck: "fail" }),
     getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -219,6 +305,19 @@ test("sync.getStatus returns status summary", async () => {
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
     getSyncStatus: () => ({ status: "idle", lastSuccessAt: "2026-02-12T00:00:00.000Z" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -229,5 +328,87 @@ test("sync.getStatus returns status summary", async () => {
   expect(result.ok).toBe(true);
   if (result.ok) {
     expect(result.data.status).toBe("idle");
+  }
+});
+
+test("backup.getInventoryPreview returns preview data", async () => {
+  const handlers = new Map<string, Handler>();
+  const ipcMain: IpcMainLike = {
+    handle: (channel, handler) => {
+      handlers.set(channel, handler as Handler);
+    },
+  };
+
+  const deps: RuntimeIpcDeps = {
+    getVersion: () => "0.0.0",
+    getStatus: () => ({ ready: true }),
+    getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
+    getDbStatus: async () => okResult({ exists: true, path: "db" }),
+    getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async () =>
+      okBackupResult({
+        backupZipPath: "C:\\backup.zip",
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
+  };
+
+  registerRuntimeIpcHandlers(ipcMain, deps);
+
+  const handler = handlers.get(BACKUP_GET_INVENTORY_PREVIEW);
+  expect(handler).toBeDefined();
+  const result = (await handler?.()) as IpcResult<BackupInventoryPreview>;
+  expect(result.ok).toBe(true);
+  if (result.ok) {
+    expect(result.data.scope.includes).toContain("db");
+  }
+});
+
+test("restore.getPlanPreview returns preview data", async () => {
+  const handlers = new Map<string, Handler>();
+  const ipcMain: IpcMainLike = {
+    handle: (channel, handler) => {
+      handlers.set(channel, handler as Handler);
+    },
+  };
+
+  const deps: RuntimeIpcDeps = {
+    getVersion: () => "0.0.0",
+    getStatus: () => ({ ready: true }),
+    getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
+    getDbStatus: async () => okResult({ exists: true, path: "db" }),
+    getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
+    getBackupInventoryPreview: async () =>
+      okBackupResult({
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        scope: { includes: ["db"] },
+        statePaths: [],
+      }),
+    getRestorePlanPreview: async (backupZipPath: string) =>
+      okBackupResult({
+        backupZipPath,
+        generatedAt: "2026-02-12T00:00:00.000Z",
+        summary: { files: 0, dirs: 0, conflicts: 0 },
+        conflicts: [],
+      }),
+  };
+
+  registerRuntimeIpcHandlers(ipcMain, deps);
+
+  const handler = handlers.get(RESTORE_GET_PLAN_PREVIEW);
+  expect(handler).toBeDefined();
+  const result = (await handler?.({}, { backupZipPath: "C:\\backup.zip" })) as IpcResult<RestorePlanPreview>;
+  expect(result.ok).toBe(true);
+  if (result.ok) {
+    expect(result.data.backupZipPath).toBe("C:\\backup.zip");
   }
 });
