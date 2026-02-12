@@ -66,6 +66,7 @@ test("registers runtime IPC handlers", () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -107,6 +108,7 @@ test("runtime.ping returns version payload", async () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -149,6 +151,7 @@ test("runtime.getStatus returns contract error on failure", async () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -190,6 +193,7 @@ test("persistence.getDbStatus passes through error results", async () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -231,6 +235,7 @@ test("persistence.getPaths returns read-only data", async () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -272,6 +277,7 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -316,6 +322,7 @@ test("sync.getStatus returns status summary", async () => {
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -395,8 +402,9 @@ test("restore.getPlanPreview returns preview data", async () => {
         items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
         warnings: [],
       }),
-    getRestorePlanPreview: async (_backupZipPath: string) =>
+    getRestorePlanPreview: async (_zipPath: string) =>
       okBackupResult({
+        zipPath: "C:\\backup.zip",
         conflicts: [],
         willOverwriteCount: 0,
         missingCount: 0,
@@ -408,9 +416,10 @@ test("restore.getPlanPreview returns preview data", async () => {
 
   const handler = handlers.get(RESTORE_GET_PLAN_PREVIEW);
   expect(handler).toBeDefined();
-  const result = (await handler?.({}, { backupZipPath: "C:\\backup.zip" })) as IpcResult<RestorePlanPreview>;
+  const result = (await handler?.({}, { zipPath: "C:\\backup.zip" })) as IpcResult<RestorePlanPreview>;
   expect(result.ok).toBe(true);
   if (result.ok) {
     expect(result.data.conflicts).toEqual([]);
+    expect(result.data.zipPath).toBe("C:\\backup.zip");
   }
 });

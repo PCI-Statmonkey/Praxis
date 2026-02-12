@@ -10,6 +10,9 @@ describe("backupService", () => {
           warnings: [],
         }),
       },
+      fs: {
+        stat: async () => ({ isFile: () => true }),
+      },
     });
 
     const result = await service.getInventoryPreview();
