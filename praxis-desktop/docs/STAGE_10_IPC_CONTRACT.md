@@ -59,12 +59,26 @@ All channels are placeholders until wired. None are invoked at runtime in this p
 - Request: `{}`
 - Response: `IpcResult<{ appDataRoot: string; dbPath: string }>`
 - Requirement: must not create DB if absent (read-only path resolution).
+- Read-only guarantees:
+  - DB missing is OK; `persistence.getDbStatus` returns `exists: false`.
+  - No create-on-read: no DB/schema/deviceId/snapshot writes.
+
+### praxis:runtime:persistence.getDbStatus
+- Purpose: read-only DB status summary.
+- Request: `{}`
+- Response: `IpcResult<{ exists: boolean; path: string }>`
+- Read-only guarantees:
+  - DB missing is OK and returns `exists: false`.
+  - No create-on-read: no DB/schema/deviceId/snapshot writes.
 
 ### praxis:runtime:persistence.getDbIntegritySummary
 - Purpose: read-only integrity summary.
 - Request: `{}`
 - Response: `IpcResult<{ ok: boolean; integrityCheck?: string; eventCount?: number; snapshotCount?: number }>`
-- Requirement: must not create DB if absent; if DB missing, return a structured error (e.g., `db_missing`).
+- Requirement: must not create DB if absent.
+- Read-only guarantees:
+  - DB missing is OK; `persistence.getDbStatus` returns `exists: false`.
+  - No create-on-read: no DB/schema/deviceId/snapshot writes.
 
 ### praxis:runtime:sync.getMirrorStatus
 - Purpose: read-only mirror status summary.
