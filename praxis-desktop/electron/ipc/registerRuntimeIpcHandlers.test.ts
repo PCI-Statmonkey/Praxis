@@ -27,10 +27,17 @@ import {
   type RuntimeIpcDeps,
 } from "./registerRuntimeIpcHandlers";
 
-type Handler = () => Promise<unknown> | unknown;
+type Handler = (event?: unknown, request?: unknown) => Promise<unknown> | unknown;
 
 const okResult = <T>(value: T): ReadOnlyResult<T> => ({ ok: true, value });
 const okBackupResult = <T>(value: T): BackupResult<T> => ({ ok: true, value });
+const makeSyncSummary = (): SyncSummary => ({
+  status: "idle",
+  mirrorConfigured: true,
+  localCursor: {},
+  syncState: {},
+  issues: [],
+});
 
 const errorResult = (message: string): ReadOnlyResult<never> => ({
   ok: false,
@@ -51,7 +58,7 @@ test("registers runtime IPC handlers", () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -93,7 +100,7 @@ test("runtime.ping returns version payload", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -136,7 +143,7 @@ test("runtime.getStatus returns contract error on failure", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -178,7 +185,7 @@ test("persistence.getDbStatus passes through error results", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => errorResult("db missing"),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -220,7 +227,7 @@ test("persistence.getPaths returns read-only data", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -262,7 +269,7 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: false, integrityCheck: "fail" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -304,7 +311,10 @@ test("sync.getStatus returns status summary", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle", lastSuccessAt: "2026-02-12T00:00:00.000Z" }),
+    getSyncStatus: () => ({
+      ...makeSyncSummary(),
+      localCursor: { maxRowId: 3 },
+    }),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -328,6 +338,7 @@ test("sync.getStatus returns status summary", async () => {
   expect(result.ok).toBe(true);
   if (result.ok) {
     expect(result.data.status).toBe("idle");
+    expect(result.data.mirrorConfigured).toBe(true);
   }
 });
 
@@ -345,7 +356,7 @@ test("backup.getInventoryPreview returns preview data", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
@@ -386,7 +397,7 @@ test("restore.getPlanPreview returns preview data", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
-    getSyncStatus: () => ({ status: "idle" }),
+    getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
         generatedAt: "2026-02-12T00:00:00.000Z",
