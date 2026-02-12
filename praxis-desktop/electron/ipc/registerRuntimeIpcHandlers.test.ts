@@ -1,6 +1,11 @@
 import { expect, test } from "vitest";
 import {
   BACKUP_GET_INVENTORY_PREVIEW,
+  MISSIONS_ARCHIVE,
+  MISSIONS_CREATE,
+  MISSIONS_GET,
+  MISSIONS_LIST,
+  MISSIONS_UPDATE,
   PERSISTENCE_GET_DB_INTEGRITY,
   PERSISTENCE_GET_DB_STATUS,
   PERSISTENCE_GET_PATHS,
@@ -14,6 +19,9 @@ import type {
   DbIntegritySummary,
   DbStatus,
   IpcResult,
+  Mission,
+  MissionCreateInput,
+  MissionUpdatePatch,
   PersistencePaths,
   RestorePlanPreview,
   RuntimeStatus,
@@ -37,6 +45,31 @@ const makeSyncSummary = (): SyncSummary => ({
   localCursor: {},
   syncState: {},
   issues: [],
+});
+
+const missionA: Mission = {
+  id: "mission-1",
+  title: "Mission One",
+  status: "active",
+  createdAt: "2026-02-12T00:00:00.000Z",
+  updatedAt: "2026-02-12T00:00:00.000Z",
+};
+
+const makeMissionDeps = () => ({
+  missionsList: async (_includeArchived?: boolean) => [missionA],
+  missionsGet: async (_id: string) => missionA,
+  missionsCreate: async (input: MissionCreateInput) => ({
+    ...missionA,
+    title: input.title,
+  }),
+  missionsUpdate: async (_id: string, patch: MissionUpdatePatch) => ({
+    ...missionA,
+    title: patch.title ?? missionA.title,
+  }),
+  missionsArchive: async (_id: string) => ({
+    ...missionA,
+    status: "archived",
+  }),
 });
 
 const errorResult = (message: string): ReadOnlyResult<never> => ({
@@ -72,6 +105,7 @@ test("registers runtime IPC handlers", () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -84,6 +118,11 @@ test("registers runtime IPC handlers", () => {
   expect(handlers.has(SYNC_GET_STATUS)).toBe(true);
   expect(handlers.has(BACKUP_GET_INVENTORY_PREVIEW)).toBe(true);
   expect(handlers.has(RESTORE_GET_PLAN_PREVIEW)).toBe(true);
+  expect(handlers.has(MISSIONS_LIST)).toBe(true);
+  expect(handlers.has(MISSIONS_GET)).toBe(true);
+  expect(handlers.has(MISSIONS_CREATE)).toBe(true);
+  expect(handlers.has(MISSIONS_UPDATE)).toBe(true);
+  expect(handlers.has(MISSIONS_ARCHIVE)).toBe(true);
 });
 
 test("runtime.ping returns version payload", async () => {
@@ -114,6 +153,7 @@ test("runtime.ping returns version payload", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -157,6 +197,7 @@ test("runtime.getStatus returns contract error on failure", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -199,6 +240,7 @@ test("persistence.getDbStatus passes through error results", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -241,6 +283,7 @@ test("persistence.getPaths returns read-only data", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -283,6 +326,7 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -328,6 +372,7 @@ test("sync.getStatus returns status summary", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -369,6 +414,7 @@ test("backup.getInventoryPreview returns preview data", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -410,6 +456,7 @@ test("restore.getPlanPreview returns preview data", async () => {
         missingCount: 0,
         warnings: [],
       }),
+    ...makeMissionDeps(),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);

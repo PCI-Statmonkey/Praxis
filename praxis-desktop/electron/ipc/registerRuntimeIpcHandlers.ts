@@ -1,5 +1,10 @@
 import {
   BACKUP_GET_INVENTORY_PREVIEW,
+  MISSIONS_ARCHIVE,
+  MISSIONS_CREATE,
+  MISSIONS_GET,
+  MISSIONS_LIST,
+  MISSIONS_UPDATE,
   PERSISTENCE_GET_DB_INTEGRITY,
   PERSISTENCE_GET_DB_STATUS,
   PERSISTENCE_GET_PATHS,
@@ -14,6 +19,9 @@ import type {
   DbStatus,
   IpcFailure,
   IpcResult,
+  Mission,
+  MissionCreateInput,
+  MissionUpdatePatch,
   PersistencePaths,
   RestorePlanPreview,
   RuntimePingResponse,
@@ -32,6 +40,11 @@ export type RuntimeIpcDeps = {
   getSyncStatus: () => Promise<SyncSummary> | SyncSummary;
   getBackupInventoryPreview: () => Promise<BackupResult<BackupInventoryPreview>>;
   getRestorePlanPreview: (backupZipPath: string) => Promise<BackupResult<RestorePlanPreview>>;
+  missionsList: (includeArchived?: boolean) => Promise<Mission[]>;
+  missionsGet: (id: string) => Promise<Mission | null>;
+  missionsCreate: (input: MissionCreateInput) => Promise<Mission>;
+  missionsUpdate: (id: string, patch: MissionUpdatePatch) => Promise<Mission | null>;
+  missionsArchive: (id: string) => Promise<Mission | null>;
 };
 
 export type IpcMainLike = {
@@ -150,4 +163,52 @@ export const registerRuntimeIpcHandlers = (
       }
     }
   );
+
+  ipcMain.handle(MISSIONS_LIST, async (_event, request: { includeArchived?: boolean } = {}) => {
+    try {
+      const result = await deps.missionsList(request.includeArchived);
+      return { ok: true, data: result };
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
+
+  ipcMain.handle(MISSIONS_GET, async (_event, request: { id?: string } = {}) => {
+    try {
+      const result = await deps.missionsGet(request.id ?? "");
+      return { ok: true, data: result };
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
+
+  ipcMain.handle(MISSIONS_CREATE, async (_event, request: MissionCreateInput) => {
+    try {
+      const result = await deps.missionsCreate(request);
+      return { ok: true, data: result };
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
+
+  ipcMain.handle(
+    MISSIONS_UPDATE,
+    async (_event, request: { id?: string; patch?: MissionUpdatePatch } = {}) => {
+      try {
+        const result = await deps.missionsUpdate(request.id ?? "", request.patch ?? {});
+        return { ok: true, data: result };
+      } catch (error) {
+        return toErrorResult(error);
+      }
+    }
+  );
+
+  ipcMain.handle(MISSIONS_ARCHIVE, async (_event, request: { id?: string } = {}) => {
+    try {
+      const result = await deps.missionsArchive(request.id ?? "");
+      return { ok: true, data: result };
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
 };

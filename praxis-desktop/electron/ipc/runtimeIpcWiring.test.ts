@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import fs from "fs";
 import {
   BACKUP_GET_INVENTORY_PREVIEW,
+  MISSIONS_LIST,
   PERSISTENCE_GET_DB_STATUS,
   RESTORE_GET_PLAN_PREVIEW,
   RUNTIME_GET_STATUS,
@@ -38,6 +39,35 @@ const makeDeps = () => ({
       missingCount: 0,
       warnings: [],
     },
+  }),
+  missionsList: async () => [],
+  missionsGet: async (id: string) => ({
+    id,
+    title: "Mission",
+    status: "active",
+    createdAt: "2026-02-12T00:00:00.000Z",
+    updatedAt: "2026-02-12T00:00:00.000Z",
+  }),
+  missionsCreate: async () => ({
+    id: "mission-1",
+    title: "Mission",
+    status: "active",
+    createdAt: "2026-02-12T00:00:00.000Z",
+    updatedAt: "2026-02-12T00:00:00.000Z",
+  }),
+  missionsUpdate: async () => ({
+    id: "mission-1",
+    title: "Mission",
+    status: "active",
+    createdAt: "2026-02-12T00:00:00.000Z",
+    updatedAt: "2026-02-12T00:00:00.000Z",
+  }),
+  missionsArchive: async () => ({
+    id: "mission-1",
+    title: "Mission",
+    status: "archived",
+    createdAt: "2026-02-12T00:00:00.000Z",
+    updatedAt: "2026-02-12T00:00:00.000Z",
   }),
 });
 
@@ -86,6 +116,7 @@ describe("runtime IPC wiring", () => {
       const syncStatus = await handlers.get(SYNC_GET_STATUS)?.();
       const backup = await handlers.get(BACKUP_GET_INVENTORY_PREVIEW)?.();
       const restore = await handlers.get(RESTORE_GET_PLAN_PREVIEW)?.({}, { zipPath: "C:\\backup.zip" });
+      const missions = await handlers.get(MISSIONS_LIST)?.();
 
       expect(ping).toEqual({ ok: true, data: { version: "0.0.0" } });
       expect(status).toEqual({ ok: true, data: { ready: true } });
@@ -111,6 +142,7 @@ describe("runtime IPC wiring", () => {
           warnings: [],
         },
       });
+      expect(missions).toEqual({ ok: true, data: [] });
 
       expect(setTimeoutSpy).not.toHaveBeenCalled();
       expect(setIntervalSpy).not.toHaveBeenCalled();

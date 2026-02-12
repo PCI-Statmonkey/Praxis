@@ -7,6 +7,11 @@ export const SYNC_GET_MIRROR_STATUS = "praxis:runtime:sync.getMirrorStatus";
 export const SYNC_GET_STATUS = "praxis:runtime:sync.getStatus";
 export const BACKUP_GET_INVENTORY_PREVIEW = "praxis:runtime:backup.getInventoryPreview";
 export const RESTORE_GET_PLAN_PREVIEW = "praxis:runtime:restore.getPlanPreview";
+export const MISSIONS_LIST = "praxis:runtime:missions.list";
+export const MISSIONS_GET = "praxis:runtime:missions.get";
+export const MISSIONS_CREATE = "praxis:runtime:missions.create";
+export const MISSIONS_UPDATE = "praxis:runtime:missions.update";
+export const MISSIONS_ARCHIVE = "praxis:runtime:missions.archive";
 
 export const RUNTIME_CHANNELS = {
   RUNTIME_PING,
@@ -18,6 +23,11 @@ export const RUNTIME_CHANNELS = {
   SYNC_GET_STATUS,
   BACKUP_GET_INVENTORY_PREVIEW,
   RESTORE_GET_PLAN_PREVIEW,
+  MISSIONS_LIST,
+  MISSIONS_GET,
+  MISSIONS_CREATE,
+  MISSIONS_UPDATE,
+  MISSIONS_ARCHIVE,
 } as const;
 
 export type RuntimeChannel = (typeof RUNTIME_CHANNELS)[keyof typeof RUNTIME_CHANNELS];

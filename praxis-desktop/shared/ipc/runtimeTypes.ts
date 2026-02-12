@@ -2,6 +2,11 @@ import type {
   BackupInventoryPreview as BackupInventoryPreviewType,
   RestorePlanPreview as RestorePlanPreviewType,
 } from "../backup/backupTypes";
+import type {
+  Mission as MissionType,
+  MissionCreateInput as MissionCreateInputType,
+  MissionUpdatePatch as MissionUpdatePatchType,
+} from "../missions/missionTypes";
 import type { SyncSummary as SyncSummaryType } from "../sync/syncTypes";
 
 export type IpcError = {
@@ -57,3 +62,7 @@ export type BackupInventoryPreview = BackupInventoryPreviewType;
 export type RestorePlanPreview = RestorePlanPreviewType;
 
 export type SyncSummary = SyncSummaryType;
+
+export type Mission = MissionType;
+export type MissionCreateInput = MissionCreateInputType;
+export type MissionUpdatePatch = MissionUpdatePatchType;

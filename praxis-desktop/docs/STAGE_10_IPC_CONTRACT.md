@@ -109,6 +109,31 @@ All channels are placeholders until wired. None are invoked at runtime in this p
 - Requirement: preview only; do not apply changes or write rollback artifacts.
   - Includes zipPath, conflict list plus overwrite/missing counts and warnings.
 
+### praxis:runtime:missions.list
+- Purpose: list missions (read-only).
+- Request: `{ includeArchived?: boolean }`
+- Response: `IpcResult<Mission[]>`
+
+### praxis:runtime:missions.get
+- Purpose: fetch a single mission by id.
+- Request: `{ id: string }`
+- Response: `IpcResult<Mission | null>`
+
+### praxis:runtime:missions.create
+- Purpose: create a mission (explicit write).
+- Request: `MissionCreateInput`
+- Response: `IpcResult<Mission>`
+
+### praxis:runtime:missions.update
+- Purpose: update a mission (explicit write).
+- Request: `{ id: string; patch: MissionUpdatePatch }`
+- Response: `IpcResult<Mission | null>`
+
+### praxis:runtime:missions.archive
+- Purpose: archive a mission (explicit write).
+- Request: `{ id: string }`
+- Response: `IpcResult<Mission | null>`
+
 ## Error Codes (Initial)
 - `unknown_error`
 - `invalid_request`

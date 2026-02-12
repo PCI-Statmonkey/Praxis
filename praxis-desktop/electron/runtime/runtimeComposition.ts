@@ -3,6 +3,9 @@ import type {
   BackupInventoryPreview,
   DbIntegritySummary,
   DbStatus,
+  Mission,
+  MissionCreateInput,
+  MissionUpdatePatch,
   PersistencePaths,
   RestorePlanPreview,
   RuntimeStatus,
@@ -33,6 +36,13 @@ export type RuntimeServices = {
   restoreService: {
     getPlanPreview: (zipPath: string) => Promise<BackupResult<RestorePlanPreview>>;
   };
+  missionService: {
+    list: (includeArchived?: boolean) => Promise<Mission[]>;
+    get: (id: string) => Promise<Mission | null>;
+    create: (input: MissionCreateInput) => Promise<Mission>;
+    update: (id: string, patch: MissionUpdatePatch) => Promise<Mission | null>;
+    archive: (id: string) => Promise<Mission | null>;
+  };
 };
 
 export type RuntimeServiceFactories = {
@@ -41,6 +51,7 @@ export type RuntimeServiceFactories = {
   createSyncOrchestrator: () => RuntimeServices["syncOrchestrator"];
   createBackupService: () => RuntimeServices["backupService"];
   createRestoreService: () => RuntimeServices["restoreService"];
+  createMissionService: () => RuntimeServices["missionService"];
 };
 
 export const createRuntimeServices = (opts: RuntimeServiceFactories): RuntimeServices => ({
@@ -49,6 +60,7 @@ export const createRuntimeServices = (opts: RuntimeServiceFactories): RuntimeSer
   syncOrchestrator: opts.createSyncOrchestrator(),
   backupService: opts.createBackupService(),
   restoreService: opts.createRestoreService(),
+  missionService: opts.createMissionService(),
 });
 
 export type RuntimeIpcDepsOptions = {
@@ -71,4 +83,9 @@ export const buildRuntimeIpcDeps = (
   getSyncStatus: services.syncOrchestrator.getStatus,
   getBackupInventoryPreview: services.backupService.getInventoryPreview,
   getRestorePlanPreview: services.restoreService.getPlanPreview,
+  missionsList: services.missionService.list,
+  missionsGet: services.missionService.get,
+  missionsCreate: services.missionService.create,
+  missionsUpdate: services.missionService.update,
+  missionsArchive: services.missionService.archive,
 });

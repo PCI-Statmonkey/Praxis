@@ -10,6 +10,8 @@ import { createEventLogService } from './persistence/eventLogService'
 import { createSyncOrchestrator } from './sync/syncOrchestrator'
 import { createBackupService } from './backup/backupService'
 import { createRestoreService } from './backup/restoreService'
+import { createMissionStore } from './persistence/missionStore'
+import { createMissionService } from './missions/missionService'
 import type { BackupInventoryPreview, RestorePlanPreview } from '../shared/backup/backupTypes'
 
 const require = createRequire(import.meta.url)
@@ -38,6 +40,13 @@ let win: BrowserWindow | null
 const buildRuntime = () => {
   const persistenceRO = createSqliteReadOnly()
   const eventLog = createEventLogService()
+  const missionStore = createMissionStore()
+  const missionService = createMissionService({
+    store: missionStore,
+    clock: {
+      now: () => new Date().toISOString(),
+    },
+  })
 
   const backupService = createBackupService({
     inventory: {
@@ -127,6 +136,7 @@ const buildRuntime = () => {
     createSyncOrchestrator: () => syncOrchestrator,
     createBackupService: () => backupService,
     createRestoreService: () => restoreService,
+    createMissionService: () => missionService,
   })
 
   const ipcDeps = buildRuntimeIpcDeps(services, {

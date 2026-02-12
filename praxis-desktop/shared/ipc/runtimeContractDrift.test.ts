@@ -50,6 +50,17 @@ test("IPC registrar registers only known runtime channels", () => {
         warnings: [],
       },
     }),
+    missionsList: async () => [],
+    missionsGet: async () => null,
+    missionsCreate: async (input) => ({
+      id: "mission-1",
+      title: input.title,
+      status: "active",
+      createdAt: "2026-02-12T00:00:00.000Z",
+      updatedAt: "2026-02-12T00:00:00.000Z",
+    }),
+    missionsUpdate: async () => null,
+    missionsArchive: async () => null,
   });
 
   const registered = Array.from(handlers.keys()).sort();
