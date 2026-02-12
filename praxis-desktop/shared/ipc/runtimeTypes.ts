@@ -1,4 +1,7 @@
-import type { BackupInventoryPreview as BackupInventoryPreviewType, RestorePlanPreview as RestorePlanPreviewType } from "../backup/backupTypes";
+import type {
+  BackupInventoryPreview as BackupInventoryPreviewType,
+  RestorePlanPreview as RestorePlanPreviewType,
+} from "../backup/backupTypes";
 import type { SyncSummary as SyncSummaryType } from "../sync/syncTypes";
 
 export type IpcError = {
@@ -52,7 +55,5 @@ export type MirrorStatus = {
 
 export type BackupInventoryPreview = BackupInventoryPreviewType;
 export type RestorePlanPreview = RestorePlanPreviewType;
-
-export type InventoryPreview = BackupInventoryPreviewType;
 
 export type SyncSummary = SyncSummaryType;
