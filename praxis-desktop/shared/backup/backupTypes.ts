@@ -24,6 +24,7 @@ export type BackupInventoryPreview = {
 };
 
 export type RestorePlanPreview = {
+  zipPath: string;
   conflicts: Array<{ path: string; reason: string }>;
   willOverwriteCount: number;
   missingCount: number;
