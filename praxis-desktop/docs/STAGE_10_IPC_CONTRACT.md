@@ -92,6 +92,8 @@ All channels are placeholders until wired. None are invoked at runtime in this p
 - Read-only guarantees:
   - No sync tick or background scheduling.
   - No writes or mirror access.
+- Notes:
+  - Status is computed from current deps; no stored last-known state.
 
 ### praxis:runtime:backup.getInventoryPreview
 - Purpose: read-only inventory preview (no writes).
