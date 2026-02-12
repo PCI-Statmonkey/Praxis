@@ -104,10 +104,10 @@ All channels are placeholders until wired. None are invoked at runtime in this p
 
 ### praxis:runtime:restore.getPlanPreview
 - Purpose: read-only restore plan preview (no writes).
-- Request: `{ backupZipPath: string }`
+- Request: `{ zipPath: string }`
 - Response: `IpcResult<RestorePlanPreview>`
 - Requirement: preview only; do not apply changes or write rollback artifacts.
-  - Includes conflict list plus overwrite/missing counts and warnings.
+  - Includes zipPath, conflict list plus overwrite/missing counts and warnings.
 
 ## Error Codes (Initial)
 - `unknown_error`

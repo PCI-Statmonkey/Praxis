@@ -60,7 +60,7 @@ Candidate runtime entrypoints (NOT YET CONNECTED):
 - Sync boundaries: orchestrator coordinates deps only; transport/locks are injected and handle mirror I/O separately.
 - Mirror root assumptions: `getMirrorRoot()` uses env `PRAXIS_MIRROR_ROOT` or `userData/config.json`. Mirror event logs stored under `<mirrorRoot>/eventlog/*.jsonl` and lock files under `<mirrorRoot>/.praxis-sync.lock` and `<mirrorRoot>/eventlog/*.lock`.
 - Backup/restore touch points: backup inventory + export read app data, mirror config, mirror root; restore plan/apply operate on DB/config (mirror root files are always conflicts unless explicitly allowed by plan logic).
-- Backup/restore staging: read-only previews only (inventory + restore plan) with no writes or export/apply/rollback in Stage 10.
+- Backup/restore staging: read-only previews only (inventory + path-based restore plan) with no writes or export/apply/rollback in Stage 10.
 
 ## Authoritative Event Log Model
 
