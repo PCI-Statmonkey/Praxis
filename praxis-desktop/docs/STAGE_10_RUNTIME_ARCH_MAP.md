@@ -55,6 +55,8 @@ Candidate runtime entrypoints (NOT YET CONNECTED):
 
 - IPC surface: No IPC channels defined in these modules. Any renderer access would require explicit `ipcMain.handle`/`ipcRenderer.invoke` wiring elsewhere.
 - DB access points: `electron/persistence/sqliteEventLog.ts` is the authoritative SQLite access layer; `electron/persistence/checklistReplay.ts` reads from it.
+- Sync orchestrator: single-tick only, no scheduling or timers. Scheduler remains locked and not reintroduced in Stage 10.
+- Sync boundaries: orchestrator coordinates deps only; transport/locks are injected and handle mirror I/O separately.
 - Mirror root assumptions: `getMirrorRoot()` uses env `PRAXIS_MIRROR_ROOT` or `userData/config.json`. Mirror event logs stored under `<mirrorRoot>/eventlog/*.jsonl` and lock files under `<mirrorRoot>/.praxis-sync.lock` and `<mirrorRoot>/eventlog/*.lock`.
 - Backup/restore touch points: backup inventory + export read app data, mirror config, mirror root; restore plan/apply operate on DB/config (mirror root files are always conflicts unless explicitly allowed by plan logic).
 
