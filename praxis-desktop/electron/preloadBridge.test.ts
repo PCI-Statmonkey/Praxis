@@ -22,6 +22,11 @@ describe("preload bridge", () => {
       [
         "backupGetInventoryPreview",
         "getStatus",
+        "missionsArchive",
+        "missionsCreate",
+        "missionsGet",
+        "missionsList",
+        "missionsUpdate",
         "persistenceGetDbIntegritySummary",
         "persistenceGetDbStatus",
         "persistenceGetPaths",
@@ -47,6 +52,15 @@ describe("preload bridge", () => {
     expect(invoke).toHaveBeenCalledWith("praxis:runtime:restore.getPlanPreview", {
       zipPath: "C:\\backup.zip",
     });
+
+    await api.missionsList();
+    expect(invoke).toHaveBeenCalledWith("praxis:runtime:missions.list", { includeArchived: undefined });
+
+    await api.missionsCreate({ title: "Mission" });
+    expect(invoke).toHaveBeenCalledWith("praxis:runtime:missions.create", { title: "Mission" });
+
+    await api.missionsArchive("mission-1");
+    expect(invoke).toHaveBeenCalledWith("praxis:runtime:missions.archive", { id: "mission-1" });
   });
 
   test("blocks unknown channels", async () => {
