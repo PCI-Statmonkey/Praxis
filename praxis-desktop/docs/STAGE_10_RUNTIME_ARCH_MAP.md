@@ -58,6 +58,12 @@ Candidate runtime entrypoints (NOT YET CONNECTED):
 - Mirror root assumptions: `getMirrorRoot()` uses env `PRAXIS_MIRROR_ROOT` or `userData/config.json`. Mirror event logs stored under `<mirrorRoot>/eventlog/*.jsonl` and lock files under `<mirrorRoot>/.praxis-sync.lock` and `<mirrorRoot>/eventlog/*.lock`.
 - Backup/restore touch points: backup inventory + export read app data, mirror config, mirror root; restore plan/apply operate on DB/config (mirror root files are always conflicts unless explicitly allowed by plan logic).
 
+## Authoritative Event Log Model
+
+- Authoritative store: SQLite (`eventlog.sqlite`) is the source of truth for local state.
+- Transport: mirror JSONL device logs are for sync transport only and are not authoritative.
+- Snapshot usage: optional acceleration only; snapshots do not replace the SQLite event log.
+
 ## Stage 8/9 Contract Mismatch Checklist
 
 - `electron/syncScheduler.ts`: starts background timers and sync loop as soon as `startSyncScheduler()` is called. Conflict: Stage 8/9 emphasize no background timers without explicit enable. Mitigation: require explicit user opt-in + IPC gating before calling `startSyncScheduler()`; ensure it is never started on app boot.
