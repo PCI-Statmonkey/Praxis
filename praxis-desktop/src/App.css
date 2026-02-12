@@ -127,6 +127,30 @@ body::after {
   box-shadow: 0 0 8px rgba(54, 242, 224, 0.5);
 }
 
+.ipc-smoke-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.ipc-output {
+  background: rgba(8, 14, 20, 0.7);
+  border: 1px solid rgba(120, 190, 220, 0.2);
+  border-radius: 8px;
+  padding: 10px;
+  font-family: "SFMono-Regular", "Cascadia Mono", "Consolas", "Liberation Mono", monospace;
+  font-size: 0.8rem;
+  color: var(--muted);
+  min-height: 80px;
+  white-space: pre-wrap;
+}
+
+.ipc-output.error {
+  color: #ff9f9f;
+  border-color: rgba(255, 159, 159, 0.4);
+}
+
 ul {
   margin: 0;
   padding-left: 0;
