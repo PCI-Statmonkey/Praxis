@@ -1,11 +1,14 @@
 import type { BackupResult, RestorePlanPreview } from "../../shared/backup/backupTypes";
 
 type RestorePlanBuilder = {
-  buildPlanPreview: (backupZipPath: string) => Promise<RestorePlanPreview>;
+  buildPlanPreview: (backupZipPath: string) => Promise<Omit<RestorePlanPreview, "zipPath">>;
 };
 
 type Deps = {
   restore: RestorePlanBuilder;
+  fs: {
+    stat: (path: string) => Promise<{ isFile: () => boolean }>;
+  };
 };
 
 export type RestoreService = {
@@ -24,14 +27,17 @@ const toError = (
 });
 
 export const createRestoreService = (deps: Deps): RestoreService => {
-  const getPlanPreview = async (
-    backupZipPath: string
-  ): Promise<BackupResult<RestorePlanPreview>> => {
-    if (!backupZipPath || typeof backupZipPath !== "string" || !backupZipPath.trim()) {
-      return toError("invalid_request", "backupZipPath is required");
+  const getPlanPreview = async (zipPath: string): Promise<BackupResult<RestorePlanPreview>> => {
+    if (!zipPath || typeof zipPath !== "string" || !zipPath.trim()) {
+      return toError("invalid_request", "zipPath is required");
     }
     try {
-      return toOk(await deps.restore.buildPlanPreview(backupZipPath));
+      const stat = await deps.fs.stat(zipPath);
+      if (!stat.isFile()) {
+        return toError("invalid_request", "zipPath must be a file");
+      }
+      const preview = await deps.restore.buildPlanPreview(zipPath);
+      return toOk({ zipPath, ...preview });
     } catch (error) {
       const err = error as Error;
       return toError("io_error", "Failed to read restore plan preview", {
