@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { createSqliteReadOnly } from "./sqliteReadOnly";
 
 const makeStat = (exists: boolean) => async () => ({
@@ -42,6 +42,44 @@ test("sqliteReadOnly returns safe defaults when DB missing", async () => {
   }
 
   expect(openCalled).toBe(false);
+});
+
+test("sqliteReadOnly read-only calls do not create files when DB missing", async () => {
+  const fs = await import("fs");
+  const mkdirSpy = vi.spyOn(fs.promises, "mkdir");
+  const writeFileSpy = vi.spyOn(fs.promises, "writeFile");
+  const appendFileSpy = vi.spyOn(fs.promises, "appendFile");
+  const openDb = vi.fn(async () => {
+    throw new Error("should not open");
+  });
+
+  const service = createSqliteReadOnly({
+    getDbPath: () => "C:\\missing\\eventlog.sqlite",
+    fs: {
+      stat: async () => {
+        const err = new Error("missing") as NodeJS.ErrnoException;
+        err.code = "ENOENT";
+        throw err;
+      },
+    },
+    openDb,
+  });
+
+  try {
+    await service.getDbStatus();
+    await service.getIntegritySummary();
+    await service.getSyncState();
+    await service.getLatestSnapshotMeta();
+
+    expect(openDb).not.toHaveBeenCalled();
+    expect(mkdirSpy).not.toHaveBeenCalled();
+    expect(writeFileSpy).not.toHaveBeenCalled();
+    expect(appendFileSpy).not.toHaveBeenCalled();
+  } finally {
+    mkdirSpy.mockRestore();
+    writeFileSpy.mockRestore();
+    appendFileSpy.mockRestore();
+  }
 });
 
 test("sqliteReadOnly reads data when DB exists without creating new files", async () => {
