@@ -5,6 +5,7 @@ import {
   PERSISTENCE_GET_PATHS,
   RUNTIME_GET_STATUS,
   RUNTIME_PING,
+  SYNC_GET_STATUS,
 } from "../../shared/ipc/runtimeChannels";
 import type {
   DbIntegritySummary,
@@ -12,6 +13,7 @@ import type {
   IpcResult,
   PersistencePaths,
   RuntimeStatus,
+  SyncSummary,
 } from "../../shared/ipc/runtimeTypes";
 import type { ReadOnlyResult } from "../../shared/persistence/readOnlyService";
 import {
@@ -43,6 +45,7 @@ test("registers runtime IPC handlers", () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -52,6 +55,7 @@ test("registers runtime IPC handlers", () => {
   expect(handlers.has(PERSISTENCE_GET_PATHS)).toBe(true);
   expect(handlers.has(PERSISTENCE_GET_DB_STATUS)).toBe(true);
   expect(handlers.has(PERSISTENCE_GET_DB_INTEGRITY)).toBe(true);
+  expect(handlers.has(SYNC_GET_STATUS)).toBe(true);
 });
 
 test("runtime.ping returns version payload", async () => {
@@ -68,6 +72,7 @@ test("runtime.ping returns version payload", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -97,6 +102,7 @@ test("runtime.getStatus returns contract error on failure", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => okResult({ exists: false, path: "z" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -125,6 +131,7 @@ test("persistence.getDbStatus passes through error results", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "x", dbPath: "y" }),
     getDbStatus: async () => errorResult("db missing"),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -153,6 +160,7 @@ test("persistence.getPaths returns read-only data", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle" }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -181,6 +189,7 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
     getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
     getDbStatus: async () => okResult({ exists: true, path: "db" }),
     getDbIntegritySummary: async () => okResult({ ok: false, integrityCheck: "fail" }),
+    getSyncStatus: () => ({ status: "idle" }),
   };
 
   registerRuntimeIpcHandlers(ipcMain, deps);
@@ -192,5 +201,33 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
   if (result.ok) {
     expect(result.data.ok).toBe(false);
     expect(result.data.integrityCheck).toBe("fail");
+  }
+});
+
+test("sync.getStatus returns status summary", async () => {
+  const handlers = new Map<string, Handler>();
+  const ipcMain: IpcMainLike = {
+    handle: (channel, handler) => {
+      handlers.set(channel, handler as Handler);
+    },
+  };
+
+  const deps: RuntimeIpcDeps = {
+    getVersion: () => "0.0.0",
+    getStatus: () => ({ ready: true }),
+    getPersistencePaths: async () => okResult({ appDataRoot: "root", dbPath: "db" }),
+    getDbStatus: async () => okResult({ exists: true, path: "db" }),
+    getDbIntegritySummary: async () => okResult({ ok: true, integrityCheck: "ok" }),
+    getSyncStatus: () => ({ status: "idle", lastSuccessAt: "2026-02-12T00:00:00.000Z" }),
+  };
+
+  registerRuntimeIpcHandlers(ipcMain, deps);
+
+  const handler = handlers.get(SYNC_GET_STATUS);
+  expect(handler).toBeDefined();
+  const result = (await handler?.()) as IpcResult<SyncSummary>;
+  expect(result.ok).toBe(true);
+  if (result.ok) {
+    expect(result.data.status).toBe("idle");
   }
 });
