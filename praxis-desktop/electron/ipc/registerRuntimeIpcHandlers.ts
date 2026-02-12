@@ -4,6 +4,7 @@ import {
   PERSISTENCE_GET_PATHS,
   RUNTIME_GET_STATUS,
   RUNTIME_PING,
+  SYNC_GET_STATUS,
 } from "../../shared/ipc/runtimeChannels";
 import type {
   DbIntegritySummary,
@@ -13,6 +14,7 @@ import type {
   PersistencePaths,
   RuntimePingResponse,
   RuntimeStatus,
+  SyncSummary,
 } from "../../shared/ipc/runtimeTypes";
 import type { ReadOnlyResult } from "../../shared/persistence/readOnlyService";
 
@@ -22,6 +24,7 @@ export type RuntimeIpcDeps = {
   getPersistencePaths: () => Promise<ReadOnlyResult<PersistencePaths>>;
   getDbStatus: () => Promise<ReadOnlyResult<DbStatus>>;
   getDbIntegritySummary: () => Promise<ReadOnlyResult<DbIntegritySummary>>;
+  getSyncStatus: () => SyncSummary;
 };
 
 export type IpcMainLike = {
@@ -97,4 +100,15 @@ export const registerRuntimeIpcHandlers = (
       }
     }
   );
+
+  ipcMain.handle(SYNC_GET_STATUS, async (): Promise<IpcResult<SyncSummary>> => {
+    try {
+      return {
+        ok: true,
+        data: deps.getSyncStatus(),
+      };
+    } catch (error) {
+      return toErrorResult(error);
+    }
+  });
 };

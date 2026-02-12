@@ -1,3 +1,5 @@
+import type { SyncSummary as SyncSummaryType } from "../sync/syncTypes";
+
 export type IpcError = {
   code: string;
   message: string;
@@ -51,3 +53,5 @@ export type InventoryPreview = {
   generatedAt: string;
   statePaths: Array<{ label: string; exists: boolean; type: string }>;
 };
+
+export type SyncSummary = SyncSummaryType;

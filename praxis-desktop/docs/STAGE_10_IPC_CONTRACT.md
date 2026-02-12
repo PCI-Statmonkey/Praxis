@@ -85,6 +85,14 @@ All channels are placeholders until wired. None are invoked at runtime in this p
 - Request: `{}`
 - Response: `IpcResult<{ mirrorRootSet: boolean; mirrorRoot?: string }>`
 
+### praxis:runtime:sync.getStatus
+- Purpose: read-only sync orchestration status snapshot.
+- Request: `{}`
+- Response: `IpcResult<SyncSummary>`
+- Read-only guarantees:
+  - No sync tick or background scheduling.
+  - No writes or mirror access.
+
 ### praxis:runtime:backup.getInventoryPreview
 - Purpose: read-only inventory preview (no writes).
 - Request: `{}`

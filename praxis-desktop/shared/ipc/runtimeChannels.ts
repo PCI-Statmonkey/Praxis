@@ -4,6 +4,7 @@ export const PERSISTENCE_GET_PATHS = "praxis:runtime:persistence.getPaths";
 export const PERSISTENCE_GET_DB_STATUS = "praxis:runtime:persistence.getDbStatus";
 export const PERSISTENCE_GET_DB_INTEGRITY = "praxis:runtime:persistence.getDbIntegritySummary";
 export const SYNC_GET_MIRROR_STATUS = "praxis:runtime:sync.getMirrorStatus";
+export const SYNC_GET_STATUS = "praxis:runtime:sync.getStatus";
 export const BACKUP_GET_INVENTORY_PREVIEW = "praxis:runtime:backup.getInventoryPreview";
 
 export const RUNTIME_CHANNELS = {
@@ -13,6 +14,7 @@ export const RUNTIME_CHANNELS = {
   PERSISTENCE_GET_DB_STATUS,
   PERSISTENCE_GET_DB_INTEGRITY,
   SYNC_GET_MIRROR_STATUS,
+  SYNC_GET_STATUS,
   BACKUP_GET_INVENTORY_PREVIEW,
 } as const;
 
