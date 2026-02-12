@@ -29,7 +29,7 @@ export type RuntimeIpcDeps = {
   getPersistencePaths: () => Promise<ReadOnlyResult<PersistencePaths>>;
   getDbStatus: () => Promise<ReadOnlyResult<DbStatus>>;
   getDbIntegritySummary: () => Promise<ReadOnlyResult<DbIntegritySummary>>;
-  getSyncStatus: () => SyncSummary;
+  getSyncStatus: () => Promise<SyncSummary> | SyncSummary;
   getBackupInventoryPreview: () => Promise<BackupResult<BackupInventoryPreview>>;
   getRestorePlanPreview: (backupZipPath: string) => Promise<BackupResult<RestorePlanPreview>>;
 };
@@ -118,7 +118,7 @@ export const registerRuntimeIpcHandlers = (
     try {
       return {
         ok: true,
-        data: deps.getSyncStatus(),
+        data: await deps.getSyncStatus(),
       };
     } catch (error) {
       return toErrorResult(error);
