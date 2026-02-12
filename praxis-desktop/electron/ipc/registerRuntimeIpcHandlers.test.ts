@@ -61,16 +61,15 @@ test("registers runtime IPC handlers", () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -103,16 +102,15 @@ test("runtime.ping returns version payload", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -146,16 +144,15 @@ test("runtime.getStatus returns contract error on failure", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -188,16 +185,15 @@ test("persistence.getDbStatus passes through error results", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -230,16 +226,15 @@ test("persistence.getPaths returns read-only data", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -272,16 +267,15 @@ test("persistence.getDbIntegritySummary returns read-only data", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -317,16 +311,15 @@ test("sync.getStatus returns status summary", async () => {
     }),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -359,16 +352,15 @@ test("backup.getInventoryPreview returns preview data", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
     getRestorePlanPreview: async () =>
       okBackupResult({
-        backupZipPath: "C:\\backup.zip",
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -379,7 +371,7 @@ test("backup.getInventoryPreview returns preview data", async () => {
   const result = (await handler?.()) as IpcResult<BackupInventoryPreview>;
   expect(result.ok).toBe(true);
   if (result.ok) {
-    expect(result.data.scope.includes).toContain("db");
+    expect(result.data.items[0].category).toBe("db");
   }
 });
 
@@ -400,16 +392,15 @@ test("restore.getPlanPreview returns preview data", async () => {
     getSyncStatus: () => makeSyncSummary(),
     getBackupInventoryPreview: async () =>
       okBackupResult({
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        scope: { includes: ["db"] },
-        statePaths: [],
+        items: [{ category: "db", path: "C:\\db.sqlite", exists: true, sizeBytes: 12 }],
+        warnings: [],
       }),
-    getRestorePlanPreview: async (backupZipPath: string) =>
+    getRestorePlanPreview: async (_backupZipPath: string) =>
       okBackupResult({
-        backupZipPath,
-        generatedAt: "2026-02-12T00:00:00.000Z",
-        summary: { files: 0, dirs: 0, conflicts: 0 },
         conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: [],
       }),
   };
 
@@ -420,6 +411,6 @@ test("restore.getPlanPreview returns preview data", async () => {
   const result = (await handler?.({}, { backupZipPath: "C:\\backup.zip" })) as IpcResult<RestorePlanPreview>;
   expect(result.ok).toBe(true);
   if (result.ok) {
-    expect(result.data.backupZipPath).toBe("C:\\backup.zip");
+    expect(result.data.conflicts).toEqual([]);
   }
 });
