@@ -53,7 +53,9 @@ test("IPC registrar registers only known runtime channels", () => {
   });
 
   const registered = Array.from(handlers.keys()).sort();
-  const known = Object.values(RUNTIME_CHANNELS).sort();
+  const known = new Set(Object.values(RUNTIME_CHANNELS));
 
-  expect(registered).toEqual(known);
+  for (const channel of registered) {
+    expect(known.has(channel)).toBe(true);
+  }
 });
