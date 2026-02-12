@@ -1,16 +1,14 @@
 import type { RuntimeIpcDeps } from "../ipc/registerRuntimeIpcHandlers";
 import type {
   BackupInventoryPreview,
-  RestorePlanPreview,
-  SyncSummary,
-} from "../../shared/ipc/runtimeTypes";
-import type { BackupResult } from "../../shared/backup/backupTypes";
-import type {
   DbIntegritySummary,
   DbStatus,
   PersistencePaths,
+  RestorePlanPreview,
   RuntimeStatus,
+  SyncSummary,
 } from "../../shared/ipc/runtimeTypes";
+import type { BackupResult } from "../../shared/backup/backupTypes";
 import type { ReadOnlyResult } from "../../shared/persistence/readOnlyService";
 
 export type RuntimeServices = {
@@ -45,25 +43,6 @@ export type RuntimeServiceFactories = {
   createRestoreService: () => RuntimeServices["restoreService"];
 };
 
-export type RuntimeDepsOptions = {
-  getVersion: () => string;
-  getStatus: () => RuntimeStatus;
-  persistence: {
-    getPaths: () => Promise<ReadOnlyResult<PersistencePaths>>;
-    getDbStatus: () => Promise<ReadOnlyResult<DbStatus>>;
-    getDbIntegritySummary: () => Promise<ReadOnlyResult<DbIntegritySummary>>;
-  };
-  sync: {
-    getStatus: () => Promise<SyncSummary> | SyncSummary;
-  };
-  backup: {
-    getInventoryPreview: () => Promise<BackupResult<BackupInventoryPreview>>;
-  };
-  restore: {
-    getPlanPreview: (zipPath: string) => Promise<BackupResult<RestorePlanPreview>>;
-  };
-};
-
 export const createRuntimeServices = (opts: RuntimeServiceFactories): RuntimeServices => ({
   persistenceRO: opts.createPersistenceRO(),
   eventLog: opts.createEventLog(),
@@ -72,13 +51,24 @@ export const createRuntimeServices = (opts: RuntimeServiceFactories): RuntimeSer
   restoreService: opts.createRestoreService(),
 });
 
-export const buildRuntimeDeps = (opts: RuntimeDepsOptions): RuntimeIpcDeps => ({
+export type RuntimeIpcDepsOptions = {
+  getVersion: () => string;
+  getStatus: () => RuntimeStatus;
+  getPaths: () => Promise<ReadOnlyResult<PersistencePaths>>;
+  getDbStatus: () => Promise<ReadOnlyResult<DbStatus>>;
+  getDbIntegritySummary: () => Promise<ReadOnlyResult<DbIntegritySummary>>;
+};
+
+export const buildRuntimeIpcDeps = (
+  services: RuntimeServices,
+  opts: RuntimeIpcDepsOptions
+): RuntimeIpcDeps => ({
   getVersion: opts.getVersion,
   getStatus: opts.getStatus,
-  getPersistencePaths: opts.persistence.getPaths,
-  getDbStatus: opts.persistence.getDbStatus,
-  getDbIntegritySummary: opts.persistence.getDbIntegritySummary,
-  getSyncStatus: opts.sync.getStatus,
-  getBackupInventoryPreview: opts.backup.getInventoryPreview,
-  getRestorePlanPreview: opts.restore.getPlanPreview,
+  getPersistencePaths: opts.getPaths,
+  getDbStatus: opts.getDbStatus,
+  getDbIntegritySummary: opts.getDbIntegritySummary,
+  getSyncStatus: services.syncOrchestrator.getStatus,
+  getBackupInventoryPreview: services.backupService.getInventoryPreview,
+  getRestorePlanPreview: services.restoreService.getPlanPreview,
 });
