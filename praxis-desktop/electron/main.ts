@@ -1,7 +1,16 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import { promises as fs } from 'node:fs'
+import { registerRuntimeIpcHandlers } from './ipc/registerRuntimeIpcHandlers'
+import { createRuntimeServices, buildRuntimeIpcDeps } from './runtime/runtimeComposition'
+import { createSqliteReadOnly } from './persistence/sqliteReadOnly'
+import { createEventLogService } from './persistence/eventLogService'
+import { createSyncOrchestrator } from './sync/syncOrchestrator'
+import { createBackupService } from './backup/backupService'
+import { createRestoreService } from './backup/restoreService'
+import type { BackupInventoryPreview, RestorePlanPreview } from '../shared/backup/backupTypes'
 
 const require = createRequire(import.meta.url)
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -25,6 +34,117 @@ export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
 
 let win: BrowserWindow | null
+
+const buildRuntime = () => {
+  const persistenceRO = createSqliteReadOnly()
+  const eventLog = createEventLogService()
+
+  const backupService = createBackupService({
+    inventory: {
+      buildPreview: async (): Promise<BackupInventoryPreview> => {
+        const appDataRoot = app.getPath('userData')
+        const dbPath = path.join(appDataRoot, 'eventlog.sqlite')
+
+        const statOrMissing = async (targetPath: string) => {
+          try {
+            const stat = await fs.stat(targetPath)
+            return { exists: stat.isFile(), sizeBytes: stat.isFile() ? stat.size : undefined }
+          } catch {
+            return { exists: false, sizeBytes: undefined }
+          }
+        }
+
+        const dbStat = await statOrMissing(dbPath)
+
+        return {
+          items: [
+            { category: 'appDataRoot', path: appDataRoot, exists: true },
+            { category: 'sqlite', path: dbPath, exists: dbStat.exists, sizeBytes: dbStat.sizeBytes },
+          ],
+          warnings: [],
+        }
+      },
+    },
+    fs: {
+      stat: fs.stat,
+    },
+  })
+
+  const restoreService = createRestoreService({
+    restore: {
+      buildPlanPreview: async (): Promise<Omit<RestorePlanPreview, 'zipPath'>> => ({
+        conflicts: [],
+        willOverwriteCount: 0,
+        missingCount: 0,
+        warnings: ['preview_not_implemented'],
+      }),
+    },
+    fs: {
+      stat: fs.stat,
+    },
+  })
+
+  const syncOrchestrator = createSyncOrchestrator({
+    getMirrorRoot: () => null,
+    lock: {
+      withMirrorLock: async (fn) => fn(),
+    },
+    mirrorTransport: {
+      listDeviceLogs: async () => [],
+      readFromOffset: async () => ({ lines: [], nextOffset: 0 }),
+      appendLines: async () => ({ appended: 0 }),
+    },
+    eventLogRead: {
+      getLocalCursor: async () => {
+        const cursor = await eventLog.getLocalEventCursor()
+        if (!cursor.ok) return { maxRowId: 0 }
+        return {
+          maxRowId: cursor.value.maxRowId,
+          lastUploadedRowId: cursor.value.lastSyncRowId,
+          lastImportedRowId: cursor.value.lastSyncRowId,
+        }
+      },
+      readEventsAfterRowId: async (rowId, limit) => {
+        const result = await eventLog.readEventsAfterRowId(rowId, limit)
+        return result.ok ? result.value : []
+      },
+    },
+    eventLogWrite: {
+      insertEventIfMissing: async (record) => {
+        const result = await eventLog.insertEventIfMissing(record)
+        return result.ok ? result.value : false
+      },
+    },
+    validateEventRecord: eventLog.validateEventRecord,
+    clock: {
+      now: () => Date.now(),
+    },
+  })
+
+  const services = createRuntimeServices({
+    createPersistenceRO: () => persistenceRO,
+    createEventLog: () => eventLog,
+    createSyncOrchestrator: () => syncOrchestrator,
+    createBackupService: () => backupService,
+    createRestoreService: () => restoreService,
+  })
+
+  const ipcDeps = buildRuntimeIpcDeps(services, {
+    getVersion: () => app.getVersion(),
+    getStatus: () => ({ ready: true }),
+    getPaths: async () => ({
+      ok: true,
+      value: {
+        appDataRoot: app.getPath('userData'),
+        dbPath: path.join(app.getPath('userData'), 'eventlog.sqlite'),
+      },
+    }),
+    getDbStatus: () => persistenceRO.getDbStatus(),
+    getDbIntegritySummary: () => persistenceRO.getIntegritySummary(),
+  })
+
+  return { services, ipcDeps }
+}
 
 function createWindow() {
   win = new BrowserWindow({
@@ -73,4 +193,8 @@ app.on('activate', () => {
   }
 })
 
-app.whenReady().then(createWindow)
+app.whenReady().then(() => {
+  const { ipcDeps } = buildRuntime()
+  registerRuntimeIpcHandlers(ipcMain, ipcDeps)
+  createWindow()
+})
