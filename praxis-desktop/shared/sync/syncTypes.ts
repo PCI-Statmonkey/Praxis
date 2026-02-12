@@ -1,4 +1,4 @@
-export type SyncStatus = "idle" | "running" | "blocked" | "error";
+export type SyncStatus = "idle" | "blocked" | "error";
 
 export type SyncErrorCode =
   | "unknown_error"
@@ -13,25 +13,12 @@ export type SyncError = {
   details?: Record<string, unknown>;
 };
 
-export type SyncCursor = {
-  maxRowId: number;
-  lastSyncRowId?: number;
-};
-
 export type SyncSummary = {
   status: SyncStatus;
-  lastTickAt?: string;
-  lastSuccessAt?: string;
-  lastError?: SyncError;
-  localCursor?: SyncCursor;
-  remoteCursor?: Record<string, number>;
-};
-
-export type SyncTickResult = {
-  status: SyncStatus;
-  uploaded: number;
-  imported: number;
-  warnings: string[];
-  blockedReason?: string;
-  error?: SyncError;
+  mirrorConfigured: boolean;
+  mirrorRoot?: string;
+  localCursor: { maxRowId?: number };
+  syncState: { lastUploadedRowId?: number; lastImportedRowId?: number };
+  lockAvailable?: boolean;
+  issues: string[];
 };
