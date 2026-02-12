@@ -1,8 +1,8 @@
-import type { MirrorAppendResult, MirrorReadResult } from "../../shared/sync/mirrorTypes";
-import type { EventRecord } from "../../shared/persistence/eventLogContract";
-
 export type MirrorTransport = {
   listDeviceLogs: () => Promise<string[]>;
-  readFromOffset: (deviceId: string, offset: number) => Promise<MirrorReadResult>;
-  append: (deviceId: string, records: EventRecord[]) => Promise<MirrorAppendResult>;
+  readFromOffset: (
+    deviceLog: string,
+    offset: number
+  ) => Promise<{ lines: string[]; nextOffset: number }>;
+  appendLines: (deviceLog: string, lines: string[]) => Promise<{ appended: number }>;
 };

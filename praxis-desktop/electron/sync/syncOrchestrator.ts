@@ -1,69 +1,52 @@
-import type {
-  EventLogResult,
-  EventRecord,
-  EventLogValidationResult,
-} from "../../shared/persistence/eventLogContract";
+import type { EventRecord, EventLogValidationResult } from "../../shared/persistence/eventLogContract";
 import type { MirrorTransport } from "./mirrorTransport";
-import type {
-  SyncCursor,
-  SyncError,
-  SyncSummary,
-  SyncTickResult,
-  SyncStatus,
-} from "../../shared/sync/syncTypes";
+import type { SyncError, SyncSummary, SyncStatus } from "../../shared/sync/syncTypes";
 
-type EventLogService = {
-  getLocalEventCursor: () => Promise<EventLogResult<SyncCursor>>;
-  readEventsAfterRowId: (rowId: number, limit: number) => Promise<EventLogResult<EventRecord[]>>;
-  validateEventRecord: (record: EventRecord) => EventLogValidationResult;
-  appendEvent: (record: EventRecord) => Promise<EventLogResult<EventRecord>>;
-  insertEventIfMissing: (record: EventRecord) => Promise<EventLogResult<boolean>>;
+type EventLogRead = {
+  getLocalCursor: () => Promise<{
+    maxRowId?: number;
+    lastUploadedRowId?: number;
+    lastImportedRowId?: number;
+  }>;
+  readEventsAfterRowId: (rowId: number, limit: number) => Promise<EventRecord[]>;
+};
+
+type EventLogWrite = {
+  insertEventIfMissing: (record: EventRecord) => Promise<boolean>;
 };
 
 type MirrorLock = {
   withMirrorLock: <T>(fn: () => Promise<T>) => Promise<T | null>;
 };
 
-type DiagnosticsLogger = {
-  log: (message: string, details?: Record<string, unknown>) => void;
-};
-
 type Clock = {
-  now: () => string;
-};
-
-type SyncConfig = {
-  isMirrorConfigured: () => boolean;
-  getLocalDeviceId: () => string;
+  now: () => number;
 };
 
 export type SyncOrchestratorDeps = {
-  eventLog: EventLogService;
+  getMirrorRoot: () => string | null;
+  lock: MirrorLock;
   mirrorTransport: MirrorTransport;
-  mirrorLock: MirrorLock;
-  diagnostics?: DiagnosticsLogger;
+  eventLogRead: EventLogRead;
+  eventLogWrite: EventLogWrite;
+  validateEventRecord: (record: EventRecord) => EventLogValidationResult;
   clock: Clock;
-  config: SyncConfig;
+};
+
+export type SyncTickResult = {
+  status: SyncStatus;
+  uploaded: number;
+  imported: number;
+  warnings: string[];
+  error?: SyncError;
 };
 
 export type SyncOrchestrator = {
   tick: () => Promise<SyncTickResult>;
-  getStatus: () => SyncSummary;
+  getStatus: () => Promise<SyncSummary>;
 };
 
 const MAX_BATCH_SIZE = 500;
-
-const toBlocked = (
-  reason: string,
-  error?: SyncError
-): SyncTickResult => ({
-  status: "blocked",
-  uploaded: 0,
-  imported: 0,
-  warnings: [reason],
-  blockedReason: reason,
-  error,
-});
 
 const toError = (error: SyncError): SyncTickResult => ({
   status: "error",
@@ -73,116 +56,107 @@ const toError = (error: SyncError): SyncTickResult => ({
   error,
 });
 
-const normalizeRecord = (record: Record<string, unknown>): EventRecord | null => {
-  if (!record || typeof record !== "object") return null;
-  return {
-    event_id: String(record.event_id ?? ""),
-    device_id: String(record.device_id ?? ""),
-    local_seq: Number(record.local_seq ?? 0),
-    ts: String(record.ts ?? ""),
-    type: record.type as EventRecord["type"],
-    item_id: String(record.item_id ?? ""),
-    payload: (record.payload ?? {}) as Record<string, unknown>,
-    prev_hash: record.prev_hash ? String(record.prev_hash) : null,
-    hash: record.hash ? String(record.hash) : null,
-    row_id: typeof record.row_id === "number" ? record.row_id : undefined,
-  };
+const normalizeRecord = (record: Record<string, unknown>): EventRecord => ({
+  event_id: String(record.event_id ?? ""),
+  device_id: String(record.device_id ?? ""),
+  local_seq: Number(record.local_seq ?? 0),
+  ts: String(record.ts ?? ""),
+  type: record.type as EventRecord["type"],
+  item_id: String(record.item_id ?? ""),
+  payload: (record.payload ?? {}) as Record<string, unknown>,
+  prev_hash: record.prev_hash ? String(record.prev_hash) : null,
+  hash: record.hash ? String(record.hash) : null,
+  row_id: typeof record.row_id === "number" ? record.row_id : undefined,
+});
+
+const parseLine = (line: string): EventRecord | null => {
+  try {
+    const record = JSON.parse(line) as Record<string, unknown>;
+    return normalizeRecord(record);
+  } catch {
+    return null;
+  }
 };
 
 export const createSyncOrchestrator = (deps: SyncOrchestratorDeps): SyncOrchestrator => {
-  let summary: SyncSummary = {
-    status: "idle",
+  const getStatus = async (): Promise<SyncSummary> => {
+    const mirrorRoot = deps.getMirrorRoot();
+    const mirrorConfigured = Boolean(mirrorRoot);
+    const issues: string[] = [];
+    if (!mirrorConfigured) {
+      issues.push("mirror root not configured");
+    }
+
+    let localCursor: { maxRowId?: number } = {};
+    let syncState: { lastUploadedRowId?: number; lastImportedRowId?: number } = {};
+    try {
+      const cursor = await deps.eventLogRead.getLocalCursor();
+      localCursor = { maxRowId: cursor.maxRowId };
+      syncState = {
+        lastUploadedRowId: cursor.lastUploadedRowId,
+        lastImportedRowId: cursor.lastImportedRowId,
+      };
+    } catch {
+      issues.push("local cursor unavailable");
+    }
+
+    const status: SyncStatus = issues.length > 0 ? "blocked" : "idle";
+
+    return {
+      status,
+      mirrorConfigured,
+      mirrorRoot: mirrorRoot ?? undefined,
+      localCursor,
+      syncState,
+      issues,
+    };
   };
 
-  const getStatus = (): SyncSummary => ({ ...summary });
-
   const tick = async (): Promise<SyncTickResult> => {
-    const now = deps.clock.now();
-    if (summary.status === "running") {
-      const error: SyncError = {
-        code: "invalid_request",
-        message: "sync already running",
+    if (!deps.getMirrorRoot()) {
+      return {
+        status: "blocked",
+        uploaded: 0,
+        imported: 0,
+        warnings: ["mirror root not configured"],
       };
-      summary = { ...summary, status: "blocked", lastTickAt: now, lastError: error };
-      return toBlocked("already_running", error);
     }
 
-    if (!deps.config.isMirrorConfigured()) {
-      const error: SyncError = {
-        code: "invalid_request",
-        message: "mirror not configured",
-      };
-      summary = { ...summary, status: "blocked", lastTickAt: now, lastError: error };
-      return toBlocked("mirror_not_configured", error);
-    }
-
-    summary = { ...summary, status: "running", lastTickAt: now, lastError: undefined };
-
-    const lockResult = await deps.mirrorLock.withMirrorLock(async () => {
-      const warnings: string[] = [];
+    const locked = await deps.lock.withMirrorLock(async () => {
       let uploaded = 0;
       let imported = 0;
-      const localCursorResult = await deps.eventLog.getLocalEventCursor();
-      if (!localCursorResult.ok) {
-        return toError(localCursorResult.error);
-      }
+      const warnings: string[] = [];
 
-      const localCursor = localCursorResult.value;
-      summary = { ...summary, localCursor };
+      const cursor = await deps.eventLogRead.getLocalCursor();
+      const lastUploaded = cursor.lastUploadedRowId ?? 0;
+      const maxRowId = cursor.maxRowId ?? 0;
 
-      const localDeviceId = deps.config.getLocalDeviceId();
-      if (!localDeviceId || typeof localDeviceId !== "string") {
-        return toError({ code: "invalid_request", message: "local device id missing" });
-      }
-
-      const lastSynced = localCursor.lastSyncRowId ?? 0;
-      if (localCursor.maxRowId > lastSynced) {
-        const eventsResult = await deps.eventLog.readEventsAfterRowId(lastSynced, MAX_BATCH_SIZE);
-        if (!eventsResult.ok) {
-          return toError(eventsResult.error);
-        }
-        if (eventsResult.value.length > 0) {
-          const appendResult = await deps.mirrorTransport.append(localDeviceId, eventsResult.value);
+      if (maxRowId > lastUploaded) {
+        const events = await deps.eventLogRead.readEventsAfterRowId(lastUploaded, MAX_BATCH_SIZE);
+        if (events.length > 0) {
+          const lines = events.map((event) => JSON.stringify(event));
+          const appendResult = await deps.mirrorTransport.appendLines("local", lines);
           uploaded += appendResult.appended;
-          summary = {
-            ...summary,
-            remoteCursor: {
-              ...(summary.remoteCursor ?? {}),
-              [localDeviceId]: appendResult.nextOffset,
-            },
-          };
         }
       }
 
-      const devices = await deps.mirrorTransport.listDeviceLogs();
-      for (const deviceId of devices) {
-        if (deviceId === localDeviceId) continue;
-        const currentOffset = summary.remoteCursor?.[deviceId] ?? 0;
-        const readResult = await deps.mirrorTransport.readFromOffset(deviceId, currentOffset);
-        for (const entry of readResult.entries) {
-          const normalized = normalizeRecord(entry.record);
-          if (!normalized) {
-            warnings.push("invalid_entry_shape");
+      const deviceLogs = await deps.mirrorTransport.listDeviceLogs();
+      for (const deviceLog of deviceLogs) {
+        const readResult = await deps.mirrorTransport.readFromOffset(deviceLog, 0);
+        for (const line of readResult.lines) {
+          const record = parseLine(line);
+          if (!record) {
+            warnings.push("invalid json line");
             continue;
           }
-          const validation = deps.eventLog.validateEventRecord(normalized);
+          const validation = deps.validateEventRecord(record);
           if (!validation.ok) {
             warnings.push(validation.error.message);
             continue;
           }
-          const insertResult = await deps.eventLog.insertEventIfMissing(normalized);
-          if (!insertResult.ok) {
-            return toError(insertResult.error);
-          }
-          if (insertResult.value) imported += 1;
+          const inserted = await deps.eventLogWrite.insertEventIfMissing(record);
+          if (inserted) imported += 1;
         }
-        summary = {
-          ...summary,
-          remoteCursor: {
-            ...(summary.remoteCursor ?? {}),
-            [deviceId]: readResult.nextOffset,
-          },
-        };
       }
 
       return {
@@ -193,33 +167,18 @@ export const createSyncOrchestrator = (deps: SyncOrchestratorDeps): SyncOrchestr
       };
     });
 
-    if (!lockResult) {
-      const error: SyncError = {
-        code: "io_error",
-        message: "mirror lock unavailable",
+    if (!locked) {
+      return {
+        status: "blocked",
+        uploaded: 0,
+        imported: 0,
+        warnings: ["mirror lock unavailable"],
       };
-      summary = { ...summary, status: "blocked", lastTickAt: now, lastError: error };
-      return toBlocked("mirror_lock_unavailable", error);
     }
 
-    if (lockResult.status === "error" || lockResult.status === "blocked") {
-      summary = { ...summary, status: lockResult.status, lastTickAt: now, lastError: lockResult.error };
-      return lockResult;
-    }
+    if (locked.status === "error") return locked;
 
-    summary = {
-      ...summary,
-      status: "idle",
-      lastTickAt: now,
-      lastSuccessAt: now,
-      lastError: undefined,
-    };
-    deps.diagnostics?.log("sync_tick_complete", {
-      uploaded: lockResult.uploaded,
-      imported: lockResult.imported,
-      warnings: lockResult.warnings.length,
-    });
-    return lockResult;
+    return locked;
   };
 
   return { tick, getStatus };
