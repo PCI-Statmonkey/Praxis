@@ -140,11 +140,11 @@ export const registerRuntimeIpcHandlers = (
     RESTORE_GET_PLAN_PREVIEW,
     async (
       _event,
-      request: { backupZipPath?: string } = {}
+      request: { zipPath?: string } = {}
     ): Promise<IpcResult<RestorePlanPreview>> => {
       try {
-        const backupZipPath = request.backupZipPath ?? "";
-        return toBackupIpcResult(await deps.getRestorePlanPreview(backupZipPath));
+        const zipPath = request.zipPath ?? "";
+        return toBackupIpcResult(await deps.getRestorePlanPreview(zipPath));
       } catch (error) {
         return toErrorResult(error);
       }
