@@ -100,12 +100,14 @@ All channels are placeholders until wired. None are invoked at runtime in this p
 - Request: `{}`
 - Response: `IpcResult<BackupInventoryPreview>`
 - Requirement: preview only; do not write report files.
+  - Items include `{ category, path, exists, sizeBytes? }` with warnings array.
 
 ### praxis:runtime:restore.getPlanPreview
 - Purpose: read-only restore plan preview (no writes).
 - Request: `{ backupZipPath: string }`
 - Response: `IpcResult<RestorePlanPreview>`
 - Requirement: preview only; do not apply changes or write rollback artifacts.
+  - Includes conflict list plus overwrite/missing counts and warnings.
 
 ## Error Codes (Initial)
 - `unknown_error`
