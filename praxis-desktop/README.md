@@ -1,30 +1,49 @@
-# React + TypeScript + Vite
+# Praxis Desk
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Praxis Desk is a local-first desktop assistant built with Electron, TypeScript, React, and Vite.
 
-Currently, two official plugins are available:
+The desktop app is the primary product. Slack is a secondary surface for notifications and quick replies so the assistant can meet the user where they already are.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Current Direction
 
-## Expanding the ESLint configuration
+- Desktop-first assistant with persistent local state
+- Event-driven internal architecture
+- Proactive suggestions backed by explicit commands
+- Contextual action resolution for short replies like `yes`, `do it`, or `1`
+- Slack as an adapter, not the system of record
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Current Repo Status
 
-- Configure the top-level `parserOptions` property like this:
+- Electron desktop shell is in place
+- Renderer UI includes the Praxis HUD panels
+- Master checklist persistence uses an append-only event log plus snapshots
+- Assistant core now targets reusable suggestion ranking and contextual action resolution
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+## Build And Package Commands
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+- `npm run build:app` compiles the app without creating an installer
+- `npm run package` builds and packages the desktop app
+- `npm run package:win` builds the Windows `x64` installer into `release/win-x64/<version>/`
+- `npm run package:win:arm64` builds the Windows `arm64` installer into `release/win-arm64/<version>/`
+- `npm run package:win:all` builds both Windows architectures into `release/win-multi/<version>/`
+- `npm run repair:native` repairs native Electron dependencies if they ever drift
+
+## Release Checklist
+
+- [Release Checklist](../docs/RELEASE_CHECKLIST.md)
+
+## Development Priorities
+
+1. Keep the Electron baseline stable and buildable
+2. Move core assistant logic into shared channel-agnostic modules
+3. Reuse the same command-backed action flow across desktop and Slack
+4. Preserve local-first behavior and avoid introducing background schedulers casually
+
+## Docs
+
+- [Product Notes](../docs/readme.md)
+- [Architecture](../docs/ARCHITECTURE.md)
+- [Storage Architecture](../docs/STORAGE_ARCHITECTURE.md)
+- [Roadmap](../docs/Roadmap.md)
+- [Spec](../docs/Spec.md)
+- [Decisions](../docs/DECISIONS.md)

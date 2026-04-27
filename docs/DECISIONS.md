@@ -1,9 +1,60 @@
 # DECISIONS
 
-- UI: Praxis HUD panels, not bubble map
-- Sync: Dropbox event-log + snapshots; never sync SQLite files
-- Two-PC: master lease heartbeat; client failover after 90s
-- AI: local model for triage/extraction; ChatGPT only for high-value tasks
-- Voice: ElevenLabs stock voice; speak only morning briefing + escalations; avoid project names in speech
-- Mobile: Android PWA + push; no native app required
-- Budget: target <= $20/month total; enforce caps + fallback modes
+- Platform: Electron is the canonical desktop implementation
+- Product focus: Praxis Desk desktop app is primary
+- Slack: secondary adapter for notifications and quick replies
+- Companion clients: future Surface/mobile clients should talk to the main PC as a Praxis Home Node through shared service/API boundaries, not by directly syncing or editing SQLite, markdown memory, or secrets
+- Companion snapshots: the first companion boundary is schema-versioned as `companion.snapshot.v1` and must expose sanitized status summaries instead of raw settings, raw email messages, provider external IDs, secrets, or direct database paths
+- Companion commands: companion clients may submit explicit assistant commands only; they must not receive direct database, markdown, or secret write access, and write-like commands require confirmation through the Home Node gateway
+- Architecture: keep assistant behavior channel-agnostic and event-driven
+- Commands: contextual replies must resolve into explicit command invocations
+- Safety: vague confirmations may execute the highest-ranked candidate only when the ranking gap is clear
+- Persistence: local-first storage remains the default stance
+- Storage: use a hybrid model with SQLite for operational state, markdown for long-term human-readable memory, and filesystem storage for artifacts
+- Secrets: store integration tokens only through Electron main-process OS-backed encryption; never mirror secrets to markdown or expose raw secret values to the renderer
+- Memory: maintain an index-first markdown external brain so Praxis can route to relevant records quickly
+- Maintenance: storage repair and integrity checks should run as headless Electron commands so they use the same production database paths and schema setup as the app
+- Release target: the first practical release artifact is the Windows `x64` NSIS installer from `npm run package:win`
+- Release architecture: Windows `arm64` remains an explicit secondary package path, not the default release artifact
+- Release channel: the first distribution channel is direct private delivery of the Windows `x64` NSIS installer to the operator or explicitly approved testers; Microsoft Store, public website downloads, and GitHub Releases are deferred
+- Release signing: unsigned installers are acceptable only for local packaging validation and private tester smoke checks; any public, client-facing, or broadly shared build should be signed before distribution
+- Signing certificate ownership: the code signing certificate should be owned by the Praxis Project/operator identity, not an individual developer machine or contributor account
+- Signing automation: do not add certificate paths, passwords, tokens, or signing commands until certificate storage and the signing location are chosen
+- Signing secrets: future signing credentials must stay outside git and must not be mirrored into markdown memory; prefer OS-backed or CI secret storage with only non-secret metadata in docs
+- Skills: local `SKILL.md` files are read-only operating procedures in V1; the registry may index and expose metadata/content, but must not execute, install, or auto-load third-party skills
+- Skill routing: assistant routes may attach lightweight skill references for observability and future prompt construction, but route results should not include full skill content by default
+- Skill surface safety: a skill must pass both a surface allowlist and its own declared `surfaces` metadata before that surface may reference it
+- Daily brief: generate from SQLite operational state first, then preserve the narrative output in markdown daily notes
+- Appointments: same-day appointments outrank ordinary deadlines and todos in the daily brief
+- Natural-language capture: start with conservative deterministic parsing and route all created records through the SQLite-backed repository
+- Capture safety: ambiguous natural-language captures require confirmation before records are created
+- Todos: a todo may be standalone or project-linked; project-linked todos still appear in global quick-action views with context badges
+- Quick actions: infer quickness from wording when possible, but show editable fields before saving
+- People: store people as first-class local records with contact fields and link them to todos, projects, and missions through structured relationships instead of burying that context in notes
+- People lookup: answer contact questions from structured people records through a reusable assistant service so desktop, Slack, and voice can share the same behavior
+- Person aliases: aliases are structured database rows, not prose-only notes, so lookup and natural-language capture can resolve nicknames safely
+- Focus reports: include involved people and relationship labels from structured person-work links
+- Slack adapter: keep Slack optional and token-gated; start it only when `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` are present
+- Slack settings: store non-secret Slack behavior settings locally; Slack tokens can move out of environment variables only when routed through the encrypted secret vault
+- Slack scope: Slack should use shared assistant services and begin with read-only DM people/contact lookup before write actions or proactive quick replies
+- Slack write safety: Slack may complete numbered report items only when they resolve against an active Slack DM report context; vague or stale replies should be rejected
+- Proactive suggestions: short confirmations such as `yes` and `do it` may execute only against an active single-action proactive suggestion context
+- Proactive safety: first proactive write action is limited to marking a top todo/deadline done; do not use vague confirmations for broad mission/project completion
+- Finance: billing history should attach to people through structured finance records later; do not fake billing history before the finance/Bill.com model is implemented
+- Calendars: calendar integration must support multiple connected calendars through settings, including Outlook and Google accounts
+- Calendar import: provider adapters must normalize external events into local appointment records through the shared import pipeline; do not store raw calendar dumps as assistant context
+- ICS import: parse exported calendar files locally and feed them through the same appointment importer as provider adapters
+- ICS recurrence: expand common recurrence rules locally with hard caps so endless calendars cannot flood appointment storage
+- ICS timezones: convert IANA `TZID` event times into UTC before storage so imported appointments render consistently in the operator's local view
+- Calendar connection status: track auth and sync readiness as local metadata before adding provider credentials or storing tokens
+- Google Calendar OAuth: use the desktop installed-app authorization-code flow with read-only calendar scope first; token exchange must happen in Electron main process and write refresh tokens only to the encrypted vault
+- Google OAuth PKCE: keep pending code verifiers in Electron main-process memory only; do not persist transient PKCE secrets to SQLite or markdown
+- Google Calendar sync: start with user-triggered manual sync only; do not introduce background schedulers until the core app behavior is stable
+- Outlook Calendar OAuth: mirror the Google desktop OAuth pattern with PKCE, main-process token exchange, Microsoft Graph calendar read scope, and encrypted vault storage
+- Outlook Calendar sync: use Microsoft Graph calendar view for bounded manual event sync, then normalize into the shared appointment importer
+- Arrival flow: build and validate the text/display status-report flow before adding voice wake and spoken output
+- Wake-word model: future wake support should use local hotword detection only, then open a short command-listening window with visible listening state, silent/off controls, and no ambient audio archive
+- Focus reports: mission/project status questions should use structured local state first, then add conversational routing later
+- Assistant routing: classify status/focus questions before natural-language capture so status requests do not become todos
+- Follow-ups: simple `tell me more` requests should expand the current report locally, while explicit ordinal commands such as `mark the first one done` may resolve through persisted report actions
+- Documentation: meaningful architecture, persistence, or product changes should update docs and add an engineering log entry

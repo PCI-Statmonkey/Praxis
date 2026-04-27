@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Praxis Desk V1 UI Directions</title>
+    <link rel="stylesheet" href="./praxis-v1-directions.css" />
+  </head>
+  <body>
+    <main class="preview-frame">
+      <nav class="preview-nav" aria-label="Design directions">
+        <div>
+          <strong>Praxis Desk UI Pass</strong>
+          <span>local preview, not production UI</span>
+        </div>
+        <div class="preview-links">
+          <a href="#command-core" data-direction-link="command-core">Command Core</a>
+          <a href="#operator-grid" data-direction-link="operator-grid">Operator Grid</a>
+          <a href="#ambient-companion" data-direction-link="ambient-companion">Ambient Companion</a>
+        </div>
+      </nav>
+
+      <section id="command-core" class="direction" aria-label="Command Core direction">
+        <div class="command-shell">
+          <aside class="sensor-rail">
+            <article class="card tight sensor-block">
+              <h3>Today Signal</h3>
+              <div class="row between">
+                <span class="label">Risk</span>
+                <span class="badge red">elevated</span>
+              </div>
+              <div class="signal-number">07</div>
+              <p class="micro">tracked items need a decision or response before tomorrow.</p>
+            </article>
+            <article class="card tight sensor-block">
+              <h3>Calendar</h3>
+              <ul class="list">
+                <li>
+                  <div class="row between"><strong>10:30</strong><span class="badge">call</span></div>
+                  <span class="micro">DCPS project check-in</span>
+                </li>
+                <li>
+                  <div class="row between"><strong>2:00</strong><span class="badge gold">prep</span></div>
+                  <span class="micro">Origins outline review</span>
+                </li>
+              </ul>
+            </article>
+            <article class="card tight sensor-block">
+              <h3>Active Work</h3>
+              <ul class="list">
+                <li><strong>Origins 2026</strong><span class="micro">3 projects, 1 deadline at risk</span></li>
+                <li><strong>DCPS</strong><span class="micro">waiting on Max, proposal pending</span></li>
+                <li><strong>House admin</strong><span class="micro">2 money-related todos</span></li>
+              </ul>
+            </article>
+          </aside>
+
+          <section class="card command-center">
+            <div class="core-ring" aria-hidden="true"></div>
+            <div class="arrival-copy">
+              <span class="kicker">Arrival Ritual</span>
+              <h1>Good morning. Status report, sir?</h1>
+              <p>Praxis comes forward with one clear read on the day, then waits for a command instead of flooding the dashboard.</p>
+            </div>
+            <article class="card top-move-command">
+              <span class="label">Top Move</span>
+              <strong>Send the DCPS proposal update before the 10:30 call.</strong>
+              <p class="micro">Reason: it unblocks Max, protects today’s meeting, and closes the highest-risk follow-up.</p>
+              <div class="command-actions">
+                <button class="primary">Open Brief</button>
+                <button>Tell Me More</button>
+                <button class="ghost">Not Now</button>
+              </div>
+            </article>
+          </section>
+
+          <aside class="voice-rail">
+            <article class="card pad">
+              <div class="assistant-presence">
+                <div class="avatar-core"><span class="status-dot"></span></div>
+                <div>
+                  <h3>Praxis</h3>
+                  <span class="micro">wake mode reserved, listening state visible</span>
+                </div>
+              </div>
+              <div class="voice-field">
+                <span class="status-dot"></span>
+                <div class="wave" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <button>mic</button>
+              </div>
+            </article>
+            <article class="card pad">
+              <h3>Conversation</h3>
+              <div class="conversation">
+                <div class="bubble praxis">There is one thing I would move first.</div>
+                <div class="bubble user">Do it after I review the wording.</div>
+                <div class="bubble praxis">Drafting the follow-up path. I will not send anything without approval.</div>
+              </div>
+            </article>
+            <article class="card tight">
+              <h3>Mirrors</h3>
+              <div class="row between"><span>Desktop</span><span class="badge green">primary</span></div>
+              <div class="row between"><span>Slack</span><span class="badge">secondary</span></div>
+              <div class="row between"><span>Surface client</span><span class="badge gold">future</span></div>
+            </article>
+          </aside>
+        </div>
+      </section>
+
+      <section id="operator-grid" class="direction" aria-label="Operator Grid direction">
+        <div class="operator-grid">
+          <header class="card operator-topbar">
+            <div class="brand-stack">
+              <span class="kicker">Praxis Desk</span>
+              <strong>Operator Dashboard</strong>
+            </div>
+            <div class="nav-tabs" aria-label="Primary surfaces">
+              <span>Projects</span>
+              <span class="active">Today</span>
+              <span>Talk</span>
+              <span>Checklist</span>
+              <span>Memory</span>
+            </div>
+            <div class="row">
+              <span class="status-dot"></span>
+              <span class="micro">local node online</span>
+            </div>
+          </header>
+
+          <aside class="mission-column">
+            <article class="card tight">
+              <h3>Missions</h3>
+              <ul class="list">
+                <li>
+                  <div class="row between"><strong>Origins 2026</strong><span class="badge red">risk</span></div>
+                  <div class="meter"><span style="width: 64%"></span></div>
+                  <span class="micro">outline and exhibitor follow-up</span>
+                </li>
+                <li>
+                  <div class="row between"><strong>DCPS</strong><span class="badge gold">today</span></div>
+                  <div class="meter"><span style="width: 48%"></span></div>
+                  <span class="micro">proposal update, Max waiting</span>
+                </li>
+                <li>
+                  <div class="row between"><strong>Home Ops</strong><span class="badge">steady</span></div>
+                  <div class="meter"><span style="width: 32%"></span></div>
+                  <span class="micro">two bill-related todos</span>
+                </li>
+              </ul>
+            </article>
+            <article class="card tight">
+              <h3>People</h3>
+              <ul class="list">
+                <li><strong>Max</strong><span class="micro">waiting on proposal reply</span></li>
+                <li><strong>Scott</strong><span class="micro">needs quote confirmation</span></li>
+                <li><strong>Finance contact</strong><span class="micro">invoice timing</span></li>
+              </ul>
+            </article>
+          </aside>
+
+          <section class="daily-column">
+            <article class="card brief-hero">
+              <div>
+                <span class="kicker">Daily Brief / Top Move</span>
+                <h1>Send the DCPS proposal update before the 10:30 check-in.</h1>
+                <p>It unblocks Max, protects the meeting, and clears the most exposed follow-up. There are three other items worth scanning after this.</p>
+                <div class="brief-actions">
+                  <button class="primary">Start Top Move</button>
+                  <button>Read Brief</button>
+                  <button class="ghost">Later</button>
+                </div>
+              </div>
+              <div class="brief-meter">
+                <span class="label">Operational Load</span>
+                <strong>72%</strong>
+                <div class="meter"><span style="width: 72%"></span></div>
+                <span class="micro">appointments, overdue work, people waiting, money tasks</span>
+              </div>
+            </article>
+
+            <div class="today-grid">
+              <article class="card pad">
+                <h3>Today Timeline</h3>
+                <div class="timeline">
+                  <div class="timeline-item">
+                    <div class="row between"><strong>9:15</strong><span class="badge gold">prep</span></div>
+                    <span class="micro">Review DCPS update and proposal status.</span>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="row between"><strong>10:30</strong><span class="badge">call</span></div>
+                    <span class="micro">DCPS check-in with latest blockers.</span>
+                  </div>
+                  <div class="timeline-item">
+                    <div class="row between"><strong>2:00</strong><span class="badge red">deadline</span></div>
+                    <span class="micro">Origins outline review window.</span>
+                  </div>
+                </div>
+              </article>
+              <article class="card pad">
+                <h3>Priority Stack</h3>
+                <ul class="list">
+                  <li><strong>DCPS proposal update</strong><span class="micro">reason: meeting dependency</span></li>
+                  <li><strong>Origins outline first pass</strong><span class="micro">reason: due soon</span></li>
+                  <li><strong>Confirm invoice timing</strong><span class="micro">reason: money-related</span></li>
+                  <li><strong>Clear Scott waiting flag</strong><span class="micro">reason: stale follow-up</span></li>
+                </ul>
+              </article>
+            </div>
+          </section>
+
+          <aside class="assistant-column">
+            <article class="card pad">
+              <div class="assistant-presence">
+                <div class="avatar-core"><span class="status-dot"></span></div>
+                <div>
+                  <h3>Talk to Praxis</h3>
+                  <span class="micro">assistant conversation, not a plain text box</span>
+                </div>
+              </div>
+            </article>
+            <article class="card pad">
+              <div class="conversation">
+                <div class="bubble praxis">I found four items that can slip today. The proposal update is first.</div>
+                <div class="bubble user">What am I waiting on from Scott?</div>
+                <div class="bubble praxis">Scott is tied to the quote confirmation. It has been idle for six days.</div>
+              </div>
+            </article>
+            <article class="card assistant-input">
+              <div class="input-shell">Ask, dictate, or capture a work item...</div>
+              <div class="row between">
+                <div class="wave" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <button class="primary">Send</button>
+              </div>
+            </article>
+          </aside>
+
+          <footer class="surface-grid" aria-label="Secondary surfaces">
+            <article class="card mini-panel">
+              <span class="label">Todos</span>
+              <strong>18</strong>
+              <span class="micro">5 quick, 2 critical</span>
+            </article>
+            <article class="card mini-panel">
+              <span class="label">Email Follow-Ups</span>
+              <strong>6</strong>
+              <span class="micro">review before storing</span>
+            </article>
+            <article class="card mini-panel">
+              <span class="label">Calendar</span>
+              <strong>4</strong>
+              <span class="micro">next: 10:30 call</span>
+            </article>
+            <article class="card mini-panel">
+              <span class="label">Memory</span>
+              <strong>25</strong>
+              <span class="micro">indexed markdown records</span>
+            </article>
+          </footer>
+        </div>
+      </section>
+
+      <section id="ambient-companion" class="direction" aria-label="Ambient Companion direction">
+        <div class="ambient-shell">
+          <aside class="ambient-side">
+            <article class="card tight">
+              <h3>Today</h3>
+              <ul class="list">
+                <li><strong>10:30 DCPS check-in</strong><span class="micro">proposal update should land first</span></li>
+                <li><strong>Origins outline</strong><span class="micro">needs a first-pass block today</span></li>
+                <li><strong>Invoice timing</strong><span class="micro">money-related follow-up</span></li>
+              </ul>
+            </article>
+            <article class="card tight">
+              <h3>Queues</h3>
+              <div class="row between"><span>Projects</span><span class="badge">12</span></div>
+              <div class="row between"><span>Missions</span><span class="badge gold">3</span></div>
+              <div class="row between"><span>People</span><span class="badge">9</span></div>
+              <div class="row between"><span>Email</span><span class="badge red">6</span></div>
+              <div class="row between"><span>Memory</span><span class="badge green">indexed</span></div>
+            </article>
+            <article class="card tight">
+              <h3>Slack Mirror</h3>
+              <p class="micro">Secondary surface only. Desktop remains the command center; Slack receives brief reports and follow-through.</p>
+            </article>
+          </aside>
+
+          <section class="card ambient-main">
+            <div class="companion-copy">
+              <span class="kicker">Ambient Companion</span>
+              <h1>I have the day. Start with the DCPS update.</h1>
+              <p>The interface stays calm and conversational. Operational detail is present, but the assistant voice carries the main decision.</p>
+              <div class="brief-actions">
+                <button class="primary">Start Focus</button>
+                <button>Show the Board</button>
+                <button class="ghost">Quiet Mode</button>
+              </div>
+            </div>
+            <div class="ambient-orbit" aria-hidden="true"></div>
+          </section>
+
+          <section class="ambient-chat">
+            <article class="card conversation-card">
+              <h3>Conversation</h3>
+              <div class="conversation">
+                <div class="bubble praxis">Good morning. I have a short report ready.</div>
+                <div class="bubble user">Give me the top move.</div>
+                <div class="bubble praxis">Send the DCPS proposal update first. Everything else can trail it.</div>
+              </div>
+              <div class="voice-strip">
+                <div class="wave" aria-hidden="true">
+                  <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <span class="micro">wake/voice reserved</span>
+              </div>
+            </article>
+            <article class="card conversation-card">
+              <h3>Daily Brief</h3>
+              <ul class="list">
+                <li><strong>Top Move</strong><span class="micro">DCPS proposal update</span></li>
+                <li><strong>There is more</strong><span class="micro">Origins, invoice timing, stale waiting-on</span></li>
+                <li><strong>Safe actions</strong><span class="micro">no sends, moves, or completions without approval</span></li>
+              </ul>
+            </article>
+            <article class="card conversation-card">
+              <h3>Work Graph</h3>
+              <ul class="list">
+                <li><strong>Projects</strong><span class="micro">visible through compact drill-downs</span></li>
+                <li><strong>People</strong><span class="micro">waiting-on context stays close</span></li>
+                <li><strong>Memory</strong><span class="micro">quietly indexed, not a main-screen wall</span></li>
+              </ul>
+            </article>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const directions = ["command-core", "operator-grid", "ambient-companion"];
+      const requested = window.location.hash.replace("#", "");
+      const pathDefault = directions.find((direction) => window.location.pathname.includes(direction));
+      const active = directions.includes(requested) ? requested : pathDefault || "operator-grid";
+
+      for (const direction of directions) {
+        document.getElementById(direction).classList.toggle("is-visible", direction === active);
+        const link = document.querySelector(`[data-direction-link="${direction}"]`);
+        if (link) {
+          link.classList.toggle("is-active", direction === active);
+        }
+      }
+    </script>
+  </body>
+</html>

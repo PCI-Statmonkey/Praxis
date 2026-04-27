@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05080a"/>
+      <stop offset="0.58" stop-color="#101820"/>
+      <stop offset="1" stop-color="#17120b"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#14252a" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#070b10" stop-opacity="0.94"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+  <g opacity="0.18" stroke="#33f6e2" stroke-width="1">
+    <path d="M0 120 H1600 M0 240 H1600 M0 360 H1600 M0 480 H1600 M0 600 H1600 M0 720 H1600 M0 840 H1600"/>
+    <path d="M160 0 V1000 M320 0 V1000 M480 0 V1000 M640 0 V1000 M800 0 V1000 M960 0 V1000 M1120 0 V1000 M1280 0 V1000 M1440 0 V1000"/>
+  </g>
+  <rect x="50" y="34" width="1500" height="86" rx="18" fill="#080d12" stroke="#2ccfc4" stroke-opacity="0.55"/>
+  <text x="82" y="78" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="20" fill="#61fff1" letter-spacing="5">PRAXIS DESK</text>
+  <text x="82" y="104" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="13" fill="#c9d6db" letter-spacing="2">COMMAND CORE - DAILY OPERATIONS</text>
+  <g font-family="Bahnschrift, Segoe UI, sans-serif" font-size="15" fill="#dce8ea">
+    <text x="1040" y="84">Calendar synced</text>
+    <text x="1190" y="84">Inbox quiet</text>
+    <text x="1328" y="84">Local AI ready</text>
+  </g>
+  <rect x="50" y="150" width="350" height="690" rx="16" fill="url(#panel)" stroke="#2ccfc4" stroke-opacity="0.42"/>
+  <text x="80" y="200" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="18" fill="#61fff1" letter-spacing="4">PROJECT STACK</text>
+  <g font-family="Segoe UI, sans-serif" font-size="20" fill="#e8f4f4">
+    <rect x="80" y="236" width="290" height="86" rx="10" fill="#0c151c" stroke="#2ccfc4" stroke-opacity="0.28"/>
+    <text x="102" y="272">Origins 2026</text>
+    <text x="102" y="300" font-size="14" fill="#9eb2b8">3 projects - 2 blockers</text>
+    <rect x="80" y="348" width="290" height="86" rx="10" fill="#0c151c" stroke="#2ccfc4" stroke-opacity="0.22"/>
+    <text x="102" y="384">DCPS Engineering</text>
+    <text x="102" y="412" font-size="14" fill="#9eb2b8">invoice and report follow-up</text>
+    <rect x="80" y="460" width="290" height="86" rx="10" fill="#0c151c" stroke="#2ccfc4" stroke-opacity="0.22"/>
+    <text x="102" y="496">Paradigm Projects</text>
+    <text x="102" y="524" font-size="14" fill="#9eb2b8">sourcebook outline due soon</text>
+  </g>
+  <rect x="435" y="150" width="730" height="690" rx="18" fill="#081018" stroke="#40fff1" stroke-opacity="0.68"/>
+  <circle cx="800" cy="415" r="154" fill="none" stroke="#33f6e2" stroke-width="2" stroke-opacity="0.52" filter="url(#glow)"/>
+  <circle cx="800" cy="415" r="112" fill="none" stroke="#ffd27a" stroke-width="2" stroke-opacity="0.7"/>
+  <circle cx="800" cy="415" r="74" fill="#0e2228" stroke="#61fff1" stroke-width="2" filter="url(#glow)"/>
+  <text x="800" y="398" text-anchor="middle" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="18" fill="#ffd27a" letter-spacing="3">TOP MOVE</text>
+  <text x="800" y="432" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="25" fill="#f4fbfb">Call Max about invoice</text>
+  <text x="800" y="464" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="15" fill="#aac3c8">Quick action - money related - waiting on Max</text>
+  <rect x="505" y="650" width="590" height="116" rx="14" fill="#0c151c" stroke="#ffd27a" stroke-opacity="0.35"/>
+  <text x="535" y="692" font-family="Segoe UI, sans-serif" font-size="24" fill="#fff0c2">Good afternoon, sir. Your top move is clear.</text>
+  <text x="535" y="727" font-family="Segoe UI, sans-serif" font-size="17" fill="#cbd8dc">I can mark it done, move it, or open the related project.</text>
+  <rect x="1198" y="150" width="352" height="690" rx="16" fill="url(#panel)" stroke="#2ccfc4" stroke-opacity="0.42"/>
+  <text x="1228" y="200" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="18" fill="#61fff1" letter-spacing="4">TALK TO PRAXIS</text>
+  <rect x="1228" y="236" width="292" height="96" rx="12" fill="#05090d" stroke="#2ccfc4" stroke-opacity="0.28"/>
+  <text x="1250" y="278" font-family="Consolas, monospace" font-size="17" fill="#a9bcc1">move first to tomorrow</text>
+  <rect x="1228" y="370" width="292" height="210" rx="12" fill="#0c151c" stroke="#ffd27a" stroke-opacity="0.28"/>
+  <text x="1250" y="414" font-family="Bahnschrift, Segoe UI, sans-serif" font-size="15" fill="#ffd27a" letter-spacing="3">PRAXIS</text>
+  <text x="1250" y="452" font-family="Segoe UI, sans-serif" font-size="18" fill="#eaf4f4">Moved the invoice follow-up</text>
+  <text x="1250" y="480" font-family="Segoe UI, sans-serif" font-size="18" fill="#eaf4f4">to tomorrow at 5:00 PM.</text>
+  <g fill="#0d171d" stroke="#2ccfc4" stroke-opacity="0.35">
+    <rect x="1228" y="628" width="84" height="44" rx="8"/>
+    <rect x="1328" y="628" width="84" height="44" rx="8"/>
+    <rect x="1428" y="628" width="92" height="44" rx="8"/>
+  </g>
+  <g font-family="Segoe UI, sans-serif" font-size="15" fill="#e8f4f4">
+    <text x="1246" y="656">Done</text>
+    <text x="1344" y="656">Pause</text>
+    <text x="1442" y="656">Focus</text>
+  </g>
+  <text x="80" y="915" font-family="Segoe UI, sans-serif" font-size="18" fill="#9fb3b7">Direction 1: Command Core - theatrical center intelligence, fast voice/chat actions, strong "AI wake-up" feeling.</text>
+</svg>

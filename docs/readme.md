@@ -1,33 +1,49 @@
-# Praxis Desk (Personal)
+# Praxis Desk
 
-Windows-first productivity assistant for Home PC + Surface Pro with local-first processing, Dropbox-based sync, and Android PWA notifications.
+Praxis Desk is a local-first desktop assistant that helps capture ideas, detect patterns, suggest next actions, and support execution over time.
 
-## Core Features (MVP)
-- Praxis HUD dashboard:
-  - Today Timeline (time blocks)
-  - Morning Plan (Top 5 fires, 3 quick wins, meetings + prep)
-  - Project Stack (urgency-driven)
-  - Master Checklist (ADHD-friendly)
-- Multi-account Gmail + Outlook mail ingestion
-- Google + Outlook calendar ingestion
-- Project links to Dropbox folders
-- Aggressive reminders (desktop + push)
-- Voice (ElevenLabs): morning briefing + escalations only (cached)
+The desktop app is the primary product. Slack is a secondary quick-reply and notification surface so the assistant can interact with the user wherever they already are.
 
-## Non-negotiables
-- Local-first: store data locally; keep cloud minimal
-- Attachments remain local (do not upload/sync)
-- Dropbox sync uses event log + snapshots (do NOT sync live SQLite DB file)
-- AI cost cap: local model for triage/extraction; ChatGPT API only for high-value tasks (morning plan + draft replies + on-demand deep summaries)
+## Core Product Shape
 
-## Repo Layout (planned)
-- /apps/desktop        (Tauri UI)
-- /apps/pwa            (GoDaddy-hosted PWA dashboard)
-- /services/agent      (background poller + reminders + scoring)
-- /services/relay      (push notification relay; no email content stored)
-- /packages/shared     (types, scoring rules, common utils)
-- /docs               (specs, prompts, decisions)
+- Praxis HUD desktop interface
+- Persistent local state
+- Event-driven assistant core
+- Proactive suggestions with explicit action choices
+- Contextual action resolution for short replies like `yes`, `do it`, `1`, and `the first one`
+
+## Non-Negotiables
+
+- Local-first storage and processing where practical
+- Desktop app is the system of record
+- Slack should mirror and extend assistant actions, not replace the app
+- Assistant actions must resolve into explicit commands under the hood
+- Keep behavior event-driven
+- Avoid background schedulers unless clearly justified
 
 ## Status
-- Stage 0: planning + docs
-- Stage 1: UI shell (next)
+
+- Electron desktop shell exists
+- Checklist persistence exists via local event log plus snapshots
+- Assistant core is being moved into shared modules for reuse across desktop and Slack
+- Hybrid storage direction is documented: SQLite for operational state, markdown for external memory
+- Praxis can now answer deterministic desktop and Slack lookup questions about people and live work state, including:
+  - who you are waiting on
+  - what is slipping or overdue
+  - what can be knocked out quickly
+  - what is money-related right now
+  - blocked or paused work
+
+## Project Documentation
+
+- [Mission Plan](./MISSION_PLAN.md)
+- [Roadmap](./Roadmap.md)
+- [Architecture](./ARCHITECTURE.md)
+- [Storage Architecture](./STORAGE_ARCHITECTURE.md)
+- [Memory System](./MEMORY_SYSTEM.md)
+- [Decisions](./DECISIONS.md)
+- [Project Workflow](./PROJECT_WORKFLOW.md)
+- [Release Checklist](./RELEASE_CHECKLIST.md)
+- [Engineering Log](./ENGINEERING_LOG.md)
+- [Tech Debt](./TECH_DEBT.md)
+- [Documentation Guide](./DOCUMENTATION_GUIDE.md)

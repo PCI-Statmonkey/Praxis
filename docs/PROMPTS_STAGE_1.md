@@ -1,26 +1,22 @@
-# PROMPT — Stage 1 (Desktop UI Shell)
+# PROMPT - Stage 1 (Desktop Shell)
 
-You are building Stage 1 ONLY:
-- Create a Windows Tauri desktop app with a Praxis HUD dashboard.
-- NO email, NO calendar, NO Dropbox sync, NO AI. Mock data only.
-- Repo structure:
-  /apps/desktop
-  /packages/shared
-  /docs
+You are building Stage 1 only:
+- Create a Windows Electron desktop app with a Praxis HUD dashboard
+- No external integrations yet
+- Keep the desktop app as the primary product surface
 
 UI must include:
-- Today Timeline panel (center)
-- Morning Plan panel (right)
-- Project Stack panel (left)
-- Master Checklist panel (bottom)
-- Settings modal/page (snark level, professional mode, headphones-only toggle)
+- Today Timeline panel
+- Assistant and Morning Plan panel
+- Project Stack panel
+- Master Checklist panel
 
 Behavior:
-- Master Checklist: add item, check off, delete
-- Persist checklist locally (temporary local storage ok for Stage 1; real DB comes Stage 2)
-- Provide clean component structure and types.
+- Master Checklist persistence should be local
+- Assistant suggestions should be able to bind actions to commands
+- Short replies should resolve safely when the best choice is clear
 
 Output:
-- Working build/run instructions
+- Working build and run instructions
 - Minimal dependencies
-- No half-implemented integrations
+- No half-implemented remote integrations

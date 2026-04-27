@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Praxis Desk icon">
+  <defs>
+    <linearGradient id="bg" x1="32" y1="224" x2="224" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10131a"/>
+      <stop offset="0.52" stop-color="#1d2630"/>
+      <stop offset="1" stop-color="#244040"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="72" y1="188" x2="184" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#55eadc"/>
+      <stop offset="1" stop-color="#f4c66d"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="44" fill="url(#bg)"/>
+  <circle cx="128" cy="128" r="78" fill="none" stroke="#55eadc" stroke-opacity="0.28" stroke-width="12"/>
+  <path
+    fill="url(#mark)"
+    d="M82 181V75h54c24 0 42 17 42 40s-18 40-42 40h-27v26H82Zm27-50h24c11 0 19-6 19-16s-8-16-19-16h-24v32Z"
+  />
+  <path fill="#f4c66d" d="M157 181h31l-32-48h-31l32 48Z" opacity="0.92"/>
+</svg>

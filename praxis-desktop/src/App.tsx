@@ -1,20 +1,1078 @@
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import "./App.css";
+import type {
+  ChatImportSnapshot,
+  ChatImportSourceSystem,
+  ImportChatConversationInput,
+} from "../shared/chatImport";
+import type { DailyBrief, FocusReport } from "../shared/dailyBrief";
+import type { EmailSnapshot } from "../shared/emailModel";
+import type { CompanionSnapshot } from "../shared/companionSnapshot";
+import {
+  buildBestProactiveSuggestion,
+  type ProactiveSuggestion,
+} from "../shared/proactiveSuggestion";
+import type { SettingsSnapshot } from "../shared/settingsModel";
+import type { SlackAdapterStatus } from "../shared/slackAdapter";
+import type { StorageOverview } from "../shared/storage/hybridStorage";
+import {
+  buildReviewInboxFromChatSuggestions,
+  buildReviewInboxFromEmailSuggestions,
+  sortReviewInboxItems,
+} from "../shared/reviewInbox";
+import { ActionMenu } from "./components/ActionMenu";
+import { MasterChecklistPanel } from "./components/MasterChecklistPanel";
+import { MemoryWriterPanel } from "./components/MemoryWriterPanel";
+import { ProjectStackPanel } from "./components/ProjectStackPanel";
+import { TodayTimelinePanel } from "./components/TodayTimelinePanel";
+import {
+  storeProactiveSuggestionContext,
+  storeReportContext,
+  useAssistantCapture,
+} from "./hooks/useAssistantCapture";
+import type {
+  CreateAppointmentInput,
+  CreateDeadlineInput,
+  CreateMissionInput,
+  CreatePersonInput,
+  CreateProjectInput,
+  CreateTodoInput,
+  AppointmentRecord,
+  DeadlineRecord,
+  EditableWorkEntityKind,
+  MissionRecord,
+  PersonRecord,
+  ProjectRecord,
+  TodoRecord,
+  WorkStatus,
+  WorkSnapshot,
+} from "../shared/workModel";
+
+type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+
+type ManualChatImportForm = {
+  sourceSystem: ChatImportSourceSystem;
+  conversationTitle: string;
+  participants: string;
+  snippet: string;
+};
+
+const EMPTY_SNAPSHOT: WorkSnapshot = {
+  missions: [],
+  projects: [],
+  todos: [],
+  deadlines: [],
+  appointments: [],
+  people: [],
+  personWorkLinks: [],
+  memoryDocuments: [],
+};
+
+const EMPTY_BRIEF: DailyBrief = {
+  generatedAt: "",
+  localDate: "",
+  greeting: "Good day",
+  spokenBrief: "Daily brief unavailable.",
+  recommendedMove: {
+    item: null,
+    directive: "Capture one mission, project, todo, or deadline.",
+    rationale: "Praxis does not have active work recorded yet.",
+    actionHint: "Add a work item in Talk to Praxis.",
+  },
+  closeout: {
+    changedTodayCount: 0,
+    completedTodayCount: 0,
+    waitingOnCount: 0,
+    overdueCount: 0,
+    dueTodayCount: 0,
+    moveTomorrowCandidates: [],
+    summary: "No closeout summary available.",
+  },
+  priorityItems: [],
+  appointments: [],
+  deadlines: [],
+  todos: [],
+  moneyItems: [],
+  emailFollowUpCount: 0,
+  followUpTopics: [],
+  thereIsMore: false,
+  markdownPath: "",
+};
+
+const EMPTY_EMAIL_SNAPSHOT: EmailSnapshot = {
+  connections: [],
+  messages: [],
+  suggestions: [],
+  contactSuggestionDismissals: [],
+};
+
+const EMPTY_CHAT_SNAPSHOT: ChatImportSnapshot = {
+  imports: [],
+  recentMessages: [],
+  suggestions: [],
+};
+
+const emptyManualChatImportForm = (): ManualChatImportForm => ({
+  sourceSystem: "whatsapp",
+  conversationTitle: "",
+  participants: "",
+  snippet: "",
+});
+
+type DashboardServiceSnapshot = {
+  settings: SettingsSnapshot | null;
+  storage: StorageOverview | null;
+  slack: SlackAdapterStatus | null;
+  companion: CompanionSnapshot | null;
+};
+
+type ServiceHealthState = "online" | "setup" | "idle" | "problem" | "loading";
+
+type ServiceHealthItem = {
+  label: string;
+  state: ServiceHealthState;
+  detail: string;
+  action: string;
+};
+
+type DashboardReadiness = {
+  state: Exclude<ServiceHealthState, "idle" | "loading">;
+  title: string;
+  detail: string;
+  action: string;
+};
+
+type IntegrationConnection = {
+  label: string;
+  enabled: boolean;
+  authStatus: string;
+  syncStatus: string;
+  lastSyncedAt: string | null;
+  lastSyncError: string | null;
+};
+
+const EMPTY_SERVICE_SNAPSHOT: DashboardServiceSnapshot = {
+  settings: null,
+  storage: null,
+  slack: null,
+  companion: null,
+};
+
+const formatDateTime = (value: string | null) => {
+  if (!value) {
+    return "No date";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString();
+};
+
+const formatServiceStatus = (value: string) => value.split("_").join(" ");
+
+const newestSyncTime = (connections: IntegrationConnection[]) =>
+  connections
+    .map((connection) => connection.lastSyncedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
+
+const summarizeIntegrationHealth = (
+  label: string,
+  connections: IntegrationConnection[],
+  oauthReady: boolean,
+  formatTimestamp: (value: string | null) => string
+): ServiceHealthItem => {
+  const enabledConnections = connections.filter((connection) => connection.enabled);
+  const problemConnection = enabledConnections.find(
+    (connection) =>
+      connection.authStatus === "error" ||
+      connection.syncStatus === "error" ||
+      connection.syncStatus === "blocked" ||
+      Boolean(connection.lastSyncError)
+  );
+
+  if (problemConnection) {
+    return {
+      label,
+      state: "problem",
+      detail:
+        problemConnection.lastSyncError ||
+        `${problemConnection.label}: ${formatServiceStatus(problemConnection.syncStatus)}`,
+      action: "Open Settings to reconnect or retry sync.",
+    };
+  }
+
+  const readyConnection = enabledConnections.find(
+    (connection) => connection.authStatus === "ready" && connection.syncStatus !== "blocked"
+  );
+
+  if (readyConnection) {
+    const lastSyncedAt = newestSyncTime(enabledConnections);
+    return {
+      label,
+      state: "online",
+      detail: lastSyncedAt ? `last sync ${formatTimestamp(lastSyncedAt)}` : "connected, no sync yet",
+      action: "Ready for dashboard planning.",
+    };
+  }
+
+  if (connections.length > 0 || oauthReady) {
+    return {
+      label,
+      state: "setup",
+      detail: oauthReady ? "account authorization needed" : "OAuth credentials missing",
+      action: "Finish account setup before relying on sync.",
+    };
+  }
+
+  return {
+    label,
+    state: "idle",
+    detail: "not configured",
+    action: "Optional; capture can still run locally.",
+  };
+};
+
+const emptyMissionForm = (): CreateMissionInput => ({
+  title: "",
+  summary: "",
+  dueAt: "",
+});
+
+const emptyProjectForm = (): CreateProjectInput => ({
+  title: "",
+  summary: "",
+  missionId: "",
+  dueAt: "",
+});
+
+const emptyTodoForm = (): CreateTodoInput => ({
+  title: "",
+  projectId: "",
+  priority: "normal",
+  dueAt: "",
+  moneyRelated: false,
+  quickAction: false,
+  estimatedMinutes: undefined,
+  waitingOnPersonId: "",
+  notes: "",
+});
+
+const emptyDeadlineForm = (): CreateDeadlineInput => ({
+  title: "",
+  dueAt: "",
+  entityKind: "standalone",
+  entityId: "",
+  priority: "normal",
+});
+
+const emptyAppointmentForm = (): CreateAppointmentInput => ({
+  title: "",
+  startsAt: "",
+  endsAt: "",
+  allDay: false,
+  notes: "",
+  sourceSystem: "manual",
+});
+
+const emptyPersonForm = (): CreatePersonInput => ({
+  name: "",
+  aliases: [],
+  roleSummary: "",
+  email: "",
+  phone: "",
+  billingAddress: "",
+  notes: "",
+});
 
 export default function App() {
+  const todayTimelineRef = useRef<HTMLElement | null>(null);
+  const [activePanel, setActivePanel] = useState<PanelId>("todayTimeline");
+  const [snapshot, setSnapshot] = useState<WorkSnapshot>(EMPTY_SNAPSHOT);
+  const [dailyBrief, setDailyBrief] = useState<DailyBrief>(EMPTY_BRIEF);
+  const [emailSnapshot, setEmailSnapshot] = useState<EmailSnapshot>(EMPTY_EMAIL_SNAPSHOT);
+  const [chatSnapshot, setChatSnapshot] = useState<ChatImportSnapshot>(EMPTY_CHAT_SNAPSHOT);
+  const [manualChatImportForm, setManualChatImportForm] = useState<ManualChatImportForm>(() =>
+    emptyManualChatImportForm()
+  );
+  const [chatImportStatus, setChatImportStatus] = useState("");
+  const [serviceSnapshot, setServiceSnapshot] =
+    useState<DashboardServiceSnapshot>(EMPTY_SERVICE_SNAPSHOT);
+  const [proactiveSuggestion, setProactiveSuggestion] = useState<ProactiveSuggestion | null>(null);
+  const [focusSelection, setFocusSelection] = useState("");
+  const [focusReport, setFocusReport] = useState<FocusReport | null>(null);
+  const [showFocusDetails, setShowFocusDetails] = useState(false);
+  const [showBriefDetails, setShowBriefDetails] = useState(false);
+  const [status, setStatus] = useState("Loading Praxis work model...");
+  const [todoFilter, setTodoFilter] = useState<"all" | "quick">("all");
+  const [showStatusReport, setShowStatusReport] = useState(true);
+  const [editingMission, setEditingMission] = useState<MissionRecord | null>(null);
+  const [editingProject, setEditingProject] = useState<ProjectRecord | null>(null);
+  const [editingDeadline, setEditingDeadline] = useState<DeadlineRecord | null>(null);
+  const [editingTodo, setEditingTodo] = useState<TodoRecord | null>(null);
+  const [editingAppointment, setEditingAppointment] = useState<AppointmentRecord | null>(null);
+  const [editingPerson, setEditingPerson] = useState<PersonRecord | null>(null);
+  const [missionForm, setMissionForm] = useState<CreateMissionInput>(() => emptyMissionForm());
+  const [projectForm, setProjectForm] = useState<CreateProjectInput>(() => emptyProjectForm());
+  const [todoForm, setTodoForm] = useState<CreateTodoInput>(() => emptyTodoForm());
+  const [personForm, setPersonForm] = useState<CreatePersonInput>(() => emptyPersonForm());
+  const [deadlineForm, setDeadlineForm] = useState<CreateDeadlineInput>(() => emptyDeadlineForm());
+  const [appointmentForm, setAppointmentForm] = useState<CreateAppointmentInput>(() =>
+    emptyAppointmentForm()
+  );
+
+  const loadWorkModel = useCallback(async () => {
+    const [
+      nextSnapshot,
+      nextBrief,
+      nextEmailSnapshot,
+      nextChatSnapshot,
+      nextSettings,
+      nextStorage,
+      nextSlack,
+      nextCompanion,
+    ] = await Promise.all([
+      window.praxis.work.getSnapshot(),
+      window.praxis.brief.getDaily(),
+      window.praxis.email.getSnapshot(),
+      window.praxis.chat.getSnapshot(),
+      window.praxis.settings.getSnapshot(),
+      window.praxis.storage.getOverview(),
+      window.praxis.slack.getStatus(),
+      window.praxis.companion.getSnapshot(),
+    ]);
+    setSnapshot(nextSnapshot);
+    setDailyBrief(nextBrief);
+    setEmailSnapshot(nextEmailSnapshot);
+    setChatSnapshot(nextChatSnapshot);
+    setServiceSnapshot({
+      settings: nextSettings,
+      storage: nextStorage,
+      slack: nextSlack,
+      companion: nextCompanion,
+    });
+    await storeReportContext("daily_report", nextSnapshot, "Daily Brief", nextBrief.priorityItems);
+    const nextSuggestion = buildBestProactiveSuggestion(nextSnapshot, nextBrief.priorityItems);
+    setProactiveSuggestion(nextSuggestion);
+    await storeProactiveSuggestionContext(nextSuggestion);
+    setStatus(
+      `Loaded ${nextSnapshot.missions.length} missions, ${nextSnapshot.projects.length} projects, ${nextSnapshot.todos.length} todos, ${nextSnapshot.deadlines.length} deadlines, ${nextSnapshot.appointments.length} appointments, and ${nextSnapshot.people.length} people.`
+    );
+  }, []);
+
+  const {
+    appointmentReport,
+    showAppointmentReport,
+    assistantReply,
+    captureText,
+    captureStatus,
+    pendingConfirmationOptions,
+    captureDraft,
+    setCaptureText,
+    setCaptureStatus,
+    setPendingCapture,
+    setCaptureDraft,
+    captureNaturalLanguage,
+    confirmCapture,
+    saveCaptureDraft,
+    updateStatus,
+    clearWaitingOn,
+  } = useAssistantCapture({
+    snapshot,
+    focusReport,
+    setSnapshot,
+    setDailyBrief,
+    setProactiveSuggestion,
+    setFocusSelection,
+    setFocusReport,
+    setShowFocusDetails,
+    setShowBriefDetails,
+    setShowStatusReport,
+    setActivePanel,
+    setStatus,
+    loadWorkModel,
+    todayTimelineRef,
+  });
+
+  useEffect(() => {
+    void loadWorkModel().catch(() => {
+      setStatus("Praxis could not load the storage-backed work model.");
+    });
+  }, [loadWorkModel]);
+
+  useEffect(() => {
+    const unsubscribe = window.praxis.calendar.onAutoSyncUpdated((update) => {
+      void loadWorkModel()
+        .then(() => {
+          setStatus(update.message);
+        })
+        .catch(() => {
+          setStatus("Calendar auto-sync finished, but Praxis could not refresh the dashboard.");
+        });
+    });
+
+    return unsubscribe;
+  }, [loadWorkModel]);
+
+  useEffect(() => {
+    const unsubscribe = window.praxis.email.onAutoSyncUpdated((update) => {
+      void loadWorkModel()
+        .then(() => {
+          setStatus(update.message);
+        })
+        .catch(() => {
+          setStatus("Email auto-sync finished, but Praxis could not refresh the dashboard.");
+        });
+    });
+
+    return unsubscribe;
+  }, [loadWorkModel]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      if (event.key === "1") {
+        event.preventDefault();
+        setActivePanel("projectStack");
+      }
+      if (event.key === "2") {
+        event.preventDefault();
+        setActivePanel("todayTimeline");
+      }
+      if (event.key === "3") {
+        event.preventDefault();
+        setActivePanel("morningPlan");
+      }
+      if (event.key === "4") {
+        event.preventDefault();
+        setActivePanel("masterChecklist");
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const createMission = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!missionForm.title.trim()) {
+      setStatus("Mission title is required.");
+      return;
+    }
+
+    await window.praxis.work.createMission(missionForm);
+    setMissionForm(emptyMissionForm());
+    await loadWorkModel();
+  };
+
+  const loadFocusReport = async () => {
+    if (!focusSelection) {
+      setFocusReport(null);
+      return;
+    }
+
+    const [entityKind, entityId] = focusSelection.split(":") as ["mission" | "project", string];
+    const report = await window.praxis.brief.getFocusReport({ entityKind, entityId });
+    setFocusReport(report);
+    setShowFocusDetails(false);
+    if (report) {
+      await storeReportContext("focus_report", snapshot, report.title, report.topItems);
+    }
+  };
+
+  const createProject = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!projectForm.title.trim()) {
+      setStatus("Project title is required.");
+      return;
+    }
+
+    await window.praxis.work.createProject(projectForm);
+    setProjectForm(emptyProjectForm());
+    await loadWorkModel();
+  };
+
+  const createPerson = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!personForm.name.trim()) {
+      setStatus("Person name is required.");
+      return;
+    }
+
+    await window.praxis.work.createPerson(personForm);
+    setPersonForm(emptyPersonForm());
+    await loadWorkModel();
+  };
+
+  const saveMissionEdit = async () => {
+    if (!editingMission) {
+      return;
+    }
+
+    await window.praxis.work.updateRecord({
+      entityKind: "mission",
+      id: editingMission.id,
+      title: editingMission.title,
+      summary: editingMission.summary ?? "",
+      dueAt: editingMission.dueAt ?? "",
+    });
+    setEditingMission(null);
+    await loadWorkModel();
+  };
+
+  const saveProjectEdit = async () => {
+    if (!editingProject) {
+      return;
+    }
+
+    await window.praxis.work.updateRecord({
+      entityKind: "project",
+      id: editingProject.id,
+      title: editingProject.title,
+      summary: editingProject.summary ?? "",
+      missionId: editingProject.missionId ?? "",
+      dueAt: editingProject.dueAt ?? "",
+    });
+    setEditingProject(null);
+    await loadWorkModel();
+  };
+
+  const createTodo = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!todoForm.title.trim()) {
+      setStatus("Todo title is required.");
+      return;
+    }
+
+    await window.praxis.work.createTodo(todoForm);
+    setTodoForm(emptyTodoForm());
+    await loadWorkModel();
+  };
+
+  const saveTodoEdit = async () => {
+    if (!editingTodo) {
+      return;
+    }
+
+    await window.praxis.work.updateRecord({
+      entityKind: "todo",
+      id: editingTodo.id,
+      title: editingTodo.title,
+      projectId: editingTodo.projectId ?? "",
+      priority: editingTodo.priority,
+      dueAt: editingTodo.dueAt ?? "",
+      moneyRelated: editingTodo.moneyRelated,
+      quickAction: editingTodo.quickAction,
+      estimatedMinutes: editingTodo.estimatedMinutes ?? undefined,
+      waitingOnPersonId: editingTodo.waitingOnPersonId ?? "",
+      notes: editingTodo.notes ?? "",
+    });
+    setEditingTodo(null);
+    await loadWorkModel();
+  };
+
+  const savePersonEdit = async () => {
+    if (!editingPerson) {
+      return;
+    }
+
+    await window.praxis.work.updateRecord({
+      entityKind: "person",
+      id: editingPerson.id,
+      name: editingPerson.name,
+      aliases: editingPerson.aliases,
+      roleSummary: editingPerson.roleSummary ?? "",
+      email: editingPerson.email ?? "",
+      phone: editingPerson.phone ?? "",
+      billingAddress: editingPerson.billingAddress ?? "",
+      notes: editingPerson.notes ?? "",
+    });
+    setEditingPerson(null);
+    await loadWorkModel();
+  };
+
+  const saveAppointmentEdit = async () => {
+    if (!editingAppointment) {
+      return;
+    }
+
+    await window.praxis.work.updateRecord({
+      entityKind: "appointment",
+      id: editingAppointment.id,
+      title: editingAppointment.title,
+      startsAt: editingAppointment.startsAt,
+      endsAt: editingAppointment.endsAt ?? "",
+      allDay: editingAppointment.allDay,
+      notes: editingAppointment.notes ?? "",
+    });
+    setEditingAppointment(null);
+    await loadWorkModel();
+  };
+
+  const deleteRecord = async (entityKind: EditableWorkEntityKind, id: string) => {
+    const nextSnapshot = await window.praxis.work.deleteRecord({ entityKind, id });
+    setSnapshot(nextSnapshot);
+    setDailyBrief(await window.praxis.brief.getDaily());
+    setStatus(`${entityKind} deleted.`);
+  };
+
+  const createDeadline = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!deadlineForm.title.trim() || !deadlineForm.dueAt.trim()) {
+      setStatus("Standalone deadline title and due date are required.");
+      return;
+    }
+
+    await window.praxis.work.createDeadline(deadlineForm);
+    setDeadlineForm(emptyDeadlineForm());
+    await loadWorkModel();
+  };
+
+  const saveDeadlineEdit = async () => {
+    if (!editingDeadline) {
+      return;
+    }
+
+    await window.praxis.work.updateRecord({
+      entityKind: "deadline",
+      id: editingDeadline.id,
+      title: editingDeadline.title,
+      dueAt: editingDeadline.dueAt,
+      priority: editingDeadline.priority,
+    });
+    setEditingDeadline(null);
+    await loadWorkModel();
+  };
+
+  const createAppointment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!appointmentForm.title.trim() || !appointmentForm.startsAt.trim()) {
+      setStatus("Appointment title and start time are required.");
+      return;
+    }
+
+    await window.praxis.work.createAppointment(appointmentForm);
+    setAppointmentForm(emptyAppointmentForm());
+    await loadWorkModel();
+  };
+
+  const renderStatusActions = (
+    entityKind: "mission" | "project" | "todo" | "deadline",
+    id: string,
+    status: WorkStatus
+  ) => (
+    <ActionMenu>
+      {status !== "completed" ? (
+        <button type="button" onClick={() => void updateStatus(entityKind, id, "completed")}>
+          Complete
+        </button>
+      ) : (
+        <button type="button" onClick={() => void updateStatus(entityKind, id, "active")}>
+          Reactivate
+        </button>
+      )}
+      {status !== "paused" && status !== "completed" ? (
+        <button type="button" onClick={() => void updateStatus(entityKind, id, "paused")}>
+          Pause
+        </button>
+      ) : null}
+    </ActionMenu>
+  );
+
+  const upcomingDeadlines = snapshot.deadlines.filter((deadline) => deadline.status !== "completed");
+  const upcomingAppointments = snapshot.appointments.filter((appointment) => {
+    const startsAt = new Date(appointment.startsAt);
+    return !Number.isNaN(startsAt.getTime()) && startsAt.getTime() >= Date.now() - 60 * 60 * 1000;
+  });
+  const pendingEmailSuggestions = emailSnapshot.suggestions.filter(
+    (suggestion) => suggestion.status === "pending"
+  );
+  const pendingChatSuggestions = chatSnapshot.suggestions.filter(
+    (suggestion) => suggestion.status === "pending"
+  );
+  const reviewInboxItems = sortReviewInboxItems([
+    ...buildReviewInboxFromEmailSuggestions(pendingEmailSuggestions),
+    ...buildReviewInboxFromChatSuggestions(pendingChatSuggestions),
+  ]);
+  const googleConnections: IntegrationConnection[] = [
+    ...(serviceSnapshot.settings?.emailConnections.filter(
+      (connection) => connection.provider === "gmail"
+    ) ?? []),
+    ...(serviceSnapshot.settings?.calendarConnections.filter(
+      (connection) => connection.provider === "google"
+    ) ?? []),
+  ];
+  const outlookConnections: IntegrationConnection[] = [
+    ...(serviceSnapshot.settings?.emailConnections.filter(
+      (connection) => connection.provider === "outlook"
+    ) ?? []),
+    ...(serviceSnapshot.settings?.calendarConnections.filter(
+      (connection) => connection.provider === "outlook"
+    ) ?? []),
+  ];
+  const googleOAuthReady = Boolean(
+    serviceSnapshot.settings?.googleOAuth.clientId &&
+      serviceSnapshot.settings.googleOAuth.clientSecretConfigured
+  );
+  const outlookOAuthReady = Boolean(
+    serviceSnapshot.settings?.outlookOAuth.clientId &&
+      serviceSnapshot.settings.outlookOAuth.clientSecretConfigured
+  );
+  const slackHealth: ServiceHealthItem = serviceSnapshot.slack
+    ? {
+        label: "Slack",
+        state: serviceSnapshot.slack.enabled ? "online" : "idle",
+        detail: serviceSnapshot.slack.enabled ? "adapter ready" : serviceSnapshot.slack.reason,
+        action: serviceSnapshot.slack.enabled
+          ? "Operator mirroring is available."
+          : "Optional; dashboard still works locally.",
+      }
+    : {
+        label: "Slack",
+        state: "loading",
+        detail: "status loading",
+        action: "Waiting for adapter status.",
+      };
+  const memoryHealth: ServiceHealthItem = serviceSnapshot.storage
+    ? {
+        label: "Memory",
+        state: "online",
+        detail: `${serviceSnapshot.storage.indexedDocumentCount} docs indexed`,
+        action:
+          serviceSnapshot.storage.indexedDocumentCount > 0
+            ? "Markdown memory is indexed."
+            : "Run memory reindex if expected notes are missing.",
+      }
+    : {
+        label: "Memory",
+        state: "loading",
+        detail: "index loading",
+        action: "Waiting for local storage overview.",
+      };
+  const companionHealth: ServiceHealthItem = serviceSnapshot.companion
+    ? {
+        label: "Companion",
+        state: serviceSnapshot.companion.capability.commandsAccepted ? "online" : "idle",
+        detail: serviceSnapshot.companion.capability.commandsAccepted ? "commands ready" : "read only",
+        action: serviceSnapshot.companion.capability.commandsAccepted
+          ? "Companion commands are accepted."
+          : serviceSnapshot.companion.capability.notes,
+      }
+    : {
+        label: "Companion",
+        state: "loading",
+        detail: "snapshot loading",
+        action: "Waiting for companion snapshot.",
+      };
+  const serviceHealthItems: ServiceHealthItem[] = [
+    summarizeIntegrationHealth("Google", googleConnections, googleOAuthReady, formatDateTime),
+    summarizeIntegrationHealth("Outlook", outlookConnections, outlookOAuthReady, formatDateTime),
+    slackHealth,
+    memoryHealth,
+    companionHealth,
+  ];
+  const serviceProblemItems = serviceHealthItems.filter((item) => item.state === "problem");
+  const serviceSetupItems = serviceHealthItems.filter((item) => item.state === "setup");
+  const dashboardReadiness: DashboardReadiness =
+    serviceProblemItems.length > 0
+      ? {
+          state: "problem",
+          title: `${serviceProblemItems.length} service problem${
+            serviceProblemItems.length === 1 ? "" : "s"
+          }`,
+          detail: serviceProblemItems.map((item) => `${item.label}: ${item.detail}`).join(" | "),
+          action: "Resolve problem services before trusting imported calendar or inbox data.",
+        }
+      : serviceSetupItems.length > 0
+        ? {
+            state: "setup",
+            title: `${serviceSetupItems.length} service${serviceSetupItems.length === 1 ? "" : "s"} need setup`,
+            detail: serviceSetupItems.map((item) => `${item.label}: ${item.detail}`).join(" | "),
+            action: "Local capture is available; sync-backed lanes may be incomplete.",
+          }
+        : {
+            state: "online",
+            title: "Dashboard ready",
+            detail: "Local storage is online and no configured service is reporting a problem.",
+            action: "Use the rhythm cards below for the next move, triage, and closeout.",
+          };
+
+  const acceptEmailSuggestion = async (suggestionId: string, mode: "todo" | "project") => {
+    const result = await window.praxis.email.acceptSuggestion({ suggestionId, mode });
+    await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const dismissEmailSuggestion = async (suggestionId: string) => {
+    const result = await window.praxis.email.dismissSuggestion({ suggestionId });
+    await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const archiveEmailSuggestion = async (suggestionId: string) => {
+    const result = await window.praxis.email.archiveSuggestion({ suggestionId });
+    await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const acceptChatSuggestion = async (suggestionId: string, mode: "todo" | "project") => {
+    const result = await window.praxis.chat.acceptSuggestion({ suggestionId, mode });
+    await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const dismissChatSuggestion = async (suggestionId: string) => {
+    const result = await window.praxis.chat.dismissSuggestion({ suggestionId });
+    await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const archiveChatSuggestion = async (suggestionId: string) => {
+    const result = await window.praxis.chat.archiveSuggestion({ suggestionId });
+    await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const importManualChatSnippet = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const conversationTitle = manualChatImportForm.conversationTitle.trim();
+    const snippet = manualChatImportForm.snippet.trim();
+    if (!conversationTitle || !snippet) {
+      setChatImportStatus("Conversation title and pasted snippet are required.");
+      return;
+    }
+
+    const participants = manualChatImportForm.participants
+      .split(",")
+      .map((participant) => participant.trim())
+      .filter(Boolean);
+    const timestamp = new Date().toISOString();
+    const input: ImportChatConversationInput = {
+      sourceSystem: manualChatImportForm.sourceSystem,
+      conversationTitle,
+      importedAt: timestamp,
+      summary: snippet,
+      participants: participants.map((displayName) => ({ displayName })),
+      messages: [
+        {
+          senderName: participants[0] ?? "Imported chat",
+          sentAt: timestamp,
+          summary: snippet,
+          snippet,
+        },
+      ],
+    };
+    const result = await window.praxis.chat.importConversation(input);
+    await loadWorkModel();
+    setChatImportStatus(result.message);
+    setStatus(result.message);
+    if (result.ok) {
+      setManualChatImportForm(emptyManualChatImportForm());
+      setActivePanel("todayTimeline");
+    }
+  };
+
   return (
     <div className="app-shell">
-      <section className="panel left">
-        <h2>Project Stack</h2>
+      <nav className="top-nav" aria-label="Praxis navigation">
+        <div className="top-nav-brand">
+          <span className="top-nav-kicker">Praxis Desk</span>
+          <strong>Operator Dashboard</strong>
+        </div>
+        <div className="top-nav-buttons">
+          <button
+            type="button"
+            className={activePanel === "projectStack" ? "is-nav-active" : ""}
+            onClick={() => setActivePanel("projectStack")}
+          >
+            Projects
+          </button>
+          <button
+            type="button"
+            className={activePanel === "todayTimeline" ? "is-nav-active" : ""}
+            onClick={() => setActivePanel("todayTimeline")}
+          >
+            Today
+          </button>
+          <button
+            type="button"
+            className={activePanel === "morningPlan" ? "is-nav-active" : ""}
+            onClick={() => setActivePanel("morningPlan")}
+          >
+            Talk
+          </button>
+          <button
+            type="button"
+            className={activePanel === "masterChecklist" ? "is-nav-active" : ""}
+            onClick={() => setActivePanel("masterChecklist")}
+          >
+            Checklist
+          </button>
+          <button
+            type="button"
+            className={activePanel === "memory" ? "is-nav-active" : ""}
+            onClick={() => {
+              setActivePanel("memory");
+              setShowBriefDetails(true);
+            }}
+          >
+            Memory
+          </button>
+        </div>
+        <div className="top-nav-node">
+          <span className="node-dot" aria-hidden="true" />
+          <span>
+            <strong>Home Node</strong>
+            <small>{dashboardReadiness.title.toLowerCase()}</small>
+          </span>
+        </div>
+      </nav>
+      <section className="service-health-strip" aria-label="Service health">
+        {serviceHealthItems.map((item) => (
+          <article key={item.label} className={`service-health-card is-${item.state}`}>
+            <div className="service-health-card-header">
+              <span>{item.label}</span>
+              <strong>{item.state}</strong>
+            </div>
+            <small>{item.detail}</small>
+            <em>{item.action}</em>
+          </article>
+        ))}
       </section>
-      <section className="panel center">
-        <h2>Today Timeline</h2>
-      </section>
-      <section className="panel right">
-        <h2>Morning Plan</h2>
-      </section>
-      <section className="panel bottom">
-        <h2>Master Checklist</h2>
-      </section>
+      <ProjectStackPanel
+        isActive={activePanel === "projectStack"}
+        missions={snapshot.missions}
+        projects={snapshot.projects}
+        people={snapshot.people}
+        openCapture={() => setActivePanel("morningPlan")}
+        formatDateTime={formatDateTime}
+        renderStatusActions={renderStatusActions}
+        setEditingMission={setEditingMission}
+        setEditingProject={setEditingProject}
+        deleteMission={(id) => deleteRecord("mission", id)}
+        deleteProject={(id) => deleteRecord("project", id)}
+      />
+
+      <TodayTimelinePanel
+        ref={todayTimelineRef}
+        isActive={activePanel === "todayTimeline" || activePanel === "memory"}
+        status={status}
+        dailyBrief={dailyBrief}
+        focusSelection={focusSelection}
+        missions={snapshot.missions}
+        projects={snapshot.projects}
+        proactiveSuggestion={proactiveSuggestion}
+        focusReport={focusReport}
+        dashboardReadiness={dashboardReadiness}
+        serviceHealthItems={serviceHealthItems}
+        openCapture={() => setActivePanel("morningPlan")}
+        showFocusDetails={showFocusDetails}
+        showStatusReport={showStatusReport}
+        showAppointmentReport={showAppointmentReport}
+        appointmentReport={appointmentReport}
+        showBriefDetails={showBriefDetails}
+        reviewInboxItems={reviewInboxItems}
+        upcomingAppointments={upcomingAppointments}
+        upcomingDeadlines={upcomingDeadlines}
+        memoryDocuments={snapshot.memoryDocuments}
+        formatDateTime={formatDateTime}
+        renderStatusActions={renderStatusActions}
+        setFocusSelection={setFocusSelection}
+        setShowFocusDetails={setShowFocusDetails}
+        setShowStatusReport={setShowStatusReport}
+        setShowBriefDetails={setShowBriefDetails}
+        setProactiveSuggestion={setProactiveSuggestion}
+        setEditingAppointment={setEditingAppointment}
+        setEditingDeadline={setEditingDeadline}
+        loadFocusReport={loadFocusReport}
+        clearWaitingOn={clearWaitingOn}
+        updateStatus={updateStatus}
+        acceptEmailSuggestion={acceptEmailSuggestion}
+        archiveEmailSuggestion={archiveEmailSuggestion}
+        dismissEmailSuggestion={dismissEmailSuggestion}
+        acceptChatSuggestion={acceptChatSuggestion}
+        archiveChatSuggestion={archiveChatSuggestion}
+        dismissChatSuggestion={dismissChatSuggestion}
+        deleteAppointment={(id) => deleteRecord("appointment", id)}
+        deleteDeadline={(id) => deleteRecord("deadline", id)}
+      />
+      <MemoryWriterPanel
+        isActive={activePanel === "morningPlan"}
+        snapshot={snapshot}
+        captureText={captureText}
+        captureStatus={captureStatus}
+        assistantReply={assistantReply}
+        pendingConfirmationOptions={pendingConfirmationOptions}
+        captureDraft={captureDraft}
+        missionForm={missionForm}
+        projectForm={projectForm}
+        personForm={personForm}
+        todoForm={todoForm}
+        deadlineForm={deadlineForm}
+        appointmentForm={appointmentForm}
+        manualChatImportForm={manualChatImportForm}
+        chatImportStatus={chatImportStatus}
+        editingMission={editingMission}
+        editingProject={editingProject}
+        editingDeadline={editingDeadline}
+        editingTodo={editingTodo}
+        editingPerson={editingPerson}
+        editingAppointment={editingAppointment}
+        setCaptureText={setCaptureText}
+        setCaptureStatus={setCaptureStatus}
+        setCaptureDraft={setCaptureDraft}
+        setPendingCapture={setPendingCapture}
+        setMissionForm={setMissionForm}
+        setProjectForm={setProjectForm}
+        setPersonForm={setPersonForm}
+        setTodoForm={setTodoForm}
+        setDeadlineForm={setDeadlineForm}
+        setAppointmentForm={setAppointmentForm}
+        setManualChatImportForm={setManualChatImportForm}
+        setEditingMission={setEditingMission}
+        setEditingProject={setEditingProject}
+        setEditingDeadline={setEditingDeadline}
+        setEditingTodo={setEditingTodo}
+        setEditingPerson={setEditingPerson}
+        setEditingAppointment={setEditingAppointment}
+        captureNaturalLanguage={captureNaturalLanguage}
+        confirmCapture={confirmCapture}
+        saveCaptureDraft={saveCaptureDraft}
+        saveMissionEdit={saveMissionEdit}
+        saveProjectEdit={saveProjectEdit}
+        saveDeadlineEdit={saveDeadlineEdit}
+        saveTodoEdit={saveTodoEdit}
+        savePersonEdit={savePersonEdit}
+        saveAppointmentEdit={saveAppointmentEdit}
+        createMission={createMission}
+        createProject={createProject}
+        createPerson={createPerson}
+        createTodo={createTodo}
+        createDeadline={createDeadline}
+        createAppointment={createAppointment}
+        importManualChatSnippet={importManualChatSnippet}
+      />
+
+      <MasterChecklistPanel
+        isActive={activePanel === "masterChecklist"}
+        todos={snapshot.todos}
+        projects={snapshot.projects}
+        missions={snapshot.missions}
+        people={snapshot.people}
+        openCapture={() => setActivePanel("morningPlan")}
+        todoFilter={todoFilter}
+        setTodoFilter={setTodoFilter}
+        formatDateTime={formatDateTime}
+        renderStatusActions={renderStatusActions}
+        setEditingTodo={setEditingTodo}
+        deleteTodo={(id) => deleteRecord("todo", id)}
+      />
     </div>
   );
 }
