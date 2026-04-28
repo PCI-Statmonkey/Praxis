@@ -39,6 +39,7 @@ import type {
   WorkSnapshot,
 } from "../shared/workModel";
 import { CalendarSettingsPanel } from "./components/CalendarSettingsPanel";
+import { AiSettingsPanel } from "./components/AiSettingsPanel";
 import { ConnectedServiceSettingsPanel } from "./components/ConnectedServiceSettingsPanel";
 import { PeopleProfilePanel } from "./components/PeopleProfilePanel";
 import { SlackSettingsPanel } from "./components/SlackSettingsPanel";
@@ -48,6 +49,7 @@ type SettingsTab =
   | "slack"
   | "google"
   | "outlook"
+  | "ai"
   | "icsImport"
   | "people"
   | "storage";
@@ -878,6 +880,7 @@ export default function SettingsApp() {
   const settingsTabs: Array<{ id: SettingsTab; label: string }> = [
     { id: "google", label: "Google" },
     { id: "outlook", label: "Outlook" },
+    { id: "ai", label: "AI" },
     { id: "slack", label: "Slack" },
     { id: "icsImport", label: "Import With ICS" },
     { id: "people", label: "People" },
@@ -1022,6 +1025,8 @@ export default function SettingsApp() {
             sendSlackTestSuggestion={sendSlackTestSuggestion}
           />
         ) : null}
+
+        {activeTab === "ai" ? <AiSettingsPanel /> : null}
 
         {activeTab === "google" ? (
           <ConnectedServiceSettingsPanel

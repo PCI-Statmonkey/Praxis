@@ -53,6 +53,34 @@
 - Likely Fix: Add more suggestion types only after each has an explicit command, safety rule, and resolver path.
 - Related: `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/electron/slackAdapter.ts`, `praxis-desktop/src/App.tsx`
 
+### AI Task Review Context Packet Is Not Implemented
+
+- Priority: High
+- Impact: PRAXIS has work graph, calendar, Review Inbox, closeout summaries, waiting-on, overdue, and quick-action signals, but there is not yet one factual context packet for natural-language AI Task Review / ADHD Reset Mode.
+- Likely Fix: Add a shared packet builder that gathers local structured facts, stable record ids, risk signals, recent changes, and allowable follow-up actions before any LLM call.
+- Related: `docs/ARCHITECTURE.md`, `docs/Roadmap.md`, `docs/MISSION_PLAN.md`, `praxis-desktop/electron/dailyBrief.ts`, `praxis-desktop/electron/assistantRouter.ts`
+
+### AI Model Policy And Provider Settings Are Missing
+
+- Priority: Medium
+- Impact: Local-first Ollama is the intended direction, but there is not yet a configurable local model, optional API provider settings, or an explicit AI reliance policy in product settings.
+- Likely Fix: Add settings for local model selection, optional API provider configuration, and a clear policy that model output can summarize, prioritize, explain, and draft, while local services own writes.
+- Related: `docs/ARCHITECTURE.md`, `docs/MISSION_PLAN.md`, `praxis-desktop/src/SettingsApp.tsx`, `praxis-desktop/electron/settingsRepository.ts`
+
+### AI Review Write Boundary Needs Enforcement
+
+- Priority: High
+- Impact: Future model-assisted review could become unsafe if suggested actions directly mutate missions, projects, todos, deadlines, or people records.
+- Likely Fix: Route write-like model suggestions into Review Inbox candidates, staged drafts, or explicit confirmation commands, with rule-based ranking as the safety net and no silent task graph mutations.
+- Related: `docs/ARCHITECTURE.md`, `praxis-desktop/electron/assistantRouter.ts`, `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/shared/assistantContextResolver.ts`
+
+### Persistent Presence Depends On AI Review
+
+- Priority: Medium
+- Impact: Rainmeter, tray/background mode, and persistent assistant presence are useful V1.1 work, but they should not lead the queue before PRAXIS can explain priority and risk through AI Task Review.
+- Likely Fix: Implement AI Task Review first, then design notifications, nudges, tray state, and Rainmeter read-only snapshots around the same context packet.
+- Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`, `docs/ARCHITECTURE.md`
+
 ### Quick-Action Ranking Is Still Basic
 
 - Priority: Medium

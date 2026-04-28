@@ -1027,12 +1027,79 @@ ol {
 .assistant-thread {
   display: grid;
   gap: 12px;
-  min-height: 330px;
+  min-height: 240px;
   margin-bottom: 14px;
   border: 1px solid rgba(185, 222, 219, 0.12);
   border-radius: 8px;
   background: rgba(6, 10, 10, 0.42);
   padding: 14px;
+}
+
+.assistant-review-surface {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+  border: 1px solid rgba(85, 234, 220, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(85, 234, 220, 0.07), transparent 58%),
+    rgba(6, 10, 10, 0.42);
+  padding: 12px;
+}
+
+.assistant-review-header {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.assistant-review-header strong {
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.assistant-review-prompts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.assistant-review-prompts button {
+  min-width: 0;
+}
+
+.assistant-review-prompts .is-review-active {
+  border-color: rgba(85, 234, 220, 0.62);
+  color: var(--text);
+  box-shadow: 0 0 14px rgba(85, 234, 220, 0.12);
+}
+
+.assistant-review-reply {
+  width: 100%;
+}
+
+.assistant-review-reply p {
+  margin: 0 0 8px;
+}
+
+.assistant-review-reply ol {
+  display: grid;
+  gap: 6px;
+  list-style: decimal;
+  padding-left: 18px;
+}
+
+.assistant-review-reply li {
+  color: var(--text);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+
+.assistant-review-guardrail {
+  margin-top: 10px !important;
+  border-top: 1px solid rgba(185, 222, 219, 0.12);
+  color: var(--dim) !important;
+  padding-top: 9px;
 }
 
 .praxis-reply,
@@ -1051,6 +1118,10 @@ ol {
   justify-self: end;
   border-color: rgba(244, 198, 109, 0.24);
   background: rgba(244, 198, 109, 0.08);
+}
+
+.praxis-reply.assistant-review-reply {
+  width: 100%;
 }
 
 .praxis-reply h4 {
@@ -1097,7 +1168,7 @@ ol {
 .voice-wave span:nth-child(6) { height: 20px; }
 
 .capture-guide {
-  margin: 14px 0 10px;
+  margin: 10px 0;
   border: 1px solid rgba(185, 222, 219, 0.12);
   border-radius: 8px;
   background: rgba(7, 12, 12, 0.42);
@@ -1114,11 +1185,12 @@ ol {
 }
 
 .capture-guide-list {
-  display: grid;
-  gap: 5px;
+  columns: 2;
+  column-gap: 14px;
 }
 
 .capture-guide-list li {
+  break-inside: avoid;
   color: var(--dim);
   font-size: 0.78rem;
 }
@@ -1693,9 +1765,18 @@ ol {
   }
 
   .daily-brief-copy .filter-actions,
-  .empty-state-actions {
+  .empty-state-actions,
+  .assistant-review-prompts {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .assistant-thread {
+    min-height: 0;
+  }
+
+  .capture-guide-list {
+    columns: 1;
   }
 
   .readiness-list li {

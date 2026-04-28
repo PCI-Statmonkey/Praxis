@@ -14,6 +14,103 @@ export type AssistantRouteSkillReference = {
 export const formatAssistantChoiceReply = (choices: string[]) =>
   `Reply with ${choices.map((choice) => `\`${choice}\``).join(", ")}, or \`no\` to cancel.`;
 
+export type AssistantReviewRouteKind =
+  | "quick_wins"
+  | "reset"
+  | "risk_review"
+  | "stale_projects"
+  | "person_project_lookup";
+
+export type AssistantReviewRoute = {
+  kind: AssistantReviewRouteKind;
+  intent: "daily_report" | "person_lookup" | "work_lookup";
+  confidence: number;
+  message: string;
+};
+
+const normalizeReviewText = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+export const classifyAssistantReviewRoute = (text: string): AssistantReviewRoute | null => {
+  const normalized = normalizeReviewText(text);
+  if (!normalized) {
+    return null;
+  }
+
+  if (/\b(knock out|quick wins?|easy wins?)\b/.test(normalized)) {
+    return {
+      kind: "quick_wins",
+      intent: "work_lookup",
+      confidence: 0.84,
+      message: "Checking the current work graph for quick wins.",
+    };
+  }
+
+  if (/\b(give me|show me|find me)\b.*\b(few )?wins?\b/.test(normalized)) {
+    return {
+      kind: "quick_wins",
+      intent: "daily_report",
+      confidence: 0.8,
+      message: "Opening the daily status report for a few safe wins.",
+    };
+  }
+
+  if (/\b(overwhelmed|reset me|reset|adhd reset|triage me|recenter me)\b/.test(normalized)) {
+    return {
+      kind: "reset",
+      intent: "daily_report",
+      confidence: 0.84,
+      message: "Opening the daily status report for a reset.",
+    };
+  }
+
+  if (/\b(forgetting|forgot|missed|missing)\b/.test(normalized)) {
+    return {
+      kind: "reset",
+      intent: "daily_report",
+      confidence: 0.82,
+      message: "Checking the daily status report for anything easy to miss.",
+    };
+  }
+
+  if (/\b(bite me|about to bite|at risk|risk|risky|fire drill)\b/.test(normalized)) {
+    return {
+      kind: "risk_review",
+      intent: "daily_report",
+      confidence: 0.82,
+      message: "Checking the daily status report for near-term pressure.",
+    };
+  }
+
+  if (/\b(stale|stalled|stagnant|neglected)\b/.test(normalized) && /\b(project|projects)\b/.test(normalized)) {
+    return {
+      kind: "stale_projects",
+      intent: "daily_report",
+      confidence: 0.78,
+      message: "Checking the daily status report for stale project pressure.",
+    };
+  }
+
+  if (
+    /\b(project|projects|mission|missions)\b/.test(normalized) &&
+    /\b(with|for|by)\b\s+[a-z0-9]+\b/.test(normalized) &&
+    /\b(hey|you have|that project|that mission|remember)\b/.test(normalized)
+  ) {
+    return {
+      kind: "person_project_lookup",
+      intent: "person_lookup",
+      confidence: 0.78,
+      message: "Looking up that person and related work.",
+    };
+  }
+
+  return null;
+};
+
 type AssistantRouteSkillContext = {
   skillReferences?: AssistantRouteSkillReference[];
 };

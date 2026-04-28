@@ -50,6 +50,7 @@ Praxis must:
 - track missions, projects, tasks, todos, deadlines, appointments, people follow-ups, and money-related obligations
 - preserve long-term context in markdown
 - prioritize the daily brief instead of dumping everything
+- provide an AI Task Review / ADHD Reset Mode that can rebuild context and recommend the next move through natural language
 - ask clarifying questions when needed
 - nudge occasionally during the day
 - escalate gently when something important is neglected repeatedly
@@ -105,6 +106,42 @@ Examples:
 
 An idea is brainstorm material only.
 It stays informal until explicitly promoted into a project or mission.
+
+## AI Task Review / ADHD Reset Mode
+
+AI Task Review is a core PRAXIS experience. It is the mode the operator uses when the day has become
+too noisy, context is scattered, or the next move is not obvious.
+
+The interface is natural language. The operator should be able to ask:
+
+- `reset me`
+- `what am I missing?`
+- `what should I do next?`
+- `what changed since yesterday?`
+- `what is stale?`
+
+PRAXIS should first build a factual context packet from local state:
+
+- work graph records
+- calendar pressure
+- Review Inbox candidates
+- stale projects and inactive missions
+- waiting-on items
+- overdue and due-soon items
+- quick wins
+- recent changes and closeout summaries
+- service health
+
+The LLM can summarize, prioritize, explain, and suggest. It should not be the source of truth.
+Rule-based ranking remains the safety net. If model output is unavailable or low-confidence, PRAXIS
+should still produce a deterministic review from local ranking.
+
+The LLM must not silently mutate the task graph. Any write-like suggestion should become a Review
+Inbox item, a staged draft, or an explicit confirmation prompt before local state changes.
+
+Model direction is local-first through Ollama with a configurable local model. Optional API provider
+settings may exist later, but API use should be explicit, operator-controlled, and governed by an AI
+reliance policy.
 
 ## Information Priority For The Daily Brief
 
@@ -258,6 +295,7 @@ These ideas fit the mission and should stay in scope consideration:
 - a compact dashboard paired with spoken briefing
 - a recommendation at the end of the daily brief
 - operator override when Praxis prioritizes incorrectly
+- AI Task Review / ADHD Reset Mode as a natural-language reset loop
 - a future Rainmeter-compatible visual layer for ambient desktop presence
 - adaptive time-of-day behavior
 - a future assistant conversation surface that feels like a resident PC companion
@@ -268,8 +306,9 @@ Initial remote access design should assume access from anywhere, not only same-h
 
 ## Immediate Development Priorities
 
-1. Build a trustworthy local memory model with markdown records and an index
-2. Build the desktop dashboard around missions, projects, todos, deadlines, people, and appointments
-3. Expand the first daily brief and recommendation engine with appointments, people, and operator overrides
-4. Add the arrival ritual in the desktop app
-5. Add voice wake and spoken output after the core briefing logic is trustworthy
+1. Build AI Task Review / ADHD Reset Mode around a factual local context packet
+2. Add local-first model routing through Ollama with configurable local model selection and optional API provider settings
+3. Preserve deterministic ranking as the fallback and safety net for all AI reviews
+4. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
+5. Plan persistent presence and Rainmeter after AI Task Review can explain priority and risk
+6. Add voice wake and spoken output after the review and briefing logic are trustworthy

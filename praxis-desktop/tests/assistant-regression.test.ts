@@ -19,7 +19,11 @@ import {
 } from "../shared/assistantSkillRouting";
 import { buildWorkItemActions } from "../shared/workLookupContext";
 import type { WorkSnapshot } from "../shared/workModel";
-import { formatAssistantChoiceReply } from "../shared/assistantRouter";
+import {
+  classifyAssistantReviewRoute,
+  formatAssistantChoiceReply,
+  type AssistantReviewRoute,
+} from "../shared/assistantRouter";
 
 const snapshot: WorkSnapshot = {
   missions: [
@@ -292,6 +296,33 @@ assert.equal(
   formatAssistantChoiceReply(["todo", "appointment"]),
   "Reply with `todo`, `appointment`, or `no` to cancel."
 );
+
+const assertReviewRoute = (
+  text: string,
+  intent: AssistantReviewRoute["intent"],
+  kind: AssistantReviewRoute["kind"]
+) => {
+  const route = classifyAssistantReviewRoute(text);
+  assert.notEqual(route, null, `${text} should route as an assistant review request`);
+  assert.equal(route?.intent, intent);
+  assert.equal(route?.kind, kind);
+  assert.equal(
+    route?.intent === "work_lookup" ||
+      route?.intent === "daily_report" ||
+      route?.intent === "person_lookup",
+    true,
+    `${text} should stay read-only`
+  );
+};
+
+assertReviewRoute("Give me a few wins.", "daily_report", "quick_wins");
+assertReviewRoute("What can I knock out today?", "work_lookup", "quick_wins");
+assertReviewRoute("I'm overwhelmed, reset me.", "daily_report", "reset");
+assertReviewRoute("What am I forgetting?", "daily_report", "reset");
+assertReviewRoute("What's about to bite me?", "daily_report", "risk_review");
+assertReviewRoute("What projects are stale?", "daily_report", "stale_projects");
+assertReviewRoute("Hey, you have that project with Stacy.", "person_lookup", "person_project_lookup");
+assert.equal(classifyAssistantReviewRoute("Mark the invoice done."), null);
 
 assert(actions.some((candidate) => candidate.command === "complete" && candidate.entityId === "todo-1"));
 assert(actions.some((candidate) => candidate.command === "pause" && candidate.entityId === "todo-1"));

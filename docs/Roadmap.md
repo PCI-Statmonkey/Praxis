@@ -114,21 +114,38 @@
 - [x] Document unsigned installer limits for validation and approved private testing
 - [ ] Add signing implementation after certificate storage, signing location, and timestamp server are chosen
 
-## Stage 6 - Voice and Arrival Ritual
+## Stage 6 - AI Task Review and ADHD Reset Mode
+- [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health
+- [ ] Add natural-language review intents such as `reset me`, `what am I missing?`, `what should I do next?`, `what changed since yesterday?`, and `what is stale?`
+- [ ] Route model review through a local-first Ollama provider with configurable local model settings
+- [ ] Add optional API provider settings behind explicit operator control
+- [ ] Keep rule-based ranking as the deterministic fallback and safety net
+- [ ] Require Review Inbox, staged drafts, or explicit confirmation for write-like suggestions
+- [ ] Document and enforce an AI reliance policy: the model summarizes, prioritizes, explains, and suggests, but local services own state changes
+
+## Stage 7 - Persistent Presence and Rainmeter
+- [ ] Define Windows tray/background behavior with close-to-tray, explicit quit, pause/quiet mode, and visible active status
+- [ ] Define notification and nudge boundaries after AI Task Review can explain priority and risk
+- [ ] Define a read-only, privacy-safe Rainmeter snapshot/export contract for ambient desktop display
+- [ ] Keep Rainmeter and wallpaper display out of direct write paths
+
+## Stage 8 - Voice and Arrival Ritual
 - [ ] Configurable wake phrase
 - [ ] Always-listening wake detection
 - [ ] Spoken greeting
 - [ ] Spoken 30-second briefing with optional follow-up
 - [ ] Silent mode and display-first override
 
-## Stage 7 - Local AI and Insight Loop
+## Stage 9 - Local AI and Insight Loop
 - [ ] Local model routing via Ollama
+- [ ] Configurable local model selection
+- [ ] Optional API provider configuration and budget/reliance controls
 - [ ] Memory summarization
 - [ ] Signal detection
 - [ ] Insight generation
 - [ ] Proactive assistant tuning based on operator profile
 
-## Stage 8 - Broader Integrations
+## Stage 10 - Broader Integrations
 - [ ] Calendar and inbox integrations
 - [ ] Define Home Node API boundary for future Surface companion client
 - [ ] Design secure travel access for a Surface companion client from outside the home network

@@ -111,6 +111,51 @@ When the user replies:
 - If the top candidates are too close, ask for clarification
 - Always convert the resolved action into a normal command invocation
 
+## AI Task Review And ADHD Reset Mode
+
+AI Task Review is core PRAXIS work, not optional polish. Its purpose is to help the operator recover
+context through natural language when attention has scattered or the backlog feels too noisy.
+
+The interface should be conversational. Examples include:
+
+- `reset me`
+- `what am I missing?`
+- `what should I do next?`
+- `what changed since yesterday?`
+- `what is stale?`
+
+Before any model is called, PRAXIS should build a factual context packet from trusted local sources:
+
+- work graph records for missions, projects, todos, deadlines, people, and relationships
+- calendar appointments and near-term schedule pressure
+- Review Inbox candidates across email and chat imports
+- stale projects and inactive missions
+- waiting-on items and blocked work
+- overdue, due-today, and due-soon items
+- quick wins and high-priority quick actions
+- recent changes from daily brief closeout summaries and local event/state metadata
+- service health for Google, Outlook, Slack, memory, and companion boundaries
+
+The packet is the source of truth for the review. It should contain factual summaries, stable record
+ids, timestamps, priority/risk signals, and allowable follow-up actions. It should not contain raw
+email bodies, raw chat transcripts, OAuth tokens, provider external IDs when avoidable, database
+paths, or secrets.
+
+The model role is limited to summarizing, prioritizing, explaining tradeoffs, and suggesting next
+moves. Rule-based ranking remains the safety net and should be able to produce a deterministic
+review when a model is unavailable, slow, or low-confidence.
+
+Model execution is local-first. The preferred direction is Ollama with a configurable local model.
+Settings may later expose optional API provider configuration, but API use should be explicit,
+operator-controlled, and governed by an AI reliance policy. The policy is:
+
+- local structured state remains authoritative
+- model output can advise, summarize, explain, and draft
+- the model must not silently mutate the work graph
+- writes go through Review Inbox candidates, staged drafts, explicit command confirmation, or normal
+  assistant command handlers
+- every write-like suggestion must be inspectable before it changes local state
+
 ## Definitions
 
 - Idea: a captured possibility that has not yet been committed to

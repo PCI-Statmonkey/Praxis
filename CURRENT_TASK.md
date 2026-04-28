@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Settings, command parity, unsigned Windows ARM64 packaging validation, and private tester handoff. Keep the next queue focused on V1.1 persistent assistant presence and capture/intelligence prerequisites.
+Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. This is core PRAXIS near-term work, not optional V1.1 polish. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after the AI review loop can explain what matters and help the operator reset.
 
 ## CURRENT STATE
 
@@ -10,63 +10,75 @@ Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Setti
 - Gmail API is enabled and live sync is validated.
 - Gmail imported 25 privacy-safe local summaries covering April 20, 2026 through April 27, 2026.
 - Gmail follow-up triage is complete for the first real synced batch.
-- PRAXIS created `Follow up: Studio 2 touching base.` as an active high-priority quick-action todo due April 28, 2026 at 5:00 PM.
-- PRAXIS archived the two stale `Meeting moved to tomorrow` candidates because their implied dates were already past and there was no open/waiting-on signal.
-- Gmail currently has 0 pending follow-up candidates.
 - Google Calendar is connected and live sync is validated with 3 future appointments imported.
 - Outlook Graph setup recovered after GoDaddy granted Microsoft Entra access for the tenant.
 - Outlook Mail is connected and live sync is validated against `Pedro@BDNC.pro`.
-- Outlook Mail imported privacy-safe local summaries and created 7 pending follow-up candidates.
 - Outlook Calendar is connected and live sync is validated against `Outlook Primary`.
-- Outlook Calendar sync completed with no imported Outlook appointments in the current local store.
-- Outlook follow-up triage is complete; Review Inbox currently has 0 pending email follow-up candidates.
+- Review Inbox currently has 0 pending email follow-up candidates after first-pass Gmail and Outlook triage.
 - The first Outlook triage added 4 active projects and 1 active todo to the work graph.
 - Raw email bodies are not written to markdown memory.
-- Settings now uses unified `Google` and `Outlook` service panels instead of separate email and calendar setup lanes.
-- Settings service panels now use user-facing labels for auth/sync state, detect stale syncs, prevent duplicate active sync actions, show reconnect for existing sources, and confirm before deleting stored source credentials.
-- Dashboard now has a compact service health strip for Google, Outlook, Slack, Memory, and Companion.
-- Dashboard now has a Dashboard Readiness card, actionable empty states, Review Inbox clarity, Daily Operating Rhythm, and mobile wrapping fixes.
-- Dashboard visual acceptance passed on desktop and mobile smoke checks with no horizontal overflow offenders.
-- The Google service panel and Review Inbox show source-neutral candidate details, including sender, received time, proposed due date, subject, summary, reason, and accept/archive/dismiss actions.
-- Email suggestion extraction interprets relative dates like `tomorrow` from the email received date instead of the current review date.
-- Review Inbox recommends `archive` for past-date candidates unless they include an open, pending, waiting-on, blocked, or outstanding signal.
-- Talk panel mission commands now produce a reviewable mission draft instead of requiring the manual record drawer.
-- Slack direct messages support appointment reports and stage direct write commands behind explicit `yes`/`no` confirmation.
-- Slack direct messages support confirmed natural-language capture drafts for missions, todos, and appointments.
-- Desktop, Slack, and companion command mode recognize `review conversation` requests and route them to the `chat-triage` skill.
-- Assistant confirmation and context isolation regressions are covered for staged writes, `yes`/`no`, Slack thread scoping, surface fallback, and call-like todo/appointment ambiguity.
-- The normalized `chat_imports` storage lane exists with conversation, participant, and message tables plus IPC access.
+- Settings now uses unified `Google` and `Outlook` service panels with reconnect, stale-sync detection, duplicate-action prevention, and delete confirmations.
+- Dashboard has service health, Dashboard Readiness, actionable empty states, Review Inbox clarity, Daily Operating Rhythm, and mobile wrapping fixes.
+- Talk panel mission commands produce reviewable mission drafts.
+- Desktop, Slack, and companion command mode recognize `review conversation` requests and route them to the manual chat import surface.
 - Imported chat snippets create pending `chat_follow_up` Review Inbox candidates with accept, archive, and dismiss actions.
-- The Talk panel has a manual chat import surface for WhatsApp, SMS, Slack, manual, or unknown snippets; imported snippets can immediately produce Review Inbox candidates.
-- `review conversation` commands hand off to the manual chat import surface: desktop opens Talk, and Slack/companion responses tell the operator where to paste the useful exchange.
-- Dashboard includes a Daily Operating Rhythm lane that summarizes arrival, triage, and closeout signals from the current brief, Review Inbox, waiting-on count, overdue count, quick actions, and near-term appointments.
 - Daily brief generation computes closeout counts for changed work, completed work, waiting-on items, overdue items, due-today items, and move-or-decide candidates.
-- Daily markdown notes persist the closeout summary so session closeout context survives across app restarts.
-- Release policy is documented: first channel is direct private Windows delivery, unsigned builds are validation/private-test only, and public or broad distribution requires signing approval.
-- Unsigned Windows x64 packaging is validated with `npm run package:win`; installer and unpacked app report `NotSigned`, matching the private validation policy.
-- Windows native module packaging was fixed by enabling Electron Builder native dependency rebuilds and unpacking the `better-sqlite3` native `.node` file.
-- Unsigned Windows ARM64 packaging is validated with `npm run package:win:arm64`; the installed ARM64 build opens visibly, loads the dashboard, opens Settings, reconnects email/calendar sources, closes without orphaned `PraxisDesk.exe` processes, and preserves `%APPDATA%\praxis-desktop` on uninstall.
-- Private Windows x64 smoke-check procedure is documented in `docs/RELEASE_CHECKLIST.md`.
-- Private Windows validation is recorded in `docs/RELEASE_VALIDATION.md`; the ARM64 build is approved for private validation sharing.
+- Daily markdown notes persist closeout summaries so session context survives restarts.
+- Release policy is documented and unsigned Windows ARM64 private validation is approved.
+- Windows native module packaging is fixed by enabling Electron Builder native dependency rebuilds and unpacking `better-sqlite3` native `.node` files.
 - Private ARM64 tester handoff is documented with artifact path, SHA-256, unsigned/private-only warning, expected install/reconnect/close/uninstall behavior, known empty-folder uninstall debt, and user-data safety notes.
 - Uninstall still leaves an empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory; this is accepted as low-priority release debt for private validation and tracked in `docs/TECH_DEBT.md`.
+- AI Task Review first slice is implemented across routing, Settings planning, and the Talk/dashboard UX: read-only reset/wins/forgetting/risk/stale routes exist, the Settings app has an AI policy tab, and the Talk panel shows a non-writing Assistant Review surface.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Plan V1.1 Persistent Assistant Presence
+### 1. Complete AI Task Review Context Packet And Model Routing
 
 **GOAL**
 
-Define how PRAXIS should live as a persistent Windows assistant after V1: visible when needed, present in the background, noisy enough to keep the operator on task, and controllable enough to preserve trust.
+Turn the first AI Task Review UX/routing slice into the full context-packet and model-assisted review loop. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
 
-**INSTRUCTIONS**
+**DIRECTION**
 
-1. Move Rainmeter desktop/wallpaper integration into V1.1 planning, not V1 release blocking.
-2. Define tray/background behavior: close-to-tray, explicit quit, pause/quiet mode, and visible active status.
-3. Define notification/nudge boundaries for the "nosy and noisy" assistant behavior.
-4. Define a Rainmeter snapshot/export contract that is read-only by default and privacy-safe for wallpaper display.
-5. Keep direct writes inside the PRAXIS app or explicit confirmation paths, not Rainmeter.
+- Natural language remains the interface. The first read-only review routes exist for reset, wins, forgetting, risk, stale projects, and person/project lookup.
+- Next, PRAXIS should build a factual context packet before involving a model.
+- The context packet should be assembled from the work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, daily brief/closeout summaries, and service health.
+- The LLM summarizes, prioritizes, explains tradeoffs, and suggests next moves.
+- Rule-based ranking remains the safety net and should still produce deterministic fallback output when a model is unavailable or uncertain.
+- The LLM must not silently mutate the task graph.
+- Writes must go through Review Inbox candidates, staged drafts, or explicit confirmation commands.
+- Model execution should default local-first through Ollama when available.
+- Settings should eventually allow a configurable local model plus optional API provider settings.
+- The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
+
+**FILES**
+
+- `docs/ARCHITECTURE.md`
+- `docs/Roadmap.md`
+- `docs/TECH_DEBT.md`
+- `docs/MISSION_PLAN.md`
+
+**DONE WHEN**
+
+- The implementation plan defines the context packet shape, source list, model policy, fallback behavior, and write boundary.
+- AI Task Review appears as the next core roadmap track before Rainmeter/background polish.
+- The first read-only UX/routing/settings slice remains intact.
+- The next code task can implement the packet builder and model route without revisiting the product decision.
+
+### 2. Plan V1.1 Persistent Presence After AI Review
+
+**GOAL**
+
+Define how PRAXIS should live as a persistent Windows assistant after the AI review loop exists: visible when needed, present in the background, noisy enough to keep the operator on task, and controllable enough to preserve trust.
+
+**DIRECTION**
+
+- Keep tray/background behavior, close-to-tray, explicit quit, pause/quiet mode, and visible active status in V1.1 planning.
+- Define notification/nudge boundaries after AI Task Review can explain priority and risk.
+- Define a Rainmeter snapshot/export contract that is read-only by default and privacy-safe for wallpaper display.
+- Keep direct writes inside PRAXIS surfaces or explicit confirmation paths, not Rainmeter.
+- Rainmeter and persistent presence should not block AI Task Review planning.
 
 **FILES**
 
@@ -77,21 +89,20 @@ Define how PRAXIS should live as a persistent Windows assistant after V1: visibl
 
 **DONE WHEN**
 
-- V1.1 has a concrete persistent-presence plan with separate tracks for tray/background mode, notifications/nudges, and Rainmeter wallpaper display.
+- V1.1 has a follow-on persistent-presence plan that depends on the AI review context packet rather than replacing it.
 
-### 2. Keep Future Intelligence And Capture Tracks Execution-Focused
+### 3. Keep Future Intelligence And Capture Tracks Execution-Focused
 
 **GOAL**
 
-Keep future PRAXIS direction visible without distracting from current release readiness.
+Keep future PRAXIS direction visible without distracting from AI Task Review as the next concrete capability.
 
-**INSTRUCTIONS**
+**DIRECTION**
 
-1. Preserve long-term goals: voice, local AI, companion remote trust, release signing, broader integrations, and invited conversation review.
-2. Treat local AI as a summarization/ranking/explanation layer, not the source of truth for writes.
-3. Keep `chat_imports` as the shared lane for Slack channel review, WhatsApp manual imports/business webhooks, and future mobile snippets.
-4. Convert only the next concrete prerequisite into active work after release validation is settled.
-5. Keep speculative ideas in roadmap/debt docs, not the immediate execution queue.
+- Preserve long-term goals: voice, local AI, companion remote trust, release signing, broader integrations, and invited conversation review.
+- Keep `chat_imports` as the shared lane for Slack channel review, WhatsApp manual imports/business webhooks, and future mobile snippets.
+- Treat local AI as a summarization/ranking/explanation layer, not the source of truth for writes.
+- Keep speculative ideas in roadmap/debt docs, not the immediate execution queue.
 
 **FILES**
 
@@ -103,4 +114,4 @@ Keep future PRAXIS direction visible without distracting from current release re
 
 **DONE WHEN**
 
-- Long-term direction remains documented, while this queue stays focused on release validation and the next concrete prerequisite.
+- Long-term direction remains documented, while this queue leads with AI Task Review / ADHD Reset Mode and then persistent presence.

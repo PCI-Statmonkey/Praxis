@@ -1,5 +1,74 @@
 # ENGINEERING LOG
 
+## 2026-04-28 - Talk And Dashboard AI Review Cleanup
+
+### Built
+
+- Tightened the Talk panel after the AI Task Review first slice landed.
+- Added the Assistant Review surface to the dashboard Talk flow as a non-writing reset, wins, forgetting, risk, and stale-project review aid.
+- Reduced Talk panel vertical dead space so the review surface and capture form fit better together.
+- Updated the Talk subtitle to `ask, reset, or capture work`.
+- Added compact responsive styling for review prompt buttons, review output, and capture guide columns.
+
+### Why
+
+- The first AI Task Review slice needed to feel native to the operator dashboard rather than like a separate planning panel.
+- The cleanup keeps the review controls discoverable while preserving the no-write guardrail.
+
+### Verification
+
+- `git diff --check` passes with line-ending normalization warnings only.
+
+## 2026-04-28 - AI Task Review First Slice Integrated
+
+### Built
+
+- Added read-only assistant review routing for reset, quick wins, forgetting, risk, stale projects, and person/project lookup prompts.
+- Added regression coverage that keeps those review prompts on read-only report/lookup intents and rejects a write-like command.
+- Added an AI Settings tab that documents local-first Ollama, configurable local model direction, optional API fallback planning, encrypted API secret expectations, and AI reliance policy.
+- Added a Talk panel Assistant Review surface with reset/wins/forgetting/risk/stale prompt buttons and deterministic local summaries from the current work snapshot.
+- Kept the review surface non-writing; creating or changing work still requires explicit confirmation or Review Inbox.
+- Updated `CURRENT_TASK.md` so the first UX/routing/settings slice is marked complete while full context-packet and model routing work remains open.
+
+### Why
+
+- AI Task Review / ADHD Reset Mode needed a first practical slice that operators can see and use without waiting for the full LLM packet builder.
+- The first slice keeps natural-language review discoverable while preserving the write boundary.
+- Full context packets, local/API model routing, and richer explanation remain the next core track.
+
+### Verification
+
+- `git diff --check` passes with only line-ending normalization warnings.
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm test` passes.
+- `npm run build:app` passes.
+
+## 2026-04-28 - AI Task Review Planning Reprioritized
+
+### Built
+
+- Rewrote `CURRENT_TASK.md` so the immediate queue leads with AI Task Review / ADHD Reset Mode.
+- Moved Rainmeter, tray/background behavior, and persistent presence behind AI Task Review in the V1.1 planning queue.
+- Added the architecture contract for factual AI review context packets.
+- Documented that natural language is the AI review interface.
+- Documented that PRAXIS builds the context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health before model use.
+- Documented the model role: summarize, prioritize, explain, and suggest.
+- Documented that rule-based ranking remains the fallback and safety net.
+- Documented the write boundary: the LLM must not silently mutate the task graph, and write-like actions go through Review Inbox, staged drafts, or explicit confirmation.
+- Updated roadmap, mission, and tech debt docs with local-first Ollama direction, configurable local model, optional API provider settings, and AI reliance policy.
+
+### Why
+
+- AI Task Review is core PRAXIS, not optional polish.
+- The operator needs a natural-language reset loop before desktop wallpaper, Rainmeter, or persistent background presence can be useful.
+- Persistent presence should reuse the same priority/risk explanation layer instead of becoming a separate notification system.
+
+### Verification
+
+- Documentation-only change.
+- `git diff --check` passes with only line-ending normalization warnings.
+
 ## 2026-04-27 - Outlook Mail Connected Through GoDaddy Microsoft 365
 
 ### Built

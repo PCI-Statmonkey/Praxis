@@ -23,6 +23,7 @@ import type {
   WorkPriority,
   WorkSnapshot,
 } from "../../shared/workModel";
+import { AssistantReviewSurface } from "./AssistantReviewSurface";
 import { WorkCreationPanel, WorkEditPanels } from "./WorkFormsPanel";
 
 type CaptureDraft = SaveCaptureCandidateRequest;
@@ -187,7 +188,7 @@ export function MemoryWriterPanel({
         </div>
         <div>
           <h2>Talk to Praxis</h2>
-          <p>assistant conversation, not a plain text box</p>
+          <p>ask, reset, or capture work</p>
         </div>
       </div>
 
@@ -207,6 +208,8 @@ export function MemoryWriterPanel({
           <p>What am I waiting on? What can I knock out quickly? What is slipping?</p>
         </article>
       </div>
+
+      <AssistantReviewSurface snapshot={snapshot} setCaptureText={setCaptureText} />
 
       <form onSubmit={(event) => void captureNaturalLanguage(event)}>
         <textarea

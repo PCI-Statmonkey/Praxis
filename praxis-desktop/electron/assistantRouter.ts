@@ -6,6 +6,7 @@ import type {
   AssistantRouteRequest,
   AssistantRouteResult,
 } from "../shared/assistantRouter";
+import { classifyAssistantReviewRoute } from "../shared/assistantRouter";
 import { skillReferencesForAssistantIntent } from "../shared/assistantSkillRouting";
 import type {
   DeadlineRecord,
@@ -503,6 +504,29 @@ const routeAssistantRequestCore = (request: AssistantRouteRequest): AssistantRou
       intent: "context_action",
       confidence: 0.82,
       message: "Resolving this against the current report.",
+    };
+  }
+
+  const reviewRoute = classifyAssistantReviewRoute(text);
+  if (reviewRoute) {
+    if (reviewRoute.intent === "daily_report") {
+      return {
+        intent: "daily_report",
+        confidence: reviewRoute.confidence,
+        message: reviewRoute.message,
+      };
+    }
+    if (reviewRoute.intent === "person_lookup") {
+      return {
+        intent: "person_lookup",
+        confidence: reviewRoute.confidence,
+        message: reviewRoute.message,
+      };
+    }
+    return {
+      intent: "work_lookup",
+      confidence: reviewRoute.confidence,
+      message: reviewRoute.message,
     };
   }
 
