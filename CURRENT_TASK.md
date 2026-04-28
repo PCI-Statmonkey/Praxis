@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Settings, command parity, and unsigned Windows ARM64 packaging validation. Keep the queue focused on private validation follow-through and the next concrete capture/intelligence prerequisite.
+Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Settings, command parity, unsigned Windows ARM64 packaging validation, and private tester handoff. Keep the next queue focused on V1.1 persistent assistant presence and capture/intelligence prerequisites.
 
 ## CURRENT STATE
 
@@ -48,34 +48,36 @@ Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Setti
 - Unsigned Windows ARM64 packaging is validated with `npm run package:win:arm64`; the installed ARM64 build opens visibly, loads the dashboard, opens Settings, reconnects email/calendar sources, closes without orphaned `PraxisDesk.exe` processes, and preserves `%APPDATA%\praxis-desktop` on uninstall.
 - Private Windows x64 smoke-check procedure is documented in `docs/RELEASE_CHECKLIST.md`.
 - Private Windows validation is recorded in `docs/RELEASE_VALIDATION.md`; the ARM64 build is approved for private validation sharing.
+- Private ARM64 tester handoff is documented with artifact path, SHA-256, unsigned/private-only warning, expected install/reconnect/close/uninstall behavior, known empty-folder uninstall debt, and user-data safety notes.
 - Uninstall still leaves an empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory; this is accepted as low-priority release debt for private validation and tracked in `docs/TECH_DEBT.md`.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Prepare Private ARM64 Validation Handoff
+### 1. Plan V1.1 Persistent Assistant Presence
 
 **GOAL**
 
-Make the current unsigned Windows ARM64 artifact usable for private validation without confusing it with a public release.
+Define how PRAXIS should live as a persistent Windows assistant after V1: visible when needed, present in the background, noisy enough to keep the operator on task, and controllable enough to preserve trust.
 
 **INSTRUCTIONS**
 
-1. Identify the exact ARM64 artifact path and SHA-256 hash from `docs/RELEASE_VALIDATION.md`.
-2. Write private-tester handoff copy that states this is unsigned, private validation only, and not for broad distribution.
-3. Include expected install, first-run, reconnect, close, and uninstall behavior.
-4. Include the known empty install-directory residue as accepted private-validation debt.
-5. Keep signing and public distribution out of this handoff.
+1. Move Rainmeter desktop/wallpaper integration into V1.1 planning, not V1 release blocking.
+2. Define tray/background behavior: close-to-tray, explicit quit, pause/quiet mode, and visible active status.
+3. Define notification/nudge boundaries for the "nosy and noisy" assistant behavior.
+4. Define a Rainmeter snapshot/export contract that is read-only by default and privacy-safe for wallpaper display.
+5. Keep direct writes inside the PRAXIS app or explicit confirmation paths, not Rainmeter.
 
 **FILES**
 
-- `docs/RELEASE_VALIDATION.md`
-- `docs/RELEASE_CHECKLIST.md`
+- `docs/Roadmap.md`
 - `docs/TECH_DEBT.md`
+- `docs/ARCHITECTURE.md`
+- `docs/MISSION_PLAN.md`
 
 **DONE WHEN**
 
-- A private tester can validate the ARM64 build with clear expectations, and there is no ambiguity that this is not a signed public release.
+- V1.1 has a concrete persistent-presence plan with separate tracks for tray/background mode, notifications/nudges, and Rainmeter wallpaper display.
 
 ### 2. Keep Future Intelligence And Capture Tracks Execution-Focused
 

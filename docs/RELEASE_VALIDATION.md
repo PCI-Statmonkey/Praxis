@@ -68,6 +68,19 @@
 - ARM64 package: preferred for this Windows ARM64 machine and validated through install, visible launch, clean close, and uninstall.
 - Private sharing recommendation: approved for private validation sharing, assuming the operator accepts the empty `%LOCALAPPDATA%\Programs\PraxisDesk` uninstall folder as known low-priority release debt.
 
+### Private ARM64 Tester Handoff
+
+- Build status: approved for private validation sharing only. This installer is unsigned and must not be treated as a public or broadly shared release.
+- Artifact: `praxis-desktop/release/win-arm64/0.1.0/Praxis Desk-Windows-0.1.0-Setup.exe`
+- SHA-256: `8D6DE5D72C320AC6A0B6858D357F141874E84E997406FF17062D4B277DE6FDC0`
+- Expected install behavior: installer completes for the current user and registers `Praxis Desk 0.1.0` in Windows uninstall entries.
+- Expected first launch behavior: Praxis Desk opens a visible window and the dashboard loads without the previous `better-sqlite3 ... tmp.node is not a valid Win32 application` failure.
+- Expected Settings reconnect behavior: Settings opens; email and calendar sources may need reconnecting after install; temporary connection errors should clear after reconnect and services should show online.
+- Expected close behavior: closing the visible app windows leaves no orphaned `PraxisDesk.exe` processes.
+- Expected uninstall behavior: uninstall removes the Windows uninstall registration and preserves `%APPDATA%\praxis-desktop`.
+- Known issue: an empty `%LOCALAPPDATA%\Programs\PraxisDesk` folder can remain after uninstall.
+- Data safety: do not delete `%APPDATA%\praxis-desktop` unless intentionally clearing local Praxis user data.
+
 ### Remaining Notes
 
 - The original native-module launch blocker is fixed.

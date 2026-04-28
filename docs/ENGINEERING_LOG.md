@@ -4081,6 +4081,26 @@ Future implementation work should add entries here when it meaningfully changes 
 - Closing the app leaves no `PraxisDesk.exe` processes.
 - Windows uninstall removes the uninstall registration and preserves `%APPDATA%\praxis-desktop`.
 
+## 2026-04-28 - Private ARM64 Tester Handoff
+
+### Built
+
+- Added a private ARM64 tester handoff section to `docs/RELEASE_VALIDATION.md`.
+- Included the exact ARM64 installer path and SHA-256 hash.
+- Documented that the build is unsigned, private-validation-only, and not a public or broadly shared release.
+- Documented expected install, first launch, Settings reconnect, close, and uninstall behavior.
+- Included the known empty `%LOCALAPPDATA%\Programs\PraxisDesk` uninstall folder residue as accepted private-validation debt.
+- Added a data safety note telling testers not to delete `%APPDATA%\praxis-desktop` unless intentionally clearing local PRAXIS user data.
+
+### Why
+
+- The ARM64 package is approved for private validation, but testers need clear expectations so they do not confuse an unsigned validation artifact with a public release.
+- The handoff also keeps the known uninstall residue and user-data preservation behavior explicit.
+
+### Verification
+
+- Documentation review passed.
+
 ## 2026-04-27 - Manual Chat Import Surface
 
 ### Built
