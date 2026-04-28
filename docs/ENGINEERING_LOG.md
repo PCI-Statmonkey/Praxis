@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-04-28 - AI Settings Persistence And Review Context Packet
+
+### Built
+
+- Persisted the AI Settings policy so the local Ollama model name and reliance policy survive reloads.
+- Added the settings IPC and preload bridge needed for saving AI model policy from Settings.
+- Added a deterministic AI Review context packet builder covering work graph counts, calendar pressure, Review Inbox, stale projects, waiting-on items, overdue/due-soon work, quick wins, recent closeout changes, and service health.
+- Added `electron/aiReviewService.ts` as the model-routing skeleton for deterministic read-only AI review responses.
+- Mapped review route kinds to review modes so reset, wins, forgetting, risk, stale-project, and lookup requests can share the packet-backed review path.
+- Planned Ollama/API routing from persisted AI settings without making network or API calls.
+- Added confirmation-required action hints to context packet items so model-assisted review cannot silently mutate the task graph.
+- Added regression coverage for AI settings normalization, packet ranking, context packet source coverage, and secret/local raw-data redaction.
+
+### Why
+
+- The first AI Review UX now has a factual, deterministic packet source to hand to future model routing.
+- Settings now records the local-first model policy needed before runtime model selection is wired in.
+- The routing skeleton preserves read-only write boundaries while making room for model-backed summaries later.
+- Full model routing remains open in `CURRENT_TASK.md`.
+- Real Ollama invocation, model probing, provider secrets, and desktop/Slack/companion exposure remain open.
+
+### Verification
+
+- Reported verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run test:assistant`.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-28 - Talk And Dashboard AI Review Cleanup
 
 ### Built

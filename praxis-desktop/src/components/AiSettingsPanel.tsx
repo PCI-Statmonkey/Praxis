@@ -1,12 +1,12 @@
-type ReliancePolicyId =
-  | "local_only"
-  | "prefer_local"
-  | "balanced"
-  | "prefer_api"
-  | "api_only";
+import type { FormEvent } from "react";
+import type {
+  AiReliancePolicy,
+  AiSettings,
+  UpdateAiSettingsInput,
+} from "../../shared/settingsModel";
 
 const reliancePolicies: Array<{
-  id: ReliancePolicyId;
+  id: AiReliancePolicy;
   label: string;
   description: string;
 }> = [
@@ -37,7 +37,25 @@ const reliancePolicies: Array<{
   },
 ];
 
-export function AiSettingsPanel() {
+type AiSettingsPanelProps = {
+  settings: AiSettings;
+  form: UpdateAiSettingsInput;
+  setForm: (form: UpdateAiSettingsInput) => void;
+  updateAiSettings: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+};
+
+const policyLabel = (policyId: AiReliancePolicy) =>
+  reliancePolicies.find((policy) => policy.id === policyId)?.label ?? policyId;
+
+export function AiSettingsPanel({
+  settings,
+  form,
+  setForm,
+  updateAiSettings,
+}: AiSettingsPanelProps) {
+  const selectedPolicy = form.reliancePolicy ?? settings.reliancePolicy;
+  const localModelName = form.localModelName ?? "";
+
   return (
     <>
       <h3>AI Model Policy</h3>
@@ -46,96 +64,113 @@ export function AiSettingsPanel() {
           <div>
             <h4>Local and API model routing</h4>
             <p>
-              Plan how Praxis should choose between local Ollama models and optional API providers.
-              These controls are staged here before runtime routing is wired in.
+              Choose how Praxis should use local Ollama models now and reserve API provider
+              fallback for future routing.
             </p>
           </div>
           <div className="setup-status-row">
             <span className="badge">runtime: Ollama</span>
-            <span className="badge">policy: planned</span>
+            <span className="badge">policy: {policyLabel(settings.reliancePolicy)}</span>
+            <span className="badge">
+              model: {settings.localModelName ?? "not selected"}
+            </span>
             <span className="badge">API fallback: planned</span>
           </div>
         </div>
 
-        <article className="service-status-grid">
-          <section className="settings-next-action">
-            <h4>Local runtime</h4>
+        <form onSubmit={(event) => void updateAiSettings(event)}>
+          <article className="service-status-grid">
+            <section className="settings-next-action">
+              <h4>Local runtime</h4>
+              <p className="setup-muted">
+                Ollama remains the local runtime. Model names are saved by installed Ollama tag,
+                not tied to one bundled model.
+              </p>
+              <div className="settings-field-grid">
+                <label className="field-label">
+                  <span>Runtime</span>
+                  <input value={settings.localRuntime} disabled readOnly />
+                </label>
+                <label className="field-label">
+                  <span>Local model name</span>
+                  <input
+                    value={localModelName}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        localModelName: event.target.value,
+                      })
+                    }
+                    placeholder="Any installed Ollama model, such as phi3 or gpt-oss-20b"
+                  />
+                </label>
+              </div>
+              <p className="brief-path">
+                Leave the model name blank to clear it. Open-weight candidates such as gpt-oss-20b
+                and gpt-oss-120b can be entered after installation. Praxis will not bundle model
+                weights.
+              </p>
+            </section>
+
+            <section className="settings-next-action">
+              <h4>Optional API provider</h4>
+              <p className="setup-muted">
+                API fallback is intended for complex cross-project reasoning, messy long review, or
+                low-confidence local output.
+              </p>
+              <div className="settings-field-grid">
+                <label className="field-label">
+                  <span>Provider</span>
+                  <select disabled value="">
+                    <option value="">Not configured</option>
+                    <option value="openai">OpenAI-compatible API</option>
+                    <option value="custom">Custom endpoint</option>
+                  </select>
+                </label>
+                <label className="field-label">
+                  <span>API key</span>
+                  <input disabled placeholder="Planned encrypted secret field" />
+                </label>
+              </div>
+              <p className="brief-path">
+                API keys must use encrypted secret storage, matching the existing OAuth secret
+                pattern. They are not stored in plain settings JSON.
+              </p>
+            </section>
+          </article>
+
+          <article className="brief-card">
+            <h4>AI reliance policy</h4>
             <p className="setup-muted">
-              Ollama remains the local runtime. Model names should be configurable by installed
-              Ollama tag, not tied to one bundled model.
+              Local-first modes keep normal assistant work on the machine and require clear
+              escalation before API fallback.
             </p>
             <div className="settings-field-grid">
-              <label className="field-label">
-                <span>Runtime</span>
-                <input value="Ollama" disabled readOnly />
-              </label>
-              <label className="field-label">
-                <span>Local model name</span>
-                <input
-                  disabled
-                  placeholder="Any installed Ollama model, such as phi3 or gpt-oss-20b"
-                />
-              </label>
+              {reliancePolicies.map((policy) => (
+                <label key={policy.id} className="checkbox-row">
+                  <input
+                    type="radio"
+                    name="aiReliancePolicy"
+                    value={policy.id}
+                    checked={selectedPolicy === policy.id}
+                    onChange={() =>
+                      setForm({
+                        ...form,
+                        reliancePolicy: policy.id,
+                      })
+                    }
+                  />
+                  <span>
+                    <strong>{policy.label}</strong>
+                    <br />
+                    {policy.description}
+                  </span>
+                </label>
+              ))}
             </div>
-            <p className="brief-path">
-              Open-weight candidates such as gpt-oss-20b and gpt-oss-120b can be entered after
-              installation. Praxis will not bundle model weights.
-            </p>
-          </section>
-
-          <section className="settings-next-action">
-            <h4>Optional API provider</h4>
-            <p className="setup-muted">
-              API fallback is intended for complex cross-project reasoning, messy long review, or
-              low-confidence local output.
-            </p>
-            <div className="settings-field-grid">
-              <label className="field-label">
-                <span>Provider</span>
-                <select disabled value="">
-                  <option value="">Not configured</option>
-                  <option value="openai">OpenAI-compatible API</option>
-                  <option value="custom">Custom endpoint</option>
-                </select>
-              </label>
-              <label className="field-label">
-                <span>API key</span>
-                <input disabled placeholder="Planned encrypted secret field" />
-              </label>
-            </div>
-            <p className="brief-path">
-              API keys must use encrypted secret storage, matching the existing OAuth secret
-              pattern. They should not be stored in plain settings JSON.
-            </p>
-          </section>
-        </article>
-
-        <article className="brief-card">
-          <h4>AI reliance policy</h4>
-          <p className="setup-muted">
-            These options define future routing defaults. Local-first modes keep normal assistant
-            work on the machine and require clear escalation before API fallback.
-          </p>
-          <div className="settings-field-grid">
-            {reliancePolicies.map((policy) => (
-              <label key={policy.id} className="checkbox-row">
-                <input
-                  type="radio"
-                  name="aiReliancePolicy"
-                  value={policy.id}
-                  checked={policy.id === "prefer_local"}
-                  disabled
-                  readOnly
-                />
-                <span>
-                  <strong>{policy.label}</strong>
-                  <br />
-                  {policy.description}
-                </span>
-              </label>
-            ))}
-          </div>
-        </article>
+            <button type="submit">Save AI Settings</button>
+          </article>
+        </form>
 
         <article className="brief-card">
           <h4>Write safety and personality planning</h4>

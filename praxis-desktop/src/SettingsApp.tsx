@@ -17,10 +17,12 @@ import {
 } from "../shared/personContactSuggestion";
 import type { SlackAdapterStatus } from "../shared/slackAdapter";
 import type { StorageOverview } from "../shared/storage/hybridStorage";
+import { DEFAULT_AI_SETTINGS } from "../shared/settingsModel";
 import type {
   CalendarProvider,
   CreateCalendarConnectionInput,
   SettingsSnapshot,
+  UpdateAiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateGoogleOAuthSettingsInput,
   UpdateOutlookOAuthSettingsInput,
@@ -87,6 +89,7 @@ const EMPTY_SETTINGS: SettingsSnapshot = {
     clientId: null,
     clientSecretConfigured: false,
   },
+  ai: DEFAULT_AI_SETTINGS,
   slack: {
     operatorChannelId: null,
     proactiveMirroringEnabled: false,
@@ -173,6 +176,10 @@ const emptyOutlookOAuthForm = (): UpdateOutlookOAuthSettingsInput => ({
   clearClientSecret: false,
 });
 
+type SettingsApiWithAi = typeof window.praxis.settings & {
+  updateAISettings: (input: UpdateAiSettingsInput) => Promise<SettingsSnapshot>;
+};
+
 const emptyPersonLinkForm = (): CreatePersonWorkLinkInput => ({
   personId: "",
   entityKind: "project",
@@ -254,6 +261,8 @@ export default function SettingsApp() {
       enabled: true,
       intervalMinutes: 30,
     }));
+  const [aiSettingsForm, setAiSettingsForm] =
+    useState<UpdateAiSettingsInput>(() => DEFAULT_AI_SETTINGS);
   const [calendarImportSource, setCalendarImportSource] =
     useState<CalendarImportSource>("manual_json");
   const [calendarImportText, setCalendarImportText] = useState(sampleCalendarImport);
@@ -310,6 +319,7 @@ export default function SettingsApp() {
       proactiveMirroringEnabled: nextSettings.slack.proactiveMirroringEnabled,
     });
     setCalendarAutoSyncForm(nextSettings.calendarAutoSync);
+    setAiSettingsForm(nextSettings.ai);
     setGoogleOAuthForm({
       clientId: nextSettings.googleOAuth.clientId ?? "",
       clientSecret: "",
@@ -776,6 +786,20 @@ export default function SettingsApp() {
     );
   };
 
+  const updateAiSettings = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextSettings = await (window.praxis.settings as SettingsApiWithAi).updateAISettings(
+      aiSettingsForm
+    );
+    setSettingsSnapshot(nextSettings);
+    setAiSettingsForm(nextSettings.ai);
+    setStatus(
+      nextSettings.ai.localModelName
+        ? `AI settings saved: Ollama model ${nextSettings.ai.localModelName}.`
+        : "AI settings saved: no Ollama model selected."
+    );
+  };
+
   const updateGoogleOAuthSettings = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextSettings = await window.praxis.settings.updateGoogleOAuth(googleOAuthForm);
@@ -1026,7 +1050,14 @@ export default function SettingsApp() {
           />
         ) : null}
 
-        {activeTab === "ai" ? <AiSettingsPanel /> : null}
+        {activeTab === "ai" ? (
+          <AiSettingsPanel
+            settings={settingsSnapshot.ai}
+            form={aiSettingsForm}
+            setForm={setAiSettingsForm}
+            updateAiSettings={updateAiSettings}
+          />
+        ) : null}
 
         {activeTab === "google" ? (
           <ConnectedServiceSettingsPanel

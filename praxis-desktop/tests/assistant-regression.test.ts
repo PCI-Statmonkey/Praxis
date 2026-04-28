@@ -24,6 +24,16 @@ import {
   formatAssistantChoiceReply,
   type AssistantReviewRoute,
 } from "../shared/assistantRouter";
+import { buildAIReviewContextPacket } from "../shared/aiReviewContext";
+import type {
+  EmailConnectionRecord,
+  EmailSuggestionRecord,
+} from "../shared/emailModel";
+import {
+  aiReviewModeFromRouteKind,
+  buildAIReviewResponse,
+  planAIReviewModelRoute,
+} from "../electron/aiReviewService";
 
 const snapshot: WorkSnapshot = {
   missions: [
@@ -712,5 +722,227 @@ assert.deepEqual(skillReferencesForAssistantIntent("person_lookup", registryForS
     relativePath: "contact-lookup/SKILL.md",
   },
 ]);
+
+const aiReviewSnapshot: WorkSnapshot = {
+  ...snapshot,
+  projects: [
+    {
+      ...snapshot.projects[0],
+      updatedAt: "2026-04-01T00:00:00.000Z",
+    },
+  ],
+  todos: [
+    {
+      ...snapshot.todos[0],
+      dueAt: "2026-04-27T17:00:00.000Z",
+      notes: "raw todo note should not leak",
+      updatedAt: "2026-04-10T00:00:00.000Z",
+    },
+    {
+      id: "todo-3",
+      projectId: "project-1",
+      title: "Send short Stacy follow-up",
+      status: "active",
+      priority: "normal",
+      dueAt: "2026-04-28T17:00:00.000Z",
+      moneyRelated: false,
+      quickAction: true,
+      estimatedMinutes: 10,
+      waitingOnPersonId: null,
+      sourceKind: null,
+      sourceRef: null,
+      notes: null,
+      createdAt: "2026-04-28T00:00:00.000Z",
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    },
+    snapshot.todos[1],
+  ],
+  appointments: [
+    {
+      id: "appointment-1",
+      sourceSystem: "manual",
+      externalId: null,
+      title: "Stacy project check-in",
+      startsAt: "2026-04-29T15:00:00.000Z",
+      endsAt: "2026-04-29T15:30:00.000Z",
+      allDay: false,
+      notes: "raw appointment note should not leak",
+      createdAt: "2026-04-28T00:00:00.000Z",
+      updatedAt: "2026-04-28T00:00:00.000Z",
+    },
+  ],
+};
+
+const aiReviewSuggestions: EmailSuggestionRecord[] = [
+  {
+    id: "email-suggestion-1",
+    messageId: "message-1",
+    sourceSystem: "gmail",
+    title: "Follow up with Stacy",
+    suggestedEntityKind: "todo",
+    reason: "Possible follow-up request",
+    confidence: 0.8,
+    dueAt: "2026-04-29T17:00:00.000Z",
+    status: "pending",
+    routedTo: null,
+    senderName: "Stacy",
+    senderEmail: "secret.sender@example.com",
+    matchedPersonId: "person-1",
+    matchedPersonName: "Max",
+    subject: "raw email subject should not leak",
+    summary: "raw email summary should not leak",
+    receivedAt: "2026-04-28T09:00:00.000Z",
+    createdAt: "2026-04-28T09:00:00.000Z",
+    updatedAt: "2026-04-28T09:00:00.000Z",
+  },
+];
+
+const aiReviewConnections: EmailConnectionRecord[] = [
+  {
+    id: "email-connection-1",
+    provider: "gmail",
+    label: "Work Gmail",
+    accountRef: "secret-account-ref",
+    enabled: true,
+    authStatus: "ready",
+    syncStatus: "ready_to_sync",
+    lastSyncedAt: "2026-04-28T10:00:00.000Z",
+    lastSyncError: "secret token refresh failure",
+    createdAt: "2026-04-28T00:00:00.000Z",
+    updatedAt: "2026-04-28T10:00:00.000Z",
+  },
+];
+
+const aiReviewPacket = buildAIReviewContextPacket({
+  snapshot: aiReviewSnapshot,
+  emailSuggestions: aiReviewSuggestions,
+  emailConnections: aiReviewConnections,
+  storage: {
+    ok: true,
+    checkedAt: "2026-04-28T11:00:00.000Z",
+    errorCount: 0,
+    warningCount: 1,
+  },
+  generatedAt: "2026-04-28T12:00:00.000Z",
+});
+
+assert.equal(aiReviewPacket.schemaVersion, 1);
+assert.equal(aiReviewPacket.generatedAt, "2026-04-28T12:00:00.000Z");
+assert.equal(aiReviewPacket.workGraph.activeProjectCount, 1);
+assert.equal(aiReviewPacket.workGraph.activeTodoCount, 2);
+assert.equal(aiReviewPacket.calendarPressure.items[0]?.stableId, "appointment:appointment-1");
+assert.equal(aiReviewPacket.reviewInbox.items[0]?.stableId, "review_inbox:email-suggestion-1");
+assert.equal(aiReviewPacket.staleProjects.items[0]?.stableId, "project:project-1");
+assert.equal(aiReviewPacket.waitingOn.items[0]?.stableId, "todo:todo-1");
+assert.equal(aiReviewPacket.waitingOn.items[0]?.waitingOnPersonName, "Max");
+assert(aiReviewPacket.overdueDueSoon.overdueCount >= 1);
+assert(aiReviewPacket.overdueDueSoon.dueSoonCount >= 1);
+assert.equal(aiReviewPacket.quickWins.items[0]?.stableId, "todo:todo-3");
+assert.equal(aiReviewPacket.recentCloseoutChanges.completedTodayCount, 0);
+assert.equal(aiReviewPacket.serviceHealth.storage?.warningCount, 1);
+assert.equal(aiReviewPacket.serviceHealth.email.latestSyncAt, "2026-04-28T10:00:00.000Z");
+assert(
+  aiReviewPacket.reviewInbox.items.every((item) =>
+    item.allowedFollowUpActions.every((candidate) => candidate.requiresConfirmation)
+  )
+);
+assert(
+  aiReviewPacket.quickWins.items.every((item) =>
+    item.allowedFollowUpActions.every((candidate) => candidate.requiresConfirmation)
+  )
+);
+assert.match(aiReviewPacket.fallbackSummary.nextBestAction, /Finish sourcebook outline|Send short Stacy follow-up/);
+
+const aiReviewPacketJson = JSON.stringify(aiReviewPacket);
+assert(!aiReviewPacketJson.includes("raw todo note should not leak"));
+assert(!aiReviewPacketJson.includes("raw appointment note should not leak"));
+assert(!aiReviewPacketJson.includes("raw email summary should not leak"));
+assert(!aiReviewPacketJson.includes("raw email subject should not leak"));
+assert(!aiReviewPacketJson.includes("secret.sender@example.com"));
+assert(!aiReviewPacketJson.includes("secret-account-ref"));
+assert(!aiReviewPacketJson.includes("secret token refresh failure"));
+assert(!aiReviewPacketJson.includes("databasePath"));
+
+const aiReviewQuickWins = buildAIReviewResponse({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+});
+assert.equal(aiReviewQuickWins.writeBoundary, "read_only");
+assert.equal(aiReviewQuickWins.modelPlan.selectedProvider, "deterministic_fallback");
+assert.equal(aiReviewQuickWins.modelPlan.plannedProvider, "ollama");
+assert.equal(aiReviewQuickWins.modelPlan.externalApiAllowed, false);
+assert.equal(aiReviewQuickWins.modelPlan.externalApiRequired, false);
+assert.match(aiReviewQuickWins.message, /A few safe wins/);
+assert.match(aiReviewQuickWins.message, /Send short Stacy follow-up/);
+assert.match(aiReviewQuickWins.message, /No work has been changed/);
+assert.deepEqual(aiReviewQuickWins.suggestedStableIds, ["todo:todo-3"]);
+
+const aiReviewReset = buildAIReviewResponse({
+  mode: "reset",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "prefer_local",
+  },
+});
+assert.equal(aiReviewReset.modelPlan.externalApiAllowed, false);
+assert.equal(aiReviewReset.modelPlan.plannedProvider, "none");
+assert.match(aiReviewReset.message, /Reset from the current work graph/);
+assert.match(aiReviewReset.message, /Finish sourcebook outline/);
+assert.match(aiReviewReset.message, /Review Inbox/);
+
+const aiReviewRisk = buildAIReviewResponse({
+  mode: "risk_review",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "api_only",
+  },
+});
+assert.equal(aiReviewRisk.modelPlan.selectedProvider, "deterministic_fallback");
+assert.equal(aiReviewRisk.modelPlan.plannedProvider, "api");
+assert.equal(aiReviewRisk.modelPlan.externalApiAllowed, true);
+assert.equal(aiReviewRisk.modelPlan.externalApiRequired, false);
+assert.match(aiReviewRisk.message, /Near-term pressure/);
+assert.match(aiReviewRisk.message, /Calendar pressure/);
+
+const aiReviewStale = buildAIReviewResponse({
+  mode: "stale_projects",
+  packet: aiReviewPacket,
+});
+assert.match(aiReviewStale.message, /Stale project pressure/);
+assert.match(aiReviewStale.message, /Powerless Sourcebook/);
+
+assert.equal(aiReviewModeFromRouteKind("quick_wins"), "quick_wins");
+assert.equal(aiReviewModeFromRouteKind("reset"), "reset");
+assert.equal(aiReviewModeFromRouteKind("risk_review"), "risk_review");
+assert.equal(aiReviewModeFromRouteKind("stale_projects"), "stale_projects");
+assert.equal(aiReviewModeFromRouteKind("person_project_lookup"), null);
+
+assert.deepEqual(
+  planAIReviewModelRoute({
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "balanced",
+  }),
+  {
+    selectedProvider: "deterministic_fallback",
+    plannedProvider: "api",
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "balanced",
+    externalApiAllowed: true,
+    externalApiRequired: false,
+    reason:
+      "API-capable policy is configured, but provider secrets are not available; deterministic fallback remains active.",
+  }
+);
 
 console.log("assistant regression tests passed");

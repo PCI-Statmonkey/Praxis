@@ -12,7 +12,9 @@ import {
   authLabel,
   canSyncConnection,
   connectActionLabel,
+  DEFAULT_AI_SETTINGS,
   isActivelySyncing,
+  normalizeAiSettings,
   statusGuidance,
   syncLabel,
 } from "../shared/settingsModel";
@@ -201,5 +203,29 @@ const authErrorState = {
 assert.equal(authLabel(authErrorState.authStatus), "Connection problem");
 assert.equal(connectActionLabel(authErrorState), "Reconnect");
 assert.equal(canSyncConnection(authErrorState), false);
+
+assert.deepEqual(normalizeAiSettings(), DEFAULT_AI_SETTINGS);
+assert.deepEqual(normalizeAiSettings({ localModelName: "  gpt-oss-20b  " }), {
+  ...DEFAULT_AI_SETTINGS,
+  localModelName: "gpt-oss-20b",
+});
+assert.deepEqual(
+  normalizeAiSettings({ localModelName: "   ", reliancePolicy: "balanced" }),
+  {
+    ...DEFAULT_AI_SETTINGS,
+    localModelName: null,
+    reliancePolicy: "balanced",
+  }
+);
+assert.deepEqual(
+  normalizeAiSettings(
+    { reliancePolicy: "not-a-policy" as never },
+    { ...DEFAULT_AI_SETTINGS, reliancePolicy: "local_only" }
+  ),
+  {
+    ...DEFAULT_AI_SETTINGS,
+    reliancePolicy: "local_only",
+  }
+);
 
 console.log("sync import regression tests passed");

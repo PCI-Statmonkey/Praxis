@@ -47,6 +47,7 @@ import type {
   DeleteCalendarConnectionInput,
   CreateEmailConnectionInput,
   DeleteEmailConnectionInput,
+  UpdateAiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateCalendarConnectionInput,
   UpdateEmailConnectionInput,
@@ -95,6 +96,7 @@ import {
   getSettingsSnapshot,
   updateCalendarConnection,
   updateEmailConnection,
+  updateAiSettings,
   updateGoogleOAuthSettings,
   updateCalendarAutoSyncSettings,
   updateOutlookOAuthSettings,
@@ -627,6 +629,9 @@ app.whenReady().then(() => {
       restartCalendarAutoSyncInterval()
       return snapshot
     }
+  )
+  ipcMain.handle('settings:updateAISettings', async (_event, input: UpdateAiSettingsInput) =>
+    updateAiSettings(input)
   )
   ipcMain.handle(
     'settings:updateGoogleOAuth',

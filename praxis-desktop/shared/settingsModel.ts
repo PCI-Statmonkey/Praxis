@@ -139,6 +139,64 @@ export type OutlookOAuthSettings = {
   clientSecretConfigured: boolean;
 };
 
+export type AiLocalRuntime = "ollama";
+
+export type AiReliancePolicy =
+  | "local_only"
+  | "prefer_local"
+  | "balanced"
+  | "prefer_api"
+  | "api_only";
+
+export type AiSettings = {
+  localRuntime: AiLocalRuntime;
+  localModelName: string | null;
+  reliancePolicy: AiReliancePolicy;
+};
+
+export type UpdateAiSettingsInput = {
+  localModelName?: string | null;
+  reliancePolicy?: AiReliancePolicy;
+};
+
+export const DEFAULT_AI_SETTINGS: AiSettings = {
+  localRuntime: "ollama",
+  localModelName: null,
+  reliancePolicy: "prefer_local",
+};
+
+const aiReliancePolicies = new Set<AiReliancePolicy>([
+  "local_only",
+  "prefer_local",
+  "balanced",
+  "prefer_api",
+  "api_only",
+]);
+
+export const isAiReliancePolicy = (value: unknown): value is AiReliancePolicy =>
+  typeof value === "string" && aiReliancePolicies.has(value as AiReliancePolicy);
+
+export const normalizeAiSettings = (
+  input: Partial<AiSettings | UpdateAiSettingsInput> = {},
+  fallback: AiSettings = DEFAULT_AI_SETTINGS
+): AiSettings => {
+  const rawModelName =
+    typeof input.localModelName === "string"
+      ? input.localModelName
+      : input.localModelName === null
+        ? ""
+        : fallback.localModelName ?? "";
+  const localModelName = rawModelName.trim();
+
+  return {
+    localRuntime: "ollama",
+    localModelName: localModelName.length > 0 ? localModelName : null,
+    reliancePolicy: isAiReliancePolicy(input.reliancePolicy)
+      ? input.reliancePolicy
+      : fallback.reliancePolicy,
+  };
+};
+
 export type CreateCalendarConnectionInput = {
   provider: CalendarProvider;
   label: string;
@@ -155,6 +213,7 @@ export type SettingsSnapshot = {
   secretStorage: SecretStorageStatus;
   googleOAuth: GoogleOAuthSettings;
   outlookOAuth: OutlookOAuthSettings;
+  ai: AiSettings;
   slack: SlackSettings;
 };
 

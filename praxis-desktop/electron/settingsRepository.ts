@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import type {
+  AiSettings,
   CalendarAuthStatus,
   CalendarConnectionRecord,
   CalendarSyncStatus,
@@ -12,12 +13,14 @@ import type {
   GoogleOAuthSettings,
   OutlookOAuthSettings,
   SettingsSnapshot,
+  UpdateAiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   SlackSettings,
   UpdateGoogleOAuthSettingsInput,
   UpdateOutlookOAuthSettingsInput,
   UpdateSlackSettingsInput,
 } from "../shared/settingsModel";
+import { normalizeAiSettings } from "../shared/settingsModel";
 import {
   DEFAULT_CALENDAR_AUTO_SYNC_SETTINGS,
   normalizeCalendarAutoSyncSettings,
@@ -68,6 +71,7 @@ type DbEmailConnection = {
 const nowIso = () => new Date().toISOString();
 const slackSettingsKey = "slack";
 const calendarAutoSyncSettingsKey = "calendar_auto_sync";
+const aiSettingsKey = "ai_model_policy";
 const googleOAuthSettingsKey = "google_oauth";
 const googleOAuthIntegrationOwnerId = "google_calendar";
 const outlookOAuthSettingsKey = "outlook_oauth";
@@ -173,6 +177,21 @@ export const getSlackSettings = (): SlackSettings => {
   }
 };
 
+export const getAiSettings = (): AiSettings => {
+  const row = getPraxisDatabase()
+    .prepare("SELECT value_json FROM settings WHERE key = ?")
+    .get(aiSettingsKey) as { value_json: string } | undefined;
+  if (!row) {
+    return normalizeAiSettings();
+  }
+
+  try {
+    return normalizeAiSettings(JSON.parse(row.value_json) as Partial<AiSettings>);
+  } catch {
+    return normalizeAiSettings();
+  }
+};
+
 export const getGoogleOAuthSettings = (): GoogleOAuthSettings => {
   const row = getPraxisDatabase()
     .prepare("SELECT value_json FROM settings WHERE key = ?")
@@ -220,6 +239,7 @@ export const getSettingsSnapshot = (): SettingsSnapshot => ({
   secretStorage: getSecretStorageStatus(),
   googleOAuth: getGoogleOAuthSettings(),
   outlookOAuth: getOutlookOAuthSettings(),
+  ai: getAiSettings(),
   slack: getSlackSettings(),
 });
 
@@ -452,6 +472,21 @@ export const updateCalendarAutoSyncSettings = (input: UpdateCalendarAutoSyncSett
        ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
     )
     .run(calendarAutoSyncSettingsKey, JSON.stringify(next), timestamp);
+
+  return getSettingsSnapshot();
+};
+
+export const updateAiSettings = (input: UpdateAiSettingsInput) => {
+  const next = normalizeAiSettings(input, getAiSettings());
+  const timestamp = nowIso();
+
+  getPraxisDatabase()
+    .prepare(
+      `INSERT INTO settings (key, value_json, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
+    )
+    .run(aiSettingsKey, JSON.stringify(next), timestamp);
 
   return getSettingsSnapshot();
 };

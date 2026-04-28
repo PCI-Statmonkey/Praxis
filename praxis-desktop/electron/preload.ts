@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld('praxis', {
     updateSlack: (input: unknown) => ipcRenderer.invoke('settings:updateSlack', input),
     updateCalendarAutoSync: (input: unknown) =>
       ipcRenderer.invoke('settings:updateCalendarAutoSync', input),
+    updateAISettings: (input: unknown) => ipcRenderer.invoke('settings:updateAISettings', input),
     updateGoogleOAuth: (input: unknown) => ipcRenderer.invoke('settings:updateGoogleOAuth', input),
     updateOutlookOAuth: (input: unknown) => ipcRenderer.invoke('settings:updateOutlookOAuth', input),
   },
