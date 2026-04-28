@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Settings, command parity, and unsigned Windows packaging validation. Keep the queue focused on the remaining release blocker and the next concrete planning track.
+Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Settings, command parity, and unsigned Windows ARM64 packaging validation. Keep the queue focused on private validation follow-through and the next concrete capture/intelligence prerequisite.
 
 ## CURRENT STATE
 
@@ -42,36 +42,40 @@ Close the V1 readiness loop after Google, Outlook, chat import, dashboard, Setti
 - Dashboard includes a Daily Operating Rhythm lane that summarizes arrival, triage, and closeout signals from the current brief, Review Inbox, waiting-on count, overdue count, quick actions, and near-term appointments.
 - Daily brief generation computes closeout counts for changed work, completed work, waiting-on items, overdue items, due-today items, and move-or-decide candidates.
 - Daily markdown notes persist the closeout summary so session closeout context survives across app restarts.
-- Release policy is documented: first channel is direct private Windows x64 delivery, unsigned builds are validation/private-test only, and public or broad distribution requires signing approval.
+- Release policy is documented: first channel is direct private Windows delivery, unsigned builds are validation/private-test only, and public or broad distribution requires signing approval.
 - Unsigned Windows x64 packaging is validated with `npm run package:win`; installer and unpacked app report `NotSigned`, matching the private validation policy.
+- Windows native module packaging was fixed by enabling Electron Builder native dependency rebuilds and unpacking the `better-sqlite3` native `.node` file.
+- Unsigned Windows ARM64 packaging is validated with `npm run package:win:arm64`; the installed ARM64 build opens visibly, loads the dashboard, opens Settings, reconnects email/calendar sources, closes without orphaned `PraxisDesk.exe` processes, and preserves `%APPDATA%\praxis-desktop` on uninstall.
 - Private Windows x64 smoke-check procedure is documented in `docs/RELEASE_CHECKLIST.md`.
-- Private Windows x64 smoke check was executed and recorded in `docs/RELEASE_VALIDATION.md`, but the artifact is not approved for private sharing yet because dashboard, Settings, visible installer wizard, and SmartScreen behavior were not visually confirmed.
+- Private Windows validation is recorded in `docs/RELEASE_VALIDATION.md`; the ARM64 build is approved for private validation sharing.
+- Uninstall still leaves an empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory; this is accepted as low-priority release debt for private validation and tracked in `docs/TECH_DEBT.md`.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Close Private Windows Release Smoke Blockers
+### 1. Prepare Private ARM64 Validation Handoff
 
 **GOAL**
 
-Decide whether the current unsigned Windows x64 artifact is safe for private validation sharing.
+Make the current unsigned Windows ARM64 artifact usable for private validation without confusing it with a public release.
 
 **INSTRUCTIONS**
 
-1. Re-run only the missing visible smoke checks from `docs/RELEASE_VALIDATION.md`.
-2. Visually confirm the installer wizard and expected unsigned-app / SmartScreen behavior.
-3. Visually confirm installed app launch, dashboard load, and Settings load.
-4. Decide whether the empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory left after silent uninstall is acceptable release debt or a blocker.
-5. Update `docs/RELEASE_VALIDATION.md` with the final result and evidence.
+1. Identify the exact ARM64 artifact path and SHA-256 hash from `docs/RELEASE_VALIDATION.md`.
+2. Write private-tester handoff copy that states this is unsigned, private validation only, and not for broad distribution.
+3. Include expected install, first-run, reconnect, close, and uninstall behavior.
+4. Include the known empty install-directory residue as accepted private-validation debt.
+5. Keep signing and public distribution out of this handoff.
 
 **FILES**
 
 - `docs/RELEASE_VALIDATION.md`
-- `docs/TECH_DEBT.md` only if the uninstall residue becomes tracked debt
+- `docs/RELEASE_CHECKLIST.md`
+- `docs/TECH_DEBT.md`
 
 **DONE WHEN**
 
-- The current Windows x64 artifact is either approved for private validation sharing or explicitly blocked with the next corrective action.
+- A private tester can validate the ARM64 build with clear expectations, and there is no ambiguity that this is not a signed public release.
 
 ### 2. Keep Future Intelligence And Capture Tracks Execution-Focused
 

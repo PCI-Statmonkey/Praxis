@@ -3,7 +3,10 @@
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
   "appId": "com.praxisdesk.desktop",
   "asar": true,
-  "npmRebuild": false,
+  "asarUnpack": [
+    "node_modules/better-sqlite3/build/Release/*.node"
+  ],
+  "npmRebuild": true,
   "nodeGypRebuild": false,
   "productName": "Praxis Desk",
   "directories": {

@@ -122,6 +122,13 @@
 - Resolution: The first distribution channel is direct private delivery of the Windows `x64` NSIS installer to the operator or explicitly approved testers. Microsoft Store, public website downloads, GitHub Releases, and broad client-facing release channels remain deferred until signing is implemented.
 - Related: `docs/DECISIONS.md`, `docs/RELEASE_CHECKLIST.md`, `praxis-desktop/electron-builder.json5`
 
+### Windows Uninstall Leaves Empty Install Directory
+
+- Priority: Low
+- Impact: The ARM64 private package uninstalls cleanly, removes the Windows uninstall registration, preserves `%APPDATA%\praxis-desktop`, and leaves no `PraxisDesk.exe` processes after normal window close. The NSIS silent uninstall still leaves an empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory.
+- Likely Fix: Add an NSIS uninstall cleanup rule for the empty install directory only, while continuing to preserve user data because `deleteAppDataOnUninstall` must remain false.
+- Related: `praxis-desktop/electron-builder.json5`, `docs/RELEASE_VALIDATION.md`
+
 ### App Icon And Product Metadata Are Minimal
 
 - Resolved: 2026-04-26

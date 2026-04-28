@@ -4051,6 +4051,36 @@ Future implementation work should add entries here when it meaningfully changes 
 - `npm run build:app` passes.
 - `npm run storage:check` passes with 0 errors and 0 warnings against the current local database.
 
+## 2026-04-28 - Windows ARM64 Package Launch Validation
+
+### Built
+
+- Fixed packaged Windows native module loading by enabling Electron Builder native dependency rebuilds.
+- Added `asarUnpack` for the `better-sqlite3` native `.node` file so the packaged app can load SQLite correctly outside `app.asar`.
+- Rebuilt and validated both Windows x64 and Windows ARM64 packages.
+- Confirmed the x64 package now carries an x64 `better_sqlite3.node`.
+- Confirmed the ARM64 package carries an ARM64 `better_sqlite3.node`.
+- Validated the installed ARM64 app opens visibly, loads the dashboard, opens Settings, reconnects email/calendar sources, closes without orphaned `PraxisDesk.exe` processes, and preserves `%APPDATA%\praxis-desktop` after uninstall.
+- Recorded the empty `%LOCALAPPDATA%\Programs\PraxisDesk` uninstall residue as low-priority release debt.
+- Updated release validation to approve the ARM64 artifact for private validation sharing.
+
+### Why
+
+- The previous x64 package built on a Windows ARM64 machine copied the host ARM64 `better-sqlite3` binary into the x64 artifact while `npmRebuild` was disabled.
+- Electron failed to load the native module in the installed app, leaving background processes and no visible window.
+- Private validation needs a launchable architecture-correct package before anyone else tests PRAXIS.
+
+### Verification
+
+- `npm run build:app` passes.
+- `npm run package:win` passes.
+- `npm run package:win:arm64` passes.
+- ARM64 installed app launches visibly.
+- Dashboard loads.
+- Settings opens and reconnects services.
+- Closing the app leaves no `PraxisDesk.exe` processes.
+- Windows uninstall removes the uninstall registration and preserves `%APPDATA%\praxis-desktop`.
+
 ## 2026-04-27 - Manual Chat Import Surface
 
 ### Built
