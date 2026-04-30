@@ -38,7 +38,10 @@ import {
   planAIReviewModelRoute,
   toAssistantAIReviewGenerateResult,
 } from "../electron/aiReviewService";
-import { generateOllamaReviewSummary } from "../electron/ollamaClient";
+import {
+  buildOllamaAIReviewPrompt,
+  generateOllamaReviewSummary,
+} from "../electron/ollamaClient";
 
 const snapshot: WorkSnapshot = {
   missions: [
@@ -925,6 +928,13 @@ const aiReviewStale = buildAIReviewResponse({
 assert.match(aiReviewStale.message, /Stale project pressure/);
 assert.match(aiReviewStale.message, /Powerless Sourcebook/);
 
+const aiReviewPrompt = buildOllamaAIReviewPrompt("stale_projects", aiReviewPacket);
+assert.match(aiReviewPrompt, /Return JSON only/);
+assert.match(aiReviewPrompt, /"allowedItems"/);
+assert.match(aiReviewPrompt, /"stableId":"project:project-1"/);
+assert.doesNotMatch(aiReviewPrompt, /Review mode: stale_projects/);
+assert.doesNotMatch(aiReviewPrompt, /Do this first:/);
+
 const ollamaSuccessFetch: typeof fetch = async (input) => {
   const url = String(input);
   if (url.endsWith("/api/tags")) {
@@ -938,7 +948,13 @@ const ollamaSuccessFetch: typeof fetch = async (input) => {
   if (url.endsWith("/api/generate")) {
     return new Response(
       JSON.stringify({
-        response: "Ollama says: start with the short Stacy follow-up.",
+        response: JSON.stringify({
+          schemaVersion: 1,
+          mode: "quick_wins",
+          priorityStableIds: ["todo:todo-3"],
+          emphasis: "quick_win",
+          coachLine: "Start here.",
+        }),
       }),
       { status: 200 }
     );
@@ -958,7 +974,13 @@ const ollamaGenerated = await generateOllamaReviewSummary(
   }
 );
 assert.equal(ollamaGenerated.ok, true);
-assert.equal(ollamaGenerated.ok ? ollamaGenerated.text : "", "Ollama says: start with the short Stacy follow-up.");
+assert.deepEqual(JSON.parse(ollamaGenerated.ok ? ollamaGenerated.text : "{}"), {
+  schemaVersion: 1,
+  mode: "quick_wins",
+  priorityStableIds: ["todo:todo-3"],
+  emphasis: "quick_win",
+  coachLine: "Start here.",
+});
 
 const aiReviewOllamaSuccess = await buildAIReviewResponseWithOllama({
   mode: "quick_wins",
@@ -972,14 +994,23 @@ const aiReviewOllamaSuccess = await buildAIReviewResponseWithOllama({
     ok: true,
     status: "ok",
     modelName: "llama3.2",
-    text: "Model summary: Send short Stacy follow-up first.",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:todo-3"],
+      emphasis: "quick_win",
+      coachLine: "Start here.",
+    }),
   }),
 });
 assert.equal(aiReviewOllamaSuccess.summarySource, "ollama");
 assert.equal(aiReviewOllamaSuccess.writeBoundary, "read_only");
 assert.equal(aiReviewOllamaSuccess.fallbackReason, null);
-assert.match(aiReviewOllamaSuccess.message, /Model summary/);
+assert.match(aiReviewOllamaSuccess.message, /Recommended quick win/);
+assert.match(aiReviewOllamaSuccess.message, /Send short Stacy follow-up/);
+assert.doesNotMatch(aiReviewOllamaSuccess.message, /Start here\./);
 assert.match(aiReviewOllamaSuccess.message, /No work has been changed/);
+assert.deepEqual(aiReviewOllamaSuccess.suggestedStableIds, ["todo:todo-3"]);
 
 const aiReviewIpcResult = toAssistantAIReviewGenerateResult(aiReviewOllamaSuccess);
 assert.equal(aiReviewIpcResult.ok, true);
@@ -1008,6 +1039,233 @@ assert.deepEqual(
     message: "AI review generation requires a supported review mode.",
   }
 );
+
+const aiReviewUnknownStableIdFallback = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:missing"],
+      emphasis: "quick_win",
+    }),
+  }),
+});
+assert.equal(aiReviewUnknownStableIdFallback.summarySource, "deterministic_fallback");
+assert.match(aiReviewUnknownStableIdFallback.fallbackReason ?? "", /unknown AI review stable ID/);
+
+const aiReviewWrongModeFallback = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: ["todo:todo-3"],
+      emphasis: "quick_win",
+    }),
+  }),
+});
+assert.equal(aiReviewWrongModeFallback.summarySource, "deterministic_fallback");
+assert.match(aiReviewWrongModeFallback.fallbackReason ?? "", /wrong mode/);
+
+const aiReviewFreeTextFallback = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: "Do this first: Send short Stacy follow-up.",
+  }),
+});
+assert.equal(aiReviewFreeTextFallback.summarySource, "deterministic_fallback");
+assert.match(aiReviewFreeTextFallback.fallbackReason ?? "", /non-JSON/);
+
+const aiReviewDuplicateIds = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:todo-3", "todo:todo-3"],
+      emphasis: "quick_win",
+    }),
+  }),
+});
+assert.equal(aiReviewDuplicateIds.summarySource, "ollama");
+assert.deepEqual(aiReviewDuplicateIds.suggestedStableIds, ["todo:todo-3"]);
+assert.equal(
+  aiReviewDuplicateIds.message.indexOf("Send short Stacy follow-up"),
+  aiReviewDuplicateIds.message.lastIndexOf("Send short Stacy follow-up")
+);
+
+const aiReviewTooManyIds = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: [
+        "deadline:deadline-1",
+        "todo:todo-1",
+        "todo:todo-3",
+        "review_inbox:email-suggestion-1",
+      ],
+      emphasis: "start_here",
+    }),
+  }),
+});
+assert.equal(aiReviewTooManyIds.summarySource, "ollama");
+assert.deepEqual(aiReviewTooManyIds.suggestedStableIds, [
+  "deadline:deadline-1",
+  "todo:todo-1",
+  "todo:todo-3",
+]);
+assert.doesNotMatch(aiReviewTooManyIds.message, /Follow up with Stacy/);
+
+const aiReviewUnknownStableIdAfterCapFallback = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: [
+        "deadline:deadline-1",
+        "todo:todo-1",
+        "todo:todo-3",
+        "todo:missing",
+      ],
+      emphasis: "start_here",
+    }),
+  }),
+});
+assert.equal(aiReviewUnknownStableIdAfterCapFallback.summarySource, "deterministic_fallback");
+assert.match(aiReviewUnknownStableIdAfterCapFallback.fallbackReason ?? "", /unknown AI review stable ID/);
+
+const aiReviewBadCoachLine = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:todo-3"],
+      emphasis: "quick_win",
+      coachLine: "I created a new task for May 30.",
+    }),
+  }),
+});
+assert.equal(aiReviewBadCoachLine.summarySource, "ollama");
+assert.equal(aiReviewBadCoachLine.fallbackReason, null);
+assert.doesNotMatch(aiReviewBadCoachLine.message, /created|May 30/i);
+
+const aiReviewNonPacketDateCoachLine = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:todo-3"],
+      emphasis: "quick_win",
+      coachLine: "Keep 2026-05-30 clear.",
+    }),
+  }),
+});
+assert.equal(aiReviewNonPacketDateCoachLine.summarySource, "ollama");
+assert.equal(aiReviewNonPacketDateCoachLine.fallbackReason, null);
+assert.doesNotMatch(aiReviewNonPacketDateCoachLine.message, /2026-05-30/);
+
+const aiReviewInternalModeCoachLine = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:todo-3"],
+      emphasis: "quick_win",
+      coachLine: "Review mode: stale_projects",
+    }),
+  }),
+});
+assert.equal(aiReviewInternalModeCoachLine.summarySource, "ollama");
+assert.equal(aiReviewInternalModeCoachLine.fallbackReason, null);
+assert.doesNotMatch(aiReviewInternalModeCoachLine.message, /Review mode|stale_projects/);
 
 const aiReviewTimeoutFallback = await buildAIReviewResponseWithOllama({
   mode: "reset",

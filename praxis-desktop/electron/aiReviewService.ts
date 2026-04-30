@@ -4,7 +4,9 @@ import {
   type AiSettings,
 } from "../shared/settingsModel";
 import type {
+  AIReviewAppointmentItem,
   AIReviewContextPacket,
+  AIReviewInboxItem,
   AIReviewWorkItem,
 } from "../shared/aiReviewContext";
 import {
@@ -268,45 +270,97 @@ const fallbackWithReason = (
   fallbackReason: reason,
 });
 
-const groundedTitles = (packet: AIReviewContextPacket) =>
-  [
-    packet.fallbackSummary.nextBestAction,
-    packet.overdueDueSoon.items.length === 0
-      ? "No overdue or due-soon items are visible."
-      : "",
-    packet.quickWins.items.length === 0
-      ? "No quick wins are currently marked."
-      : "",
-    packet.reviewInbox.items.length === 0
-      ? "No pending Review Inbox suggestions are visible."
-      : "",
-    packet.staleProjects.items.length === 0
-      ? "No stale, paused, or blocked projects are currently visible."
-      : "",
-    packet.waitingOn.items.length === 0
-      ? "No waiting-on items are currently visible."
-      : "",
-    packet.calendarPressure.items.length === 0
-      ? "No near-term appointments are visible."
-      : "",
-    ...packet.overdueDueSoon.items.map((item) => item.title),
-    ...packet.quickWins.items.map((item) => item.title),
-    ...packet.reviewInbox.items.map((item) => item.title),
-    ...packet.staleProjects.items.map((item) => item.title),
-    ...packet.waitingOn.items.map((item) => item.title),
-    ...packet.calendarPressure.items.map((item) => item.title),
-  ]
-    .map((title) => title.trim())
-    .filter((title, index, titles) => title.length > 0 && titles.indexOf(title) === index);
+const aiReviewEmphasisValues = new Set([
+  "start_here",
+  "quick_win",
+  "risk",
+  "waiting_on",
+  "review_inbox",
+  "stale",
+] as const);
 
-const isGroundedSummary = (text: string, packet: AIReviewContextPacket) => {
-  const titles = groundedTitles(packet);
-  if (titles.length === 0) {
-    return true;
-  }
-  const normalizedText = text.toLocaleLowerCase();
-  return titles.some((title) => normalizedText.includes(title.toLocaleLowerCase()));
+type AIReviewEmphasis = typeof aiReviewEmphasisValues extends Set<infer Value> ? Value : never;
+
+type AIReviewModelSelection = {
+  schemaVersion: 1;
+  mode: AssistantAIReviewMode;
+  priorityStableIds: string[];
+  emphasis: AIReviewEmphasis;
+  coachLine?: string;
 };
+
+type RenderableAIReviewItem = {
+  stableId: string;
+  title: string;
+  line: string;
+};
+
+const inboxItemLine = (item: AIReviewInboxItem) =>
+  `- ${item.title} (Review Inbox: ${item.reason})`;
+
+const appointmentItemLine = (item: AIReviewAppointmentItem) =>
+  `- ${item.title}${formatReasons(item)}`;
+
+const workRenderable = (item: AIReviewWorkItem): RenderableAIReviewItem => ({
+  stableId: item.stableId,
+  title: item.title,
+  line: formatWorkItem(item),
+});
+
+const inboxRenderable = (item: AIReviewInboxItem): RenderableAIReviewItem => ({
+  stableId: item.stableId,
+  title: item.title,
+  line: inboxItemLine(item),
+});
+
+const appointmentRenderable = (item: AIReviewAppointmentItem): RenderableAIReviewItem => ({
+  stableId: item.stableId,
+  title: item.title,
+  line: appointmentItemLine(item),
+});
+
+const allowedModelItems = (
+  mode: AssistantAIReviewMode,
+  packet: AIReviewContextPacket
+): RenderableAIReviewItem[] => {
+  if (mode === "quick_wins") {
+    return packet.quickWins.items.map(workRenderable);
+  }
+  if (mode === "stale_projects") {
+    return packet.staleProjects.items.map(workRenderable);
+  }
+  if (mode === "risk_review") {
+    return [
+      ...packet.overdueDueSoon.items.map(workRenderable),
+      ...packet.waitingOn.items.map(workRenderable),
+      ...packet.calendarPressure.items.map(appointmentRenderable),
+    ];
+  }
+  if (mode === "forgetting") {
+    return [
+      ...packet.overdueDueSoon.items.map(workRenderable),
+      ...packet.reviewInbox.items.map(inboxRenderable),
+      ...packet.calendarPressure.items.map(appointmentRenderable),
+    ];
+  }
+  return [
+    ...packet.overdueDueSoon.items.map(workRenderable),
+    ...packet.quickWins.items.map(workRenderable),
+    ...packet.waitingOn.items.map(workRenderable),
+    ...packet.reviewInbox.items.map(inboxRenderable),
+  ];
+};
+
+const knownStableIds = (packet: AIReviewContextPacket) =>
+  new Set([
+    ...packet.overdueDueSoon.items.map((item) => item.stableId),
+    ...packet.quickWins.items.map((item) => item.stableId),
+    ...packet.reviewInbox.items.map((item) => item.stableId),
+    ...packet.staleProjects.items.map((item) => item.stableId),
+    ...packet.waitingOn.items.map((item) => item.stableId),
+    ...packet.calendarPressure.items.map((item) => item.stableId),
+    ...packet.recentCloseoutChanges.items.map((item) => item.stableId),
+  ]);
 
 const packetDates = (packet: AIReviewContextPacket) =>
   new Set(
@@ -332,6 +386,156 @@ const hasOnlyPacketDates = (text: string, packet: AIReviewContextPacket) => {
   }
   const allowedDates = packetDates(packet);
   return dates.every((date) => allowedDates.has(date));
+};
+
+const mutationLanguage =
+  /\b(create|created|creating|edit|edited|editing|update|updated|updating|complete|completed|mark done|schedule|scheduled|scheduling|send|sent|sending|delete|deleted|deleting|move|moved|moving|reschedule|rescheduled|change|changed|changing)\b/i;
+
+const internalModeLanguage =
+  /\b(?:review mode|route|mode|quick_wins|risk_review|stale_projects|start_here|quick_win|waiting_on|review_inbox)\b/i;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null;
+
+const parseAIReviewModelSelection = (
+  text: string,
+  mode: AssistantAIReviewMode,
+  packet: AIReviewContextPacket
+):
+  | { ok: true; selection: AIReviewModelSelection }
+  | { ok: false; reason: string } => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return {
+      ok: false,
+      reason: "Ollama returned non-JSON AI review output.",
+    };
+  }
+
+  if (!isRecord(parsed)) {
+    return {
+      ok: false,
+      reason: "Ollama returned an invalid AI review selection shape.",
+    };
+  }
+
+  if (parsed.schemaVersion !== 1) {
+    return {
+      ok: false,
+      reason: "Ollama returned an unsupported AI review selection schema.",
+    };
+  }
+
+  if (parsed.mode !== mode) {
+    return {
+      ok: false,
+      reason: "Ollama returned an AI review selection for the wrong mode.",
+    };
+  }
+
+  if (!aiReviewEmphasisValues.has(parsed.emphasis as AIReviewEmphasis)) {
+    return {
+      ok: false,
+      reason: "Ollama returned an unsupported AI review emphasis.",
+    };
+  }
+
+  if (!Array.isArray(parsed.priorityStableIds)) {
+    return {
+      ok: false,
+      reason: "Ollama returned AI review IDs in an invalid shape.",
+    };
+  }
+
+  const knownIds = knownStableIds(packet);
+  const allowedIds = new Set(allowedModelItems(mode, packet).map((item) => item.stableId));
+  const selectedIds: string[] = [];
+  const seenIds = new Set<string>();
+
+  for (const value of parsed.priorityStableIds) {
+    if (typeof value !== "string" || value.trim().length === 0) {
+      return {
+        ok: false,
+        reason: "Ollama returned an invalid AI review stable ID.",
+      };
+    }
+    const stableId = value.trim();
+    if (!knownIds.has(stableId)) {
+      return {
+        ok: false,
+        reason: "Ollama selected an unknown AI review stable ID.",
+      };
+    }
+    if (!allowedIds.has(stableId)) {
+      return {
+        ok: false,
+        reason: "Ollama selected an AI review stable ID outside the requested mode.",
+      };
+    }
+    if (seenIds.has(stableId)) {
+      continue;
+    }
+    seenIds.add(stableId);
+    if (selectedIds.length < 3) {
+      selectedIds.push(stableId);
+    }
+  }
+
+  if (selectedIds.length === 0) {
+    return {
+      ok: false,
+      reason: "Ollama did not select any usable AI review stable IDs.",
+    };
+  }
+
+  const rawCoachLine = typeof parsed.coachLine === "string" ? parsed.coachLine.trim() : "";
+  const coachLine =
+    rawCoachLine.length > 0 &&
+    rawCoachLine.length <= 140 &&
+    !mutationLanguage.test(rawCoachLine) &&
+    !internalModeLanguage.test(rawCoachLine) &&
+    hasOnlyPacketDates(rawCoachLine, packet)
+      ? rawCoachLine
+      : undefined;
+
+  return {
+    ok: true,
+    selection: {
+      schemaVersion: 1,
+      mode,
+      priorityStableIds: selectedIds,
+      emphasis: parsed.emphasis as AIReviewEmphasis,
+      ...(coachLine ? { coachLine } : {}),
+    },
+  };
+};
+
+const emphasisSectionTitles: Record<AIReviewEmphasis, string> = {
+  start_here: "Recommended starting point",
+  quick_win: "Recommended quick win",
+  risk: "Risk to review",
+  waiting_on: "Waiting on",
+  review_inbox: "Review Inbox",
+  stale: "Stale work",
+};
+
+const renderAIReviewModelSelection = (
+  mode: AssistantAIReviewMode,
+  packet: AIReviewContextPacket,
+  selection: AIReviewModelSelection
+) => {
+  const itemById = new Map(allowedModelItems(mode, packet).map((item) => [item.stableId, item]));
+  const lines = selection.priorityStableIds
+    .map((stableId) => itemById.get(stableId)?.line ?? "")
+    .filter((line) => line.length > 0);
+
+  return [
+    modeHeadlines[mode],
+    section(emphasisSectionTitles[selection.emphasis], lines),
+    "No work has been changed.",
+  ].join("\n\n");
 };
 
 export const buildAIReviewResponseWithOllama = async ({
@@ -363,25 +567,17 @@ export const buildAIReviewResponseWithOllama = async ({
     return fallbackWithReason(fallbackInput, generated.reason);
   }
 
-  if (!isGroundedSummary(generated.text, packet)) {
-    return fallbackWithReason(
-      fallbackInput,
-      "Ollama summary did not stay grounded in packet titles."
-    );
-  }
-
-  if (!hasOnlyPacketDates(generated.text, packet)) {
-    return fallbackWithReason(
-      fallbackInput,
-      "Ollama summary introduced a date outside packet facts."
-    );
+  const selectionResult = parseAIReviewModelSelection(generated.text, mode, packet);
+  if (!selectionResult.ok) {
+    return fallbackWithReason(fallbackInput, selectionResult.reason);
   }
 
   return {
     ...buildAIReviewResponse(fallbackInput),
-    message: `${generated.text}\n\nNo work has been changed.`,
+    message: renderAIReviewModelSelection(mode, packet, selectionResult.selection),
     summarySource: "ollama",
     fallbackReason: null,
+    suggestedStableIds: selectionResult.selection.priorityStableIds,
   };
 };
 

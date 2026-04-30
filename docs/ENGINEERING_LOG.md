@@ -1,5 +1,34 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - Structured AI Review Model Output
+
+### Built
+
+- Changed local Ollama AI Review generation to request JSON-mode output with `format: "json"`.
+- Replaced free-text model summaries with a structured selection contract: schema version, mode, ranked stable IDs, emphasis, and optional coach line.
+- Restricted prompt choices to mode-scoped `allowedStableIds` and compact packet facts.
+- Added validation for schema, requested mode, emphasis, known stable IDs, mode-valid stable IDs, duplicates, maximum selected IDs, mutation language, internal mode wording, and invalid dates.
+- Rendered final model-ranked AI Review messages deterministically from packet records instead of showing model-written factual prose.
+
+### Validated
+
+- Confirmed `qwen2.5:0.5b-instruct` is selected with `prefer_local` and available through the PRAXIS Settings probe.
+- Ran live Electron IPC QA for `reset`, `quick_wins`, `forgetting`, `risk_review`, and `stale_projects`.
+- Confirmed reset, wins, forgetting, and risk return `summarySource: "ollama"` with packet-rendered copy and `No work has been changed.`
+- Confirmed stale-project review falls back safely when there are no stale project IDs for the model to rank.
+- Confirmed work snapshot before and after live IPC QA matched exactly.
+
+### Still Open
+
+- Actual Talk UI QA should rerun against the structured JSON-mode contract to verify visible model/fallback states and layout.
+- Stale-project empty-state behavior is safe as fallback; if product wants an Ollama-labeled empty-state response, add an explicit synthetic empty-state selectable item rather than asking the model to invent one.
+
+### Verification
+
+- `npm run test:assistant` passes.
+- `npx tsc --noEmit` passes.
+- `npm run build:app` passes.
+
 ## 2026-04-30 - Qwen Local AI Review Model-Path QA
 
 ### Built

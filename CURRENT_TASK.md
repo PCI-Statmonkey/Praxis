@@ -33,7 +33,7 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - Local Ollama AI Review generation now exists for selected available models through `127.0.0.1:11434/api/generate`, with deterministic fallback for no selected model, missing model, unavailable Ollama, timeout, invalid response, empty response, and HTTP/error cases.
 - Async AI Review IPC now lets Talk request local review generation, show checking/generating/model/fallback states, display Ollama summaries when available, and fall back to deterministic `route.message` on IPC failure.
 - Live Electron QA passed for the Talk fallback path with runtime `ollama`, no saved model, reliance policy `prefer_local`, probe status `no_model_selected`, all five AI Review prompts returning deterministic fallback, no-write guardrail visible, no work snapshot mutation, and desktop/narrow overflow checks passing.
-- Local model-path IPC QA now reaches `summarySource: "ollama"` with saved model `qwen2.5:0.5b-instruct`, sub-5-second generation for the five AI Review modes, read-only write boundary, and unchanged work snapshot; copy/grounding polish remains open before treating model-generated Talk output as daily-use complete.
+- Local model-path IPC QA now reaches structured model-ranked output with saved model `qwen2.5:0.5b-instruct`: reset, wins, forgetting, and risk return `summarySource: "ollama"` with deterministic packet-rendered copy, stale projects safely falls back when there are no stale IDs to rank, the write boundary stays read-only, and the work snapshot remains unchanged.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
@@ -58,7 +58,7 @@ Turn the async local Ollama review path into a polished routing policy that rema
 - Talk now uses async AI Review IPC to display model-generated summaries when available and deterministic fallback when needed.
 - Optional API provider settings and encrypted provider secrets remain future work.
 - Slack and companion exposure remain open if not already routed through the AI Review path.
-- Live Electron model-generated QA reached `summarySource: "ollama"` through IPC with `qwen2.5:0.5b-instruct`; actual Talk-surface copy review and stricter grounding polish remain open before closing daily-use QA.
+- Live Electron model-generated QA reached structured model-ranked output through IPC with `qwen2.5:0.5b-instruct`; actual Talk-surface QA should confirm visible model/fallback states after the JSON-mode contract.
 - The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
 
 **FILES**
@@ -74,7 +74,7 @@ Turn the async local Ollama review path into a polished routing policy that rema
 - Routing behavior accounts for unavailable, missing, available, no-model, timeout, invalid, empty, and HTTP/error states.
 - API provider fallback remains disabled until secret storage and policy are implemented.
 - Slack/companion review exposure is either wired through the same AI Review path or deliberately deferred.
-- Live Electron QA against model-generated AI Review output is complete or documented as remaining validation debt; current debt is model copy quality/grounding on small local models.
+- Live Electron QA against structured model-ranked AI Review output is complete or documented as remaining validation debt.
 - AI Task Review appears as the next core roadmap track before Rainmeter/background polish.
 - Packet-backed read-only UX/routing/settings behavior remains intact.
 
