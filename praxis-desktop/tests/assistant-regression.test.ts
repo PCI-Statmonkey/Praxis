@@ -972,7 +972,7 @@ const aiReviewOllamaSuccess = await buildAIReviewResponseWithOllama({
     ok: true,
     status: "ok",
     modelName: "llama3.2",
-    text: "Model summary: do the Stacy follow-up first.",
+    text: "Model summary: Send short Stacy follow-up first.",
   }),
 });
 assert.equal(aiReviewOllamaSuccess.summarySource, "ollama");

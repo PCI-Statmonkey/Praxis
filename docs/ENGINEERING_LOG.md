@@ -1,5 +1,36 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - Qwen Local AI Review Model-Path QA
+
+### Built
+
+- Increased local Ollama generation timeout for AI Review and changed the model prompt to compact, mode-specific facts instead of the full review packet.
+- Tuned the prompt toward direct coach-style answers while preserving the read-only/no-mutation boundary.
+- Added grounding checks so model summaries fall back when they do not include exact packet titles or when they introduce dates outside packet facts.
+- Updated regression coverage for the stricter grounded model-summary path.
+
+### Validated
+
+- Installed and selected `qwen2.5:0.5b-instruct` for local Ollama AI Review.
+- Confirmed Ollama availability through `127.0.0.1:11434/api/tags`.
+- Confirmed PRAXIS Settings probe reports `Saved Ollama model found: qwen2.5:0.5b-instruct.`
+- Ran live Electron IPC QA for `reset`, `quick_wins`, `forgetting`, `risk_review`, and `stale_projects`.
+- Confirmed all five modes can return `summarySource: "ollama"` with sub-5-second generation.
+- Confirmed `writeBoundary: "read_only"` and `No work has been changed.` remain present.
+- Confirmed the work snapshot before and after QA matched exactly.
+
+### Still Open
+
+- Small local model copy quality still needs polish before model-generated Talk output is daily-use complete.
+- The current grounding guards reject missing exact titles and invented ISO/month-name dates, but additional output-shape checks may be needed if small models continue to paraphrase too freely.
+- Actual Talk-surface QA should verify visible model state, fallback state, and desktop/narrow layout with the selected Qwen model.
+
+### Verification
+
+- `npm run test:assistant` passes.
+- `npx tsc --noEmit` passes.
+- `npm run build:app` passes.
+
 ## 2026-04-30 - Live AI Review Talk Fallback QA
 
 ### Validated

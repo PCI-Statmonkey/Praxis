@@ -268,6 +268,72 @@ const fallbackWithReason = (
   fallbackReason: reason,
 });
 
+const groundedTitles = (packet: AIReviewContextPacket) =>
+  [
+    packet.fallbackSummary.nextBestAction,
+    packet.overdueDueSoon.items.length === 0
+      ? "No overdue or due-soon items are visible."
+      : "",
+    packet.quickWins.items.length === 0
+      ? "No quick wins are currently marked."
+      : "",
+    packet.reviewInbox.items.length === 0
+      ? "No pending Review Inbox suggestions are visible."
+      : "",
+    packet.staleProjects.items.length === 0
+      ? "No stale, paused, or blocked projects are currently visible."
+      : "",
+    packet.waitingOn.items.length === 0
+      ? "No waiting-on items are currently visible."
+      : "",
+    packet.calendarPressure.items.length === 0
+      ? "No near-term appointments are visible."
+      : "",
+    ...packet.overdueDueSoon.items.map((item) => item.title),
+    ...packet.quickWins.items.map((item) => item.title),
+    ...packet.reviewInbox.items.map((item) => item.title),
+    ...packet.staleProjects.items.map((item) => item.title),
+    ...packet.waitingOn.items.map((item) => item.title),
+    ...packet.calendarPressure.items.map((item) => item.title),
+  ]
+    .map((title) => title.trim())
+    .filter((title, index, titles) => title.length > 0 && titles.indexOf(title) === index);
+
+const isGroundedSummary = (text: string, packet: AIReviewContextPacket) => {
+  const titles = groundedTitles(packet);
+  if (titles.length === 0) {
+    return true;
+  }
+  const normalizedText = text.toLocaleLowerCase();
+  return titles.some((title) => normalizedText.includes(title.toLocaleLowerCase()));
+};
+
+const packetDates = (packet: AIReviewContextPacket) =>
+  new Set(
+    [
+      packet.localDate,
+      ...packet.overdueDueSoon.items.map((item) => item.dueAt?.slice(0, 10) ?? ""),
+      ...packet.quickWins.items.map((item) => item.dueAt?.slice(0, 10) ?? ""),
+      ...packet.reviewInbox.items.map((item) => item.dueAt?.slice(0, 10) ?? ""),
+      ...packet.staleProjects.items.map((item) => item.dueAt?.slice(0, 10) ?? ""),
+      ...packet.waitingOn.items.map((item) => item.dueAt?.slice(0, 10) ?? ""),
+      ...packet.calendarPressure.items.map((item) => item.startsAt.slice(0, 10)),
+    ].filter((value) => value.length > 0)
+  );
+
+const hasOnlyPacketDates = (text: string, packet: AIReviewContextPacket) => {
+  const monthNameDate = /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\b/i;
+  if (monthNameDate.test(text)) {
+    return false;
+  }
+  const dates = text.match(/\b\d{4}-\d{2}-\d{2}\b/g) ?? [];
+  if (dates.length === 0) {
+    return true;
+  }
+  const allowedDates = packetDates(packet);
+  return dates.every((date) => allowedDates.has(date));
+};
+
 export const buildAIReviewResponseWithOllama = async ({
   mode,
   packet,
@@ -295,6 +361,20 @@ export const buildAIReviewResponseWithOllama = async ({
 
   if (!generated.ok) {
     return fallbackWithReason(fallbackInput, generated.reason);
+  }
+
+  if (!isGroundedSummary(generated.text, packet)) {
+    return fallbackWithReason(
+      fallbackInput,
+      "Ollama summary did not stay grounded in packet titles."
+    );
+  }
+
+  if (!hasOnlyPacketDates(generated.text, packet)) {
+    return fallbackWithReason(
+      fallbackInput,
+      "Ollama summary introduced a date outside packet facts."
+    );
   }
 
   return {
