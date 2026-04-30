@@ -4,6 +4,7 @@ import type {
 } from "./emailModel";
 import type {
   AppointmentRecord,
+  DeadlineEntityKind,
   DeadlineRecord,
   ProjectRecord,
   TodoRecord,
@@ -47,6 +48,8 @@ export type AIReviewWorkItem = {
   waitingOnPersonId?: string | null;
   waitingOnPersonName?: string | null;
   estimatedMinutes?: number | null;
+  linkedEntityKind?: DeadlineEntityKind | null;
+  linkedEntityId?: string | null;
   allowedFollowUpActions: AIReviewActionHint[];
 };
 
@@ -303,6 +306,8 @@ const deadlineItem = (
     projectTitle: project?.title ?? null,
     missionId: mission?.id ?? null,
     missionTitle: mission?.title ?? null,
+    linkedEntityKind: deadline.entityKind,
+    linkedEntityId: deadline.entityId,
     allowedFollowUpActions: workActions("deadline", deadline.status),
   };
 };

@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - AI Review Linked Deadline De-Dupe
+
+### Built
+
+- Added linked deadline source identity to `AIReviewWorkItem` through `linkedEntityKind` and `linkedEntityId`.
+- Populated linked source identity from `DeadlineRecord.entityKind` and `DeadlineRecord.entityId` when building AI Review deadline items.
+- Updated model-ranked presentation de-duping to use structured source keys instead of fuzzy title/project/mission matching.
+- De-dupes linked todo, project, and mission deadlines against their parent work item when both are selected by the model.
+- Keeps standalone deadlines distinct even when they share similar or matching titles.
+- Preserved exact packet-title rendering, JSON parsing and validation, fallback behavior, the read-only write boundary, and `No work has been changed.`
+
+### Still Open
+
+- One final live Talk smoke should confirm the exact `3292 n 29th ct NEW RACKS 5-6-2025` duplicate no longer appears on the real workspace data.
+
+### Verification
+
+- `npm run test:assistant` passes.
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm test` passes.
+- `npm run build:app` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-30 - AI Review Copy Smoke Follow-Up
 
 ### Validated
@@ -13,8 +37,7 @@
 
 ### Still Open
 
-- Duplicate visible todo/deadline presentation remains for `3292 n 29th ct NEW RACKS 5-6-2025`.
-- The current renderer can only de-dupe relationships visible in the packet. Linked deadline source entity data exists in `DeadlineRecord`, but the AI review packet currently flattens deadline items to deadline identity only.
+- Follow-up linked deadline source identity work has been implemented and needs one final live Talk smoke on the real workspace data.
 
 ### Verification
 

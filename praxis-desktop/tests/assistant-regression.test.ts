@@ -846,6 +846,11 @@ assert.equal(aiReviewPacket.waitingOn.items[0]?.waitingOnPersonName, "Max");
 assert(aiReviewPacket.overdueDueSoon.overdueCount >= 1);
 assert(aiReviewPacket.overdueDueSoon.dueSoonCount >= 1);
 assert.equal(aiReviewPacket.quickWins.items[0]?.stableId, "todo:todo-3");
+const aiReviewProjectDeadline = aiReviewPacket.overdueDueSoon.items.find(
+  (item) => item.stableId === "deadline:deadline-1"
+);
+assert.equal(aiReviewProjectDeadline?.linkedEntityKind, "project");
+assert.equal(aiReviewProjectDeadline?.linkedEntityId, "project-1");
 assert.equal(aiReviewPacket.recentCloseoutChanges.completedTodayCount, 0);
 assert.equal(aiReviewPacket.serviceHealth.storage?.warningCount, 1);
 assert.equal(aiReviewPacket.serviceHealth.email.latestSyncAt, "2026-04-28T10:00:00.000Z");
@@ -1075,7 +1080,7 @@ const aiReviewDuplicatePresentationPacket = buildAIReviewContextPacket({
         id: "deadline-duplicate",
         entityKind: "todo",
         entityId: "todo-3",
-        title: "Send short Stacy follow-up",
+        title: "Stacy follow-up deadline",
         dueAt: "2026-04-28T17:00:00.000Z",
       },
     ],
@@ -1106,7 +1111,7 @@ const aiReviewDuplicatePresentation = await buildAIReviewResponseWithOllama({
     text: JSON.stringify({
       schemaVersion: 1,
       mode: "reset",
-      priorityStableIds: ["deadline:deadline-duplicate", "todo:todo-3"],
+      priorityStableIds: ["todo:todo-3", "deadline:deadline-duplicate"],
       emphasis: "start_here",
     }),
   }),
@@ -1115,6 +1120,139 @@ assert.equal(aiReviewDuplicatePresentation.summarySource, "ollama");
 assert.equal(
   aiReviewDuplicatePresentation.message.indexOf("Send short Stacy follow-up"),
   aiReviewDuplicatePresentation.message.lastIndexOf("Send short Stacy follow-up")
+);
+assert.doesNotMatch(aiReviewDuplicatePresentation.message, /Stacy follow-up deadline/);
+
+const aiReviewLinkedProjectPresentationPacket = {
+  ...aiReviewPacket,
+  overdueDueSoon: {
+    ...aiReviewPacket.overdueDueSoon,
+    items: [
+      aiReviewPacket.staleProjects.items[0],
+      aiReviewPacket.overdueDueSoon.items.find((item) => item.stableId === "deadline:deadline-1"),
+    ].filter((item): item is NonNullable<typeof item> => Boolean(item)),
+  },
+};
+
+const aiReviewLinkedProjectPresentation = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: aiReviewLinkedProjectPresentationPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: ["project:project-1", "deadline:deadline-1"],
+      emphasis: "start_here",
+    }),
+  }),
+});
+assert.equal(aiReviewLinkedProjectPresentation.summarySource, "ollama");
+assert.match(aiReviewLinkedProjectPresentation.message, /Powerless Sourcebook/);
+assert.doesNotMatch(aiReviewLinkedProjectPresentation.message, /Finish sourcebook outline/);
+
+const aiReviewMissionParentItem = {
+  ...aiReviewPacket.staleProjects.items[0],
+  stableId: "mission:mission-1",
+  entityKind: "mission" as const,
+  entityId: "mission-1",
+  title: "Origins Mission",
+  projectId: null,
+  projectTitle: null,
+  missionId: "mission-1",
+  missionTitle: "Origins Mission",
+};
+const aiReviewMissionDeadlineItem = {
+  ...aiReviewPacket.overdueDueSoon.items.find((item) => item.stableId === "deadline:deadline-1")!,
+  stableId: "deadline:mission-deadline-1",
+  entityId: "mission-deadline-1",
+  title: "Mission launch deadline",
+  projectId: null,
+  projectTitle: null,
+  missionId: "mission-1",
+  missionTitle: "Origins Mission",
+  linkedEntityKind: "mission" as const,
+  linkedEntityId: "mission-1",
+};
+const aiReviewLinkedMissionPresentation = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: {
+    ...aiReviewPacket,
+    overdueDueSoon: {
+      ...aiReviewPacket.overdueDueSoon,
+      items: [aiReviewMissionParentItem, aiReviewMissionDeadlineItem],
+    },
+  },
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: ["mission:mission-1", "deadline:mission-deadline-1"],
+      emphasis: "start_here",
+    }),
+  }),
+});
+assert.equal(aiReviewLinkedMissionPresentation.summarySource, "ollama");
+assert.match(aiReviewLinkedMissionPresentation.message, /Origins Mission/);
+assert.doesNotMatch(aiReviewLinkedMissionPresentation.message, /Mission launch deadline/);
+
+const aiReviewStandaloneDeadlineItem = {
+  ...aiReviewPacket.overdueDueSoon.items.find((item) => item.stableId === "deadline:deadline-1")!,
+  stableId: "deadline:standalone-duplicate-title",
+  entityId: "standalone-duplicate-title",
+  title: "Send short Stacy follow-up",
+  projectId: null,
+  projectTitle: null,
+  missionId: null,
+  missionTitle: null,
+  linkedEntityKind: "standalone" as const,
+  linkedEntityId: null,
+};
+const aiReviewStandaloneDeadlinePresentation = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: {
+    ...aiReviewPacket,
+    overdueDueSoon: {
+      ...aiReviewPacket.overdueDueSoon,
+      items: [aiReviewStandaloneDeadlineItem],
+    },
+  },
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: ["deadline:standalone-duplicate-title", "todo:todo-3"],
+      emphasis: "start_here",
+    }),
+  }),
+});
+assert.equal(aiReviewStandaloneDeadlinePresentation.summarySource, "ollama");
+assert.notEqual(
+  aiReviewStandaloneDeadlinePresentation.message.indexOf("Send short Stacy follow-up"),
+  aiReviewStandaloneDeadlinePresentation.message.lastIndexOf("Send short Stacy follow-up")
 );
 
 const aiReviewIpcResult = toAssistantAIReviewGenerateResult(aiReviewOllamaSuccess);

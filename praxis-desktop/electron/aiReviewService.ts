@@ -323,18 +323,22 @@ type RenderableAIReviewItem = {
   presentationKeys: string[];
 };
 
-const normalizePresentationText = (value: string | null | undefined) =>
-  (value ?? "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
+const sourcePresentationKey = (entityKind: string | null | undefined, entityId: string | null | undefined) =>
+  entityKind && entityKind !== "standalone" && entityId ? `source:${entityKind}:${entityId}` : null;
 
-const workPresentationKeys = (item: AIReviewWorkItem) => [
-  `stable:${item.stableId}`,
-  [
-    "work",
-    normalizePresentationText(item.title),
-    normalizePresentationText(item.projectId ?? item.projectTitle),
-    normalizePresentationText(item.missionId ?? item.missionTitle),
-  ].join("|"),
-];
+const workPresentationKeys = (item: AIReviewWorkItem) => {
+  const keys = [`stable:${item.stableId}`];
+  const linkedSourceKey = sourcePresentationKey(item.linkedEntityKind, item.linkedEntityId);
+  const ownSourceKey = sourcePresentationKey(item.entityKind, item.entityId);
+
+  if (linkedSourceKey) {
+    keys.push(linkedSourceKey);
+  } else if (ownSourceKey) {
+    keys.push(ownSourceKey);
+  }
+
+  return keys;
+};
 
 const uniqueWorkItemsForPresentation = (
   items: AIReviewWorkItem[],
