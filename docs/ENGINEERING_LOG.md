@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - Structured AI Review Talk QA
+
+### Validated
+
+- Ran live Electron Talk UI QA against checkpoint `f5dbc9f Structure local AI review output`.
+- Confirmed AI Settings are saved as `qwen2.5:0.5b-instruct` with `prefer_local`.
+- Confirmed the Settings probe reports `Saved Ollama model found: qwen2.5:0.5b-instruct.`
+- Tested `I'm overwhelmed, reset me`, `Give me a few wins`, `What am I forgetting?`, `What's about to bite me?`, and `What projects are stale?` through the actual Talk controls.
+- Confirmed reset, wins, forgetting, and risk show `Ollama / Model summary` with exact packet titles, no invented facts, no internal mode leaks, and the no-write guardrail.
+- Confirmed stale-project review uses deterministic fallback when the packet has no stale project IDs to rank.
+- Confirmed the work snapshot before and after QA matched exactly.
+- Confirmed desktop and narrow Talk layouts show no visible Talk overflow and keep controls visible.
+
+### Still Open
+
+- Minor copy polish remains: several modes use the generic heading `Recommended starting point`, and reset/risk can show both a todo and its deadline for the same underlying item.
+- Stale-project empty-state behavior remains safe as fallback; if product wants an Ollama-labeled empty-state response, add an explicit synthetic empty-state selectable item rather than asking the model to invent one.
+
+### Verification
+
+- `npm run build:app` passes.
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm test` passes.
+
 ## 2026-04-30 - Structured AI Review Model Output
 
 ### Built
@@ -20,7 +45,7 @@
 
 ### Still Open
 
-- Actual Talk UI QA should rerun against the structured JSON-mode contract to verify visible model/fallback states and layout.
+- Actual Talk UI QA passed in the follow-up structured AI Review Talk QA entry.
 - Stale-project empty-state behavior is safe as fallback; if product wants an Ollama-labeled empty-state response, add an explicit synthetic empty-state selectable item rather than asking the model to invent one.
 
 ### Verification
