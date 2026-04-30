@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - Live AI Review Talk Fallback QA
+
+### Validated
+
+- Ran live Electron QA for AI Review in Talk with no code edits.
+- Confirmed AI runtime `ollama`, no saved model, reliance policy `prefer_local`, and Ollama probe status `no_model_selected`.
+- Tested `I'm overwhelmed, reset me`.
+- Tested `Give me a few wins`.
+- Tested `What am I forgetting?`.
+- Tested `What's about to bite me?`.
+- Tested `What projects are stale?`.
+- Confirmed all prompts returned deterministic fallback with visible fallback state and the no-write guardrail.
+- Confirmed work snapshot before and after matched; no work records were mutated.
+- Confirmed desktop and narrow Talk overflow checks passed.
+
+### Still Open
+
+- Model-generated AI Review path still needs live QA after a saved Ollama model is configured.
+- The write boundary remains read-only: AI Review may explain and suggest, but task graph writes still require Review Inbox, staged drafts, or explicit confirmation.
+
+### Verification
+
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-30 - Async AI Review IPC And Talk Wiring
 
 ### Built
