@@ -1,5 +1,34 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - AI Review Routed Into Talk And Ollama Probe
+
+### Built
+
+- Polished the AI Settings panel so it distinguishes saved state from draft edits.
+- Added an unsaved-changes badge and disabled save behavior when the AI model name and reliance policy are unchanged.
+- Added local Ollama model availability probing against `127.0.0.1:11434/api/tags`.
+- Added timeout, unavailable, missing, available, and no-model availability states without activating API secrets or provider paths.
+- Exposed packet-backed AI Review responses through assistant routing with a `route.aiReview` payload.
+- Added deterministic read-only fallback text in `route.message` for AI review routes.
+- Routed reset, wins, forgetting, risk, and stale-project prompts through the AI review payload while keeping person/project lookup on the person lookup path.
+- Wired the Talk UI to consume `route.aiReview` and display packet-backed AI review answers.
+- Rendered multi-line AI review responses correctly.
+- Suppressed the local preview when a packet-backed answer is current.
+- Kept the no-write guardrail visible in the Talk review surface.
+
+### Still Open
+
+- Assistant routing does not yet use the Ollama probe result when selecting response behavior.
+- Real Ollama model invocation for AI review summaries remains open.
+- API provider secret storage and remote model routing remain open.
+- Slack and companion exposure remain open if not wired through the packet-backed review path.
+- The team still needs to decide whether model availability should be checked live, cached, or stored as explicit availability state.
+- The write boundary remains read-only: AI Review may explain and suggest, but task graph writes still require Review Inbox, staged drafts, or explicit confirmation.
+
+### Verification
+
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-28 - AI Settings Persistence And Review Context Packet
 
 ### Built

@@ -1102,6 +1102,10 @@ ol {
   padding-top: 9px;
 }
 
+.assistant-review-preview-note {
+  margin: 0 !important;
+}
+
 .praxis-reply,
 .user-reply {
   width: min(92%, 360px);
@@ -1137,6 +1141,10 @@ ol {
   margin: 0;
   color: var(--text);
   font-size: 0.86rem;
+}
+
+.assistant-reply-text {
+  white-space: pre-line;
 }
 
 .assistant-input-footer {

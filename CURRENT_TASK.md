@@ -28,28 +28,30 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - Windows native module packaging is fixed by enabling Electron Builder native dependency rebuilds and unpacking `better-sqlite3` native `.node` files.
 - Private ARM64 tester handoff is documented with artifact path, SHA-256, unsigned/private-only warning, expected install/reconnect/close/uninstall behavior, known empty-folder uninstall debt, and user-data safety notes.
 - Uninstall still leaves an empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory; this is accepted as low-priority release debt for private validation and tracked in `docs/TECH_DEBT.md`.
-- AI Task Review first slice is implemented across routing, Settings planning, and the Talk/dashboard UX: read-only reset/wins/forgetting/risk/stale routes exist, the Settings app has an AI policy tab, and the Talk panel shows a non-writing Assistant Review surface.
+- AI Task Review route/service plumbing now produces packet-backed read-only review responses for reset/wins/forgetting/risk/stale prompts, and the Talk UI consumes those responses while preserving the no-write guardrail.
+- AI Settings now persists local model/policy drafts and can probe local Ollama model availability, but assistant routing does not yet use probe results.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Complete AI Task Review Context Packet And Model Routing
+### 1. Complete AI Review Model Invocation And Routing Policy
 
 **GOAL**
 
-Turn the first AI Task Review UX/routing slice into the full context-packet and model-assisted review loop. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
+Turn the packet-backed deterministic AI Review loop into model-assisted review without weakening the local fallback or write boundaries. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
 
 **DIRECTION**
 
-- Natural language remains the interface. The first read-only review routes exist for reset, wins, forgetting, risk, stale projects, and person/project lookup.
-- Next, PRAXIS should build a factual context packet before involving a model.
-- The context packet should be assembled from the work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, daily brief/closeout summaries, and service health.
+- Natural language remains the interface. Packet-backed read-only review routes exist for reset, wins, forgetting, risk, and stale projects; person/project lookup remains a lookup route.
+- PRAXIS now builds a factual context packet before involving a model.
+- The context packet is assembled from the work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, daily brief/closeout summaries, and service health.
 - The LLM summarizes, prioritizes, explains tradeoffs, and suggests next moves.
 - Rule-based ranking remains the safety net and should still produce deterministic fallback output when a model is unavailable or uncertain.
 - The LLM must not silently mutate the task graph.
 - Writes must go through Review Inbox candidates, staged drafts, or explicit confirmation commands.
 - Model execution should default local-first through Ollama when available.
-- Settings should eventually allow a configurable local model plus optional API provider settings.
+- Settings now supports a configurable local model and local availability probing; routing still needs to decide whether probe results are live, cached, or stored as explicit state.
+- Optional API provider settings and encrypted provider secrets remain future work.
 - The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
 
 **FILES**
@@ -61,10 +63,11 @@ Turn the first AI Task Review UX/routing slice into the full context-packet and 
 
 **DONE WHEN**
 
-- The implementation plan defines the context packet shape, source list, model policy, fallback behavior, and write boundary.
+- The implementation wires real Ollama invocation for AI review summaries without making the model the source of truth.
+- Routing behavior accounts for unavailable, missing, available, no-model, and timeout probe states.
+- API provider fallback remains disabled until secret storage and policy are implemented.
 - AI Task Review appears as the next core roadmap track before Rainmeter/background polish.
-- The first read-only UX/routing/settings slice remains intact.
-- The next code task can implement the packet builder and model route without revisiting the product decision.
+- Packet-backed read-only UX/routing/settings behavior remains intact.
 
 ### 2. Plan V1.1 Persistent Presence After AI Review
 

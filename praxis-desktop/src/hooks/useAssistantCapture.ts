@@ -64,6 +64,7 @@ export function useAssistantCapture({
   );
   const [showAppointmentReport, setShowAppointmentReport] = useState(false);
   const [assistantReply, setAssistantReply] = useState("");
+  const [assistantReplyIsAiReview, setAssistantReplyIsAiReview] = useState(false);
   const [captureText, setCaptureText] = useState("");
   const [captureStatus, setCaptureStatus] = useState("Try: Doctor appointment tomorrow at 9.");
   const [pendingCapture, setPendingCapture] = useState<CaptureResult | null>(null);
@@ -89,6 +90,7 @@ export function useAssistantCapture({
     const focusFollowUp = answerFocusReportFollowUp(captureText, focusReport);
     if (focusFollowUp.matched) {
       setAssistantReply(focusFollowUp.message);
+      setAssistantReplyIsAiReview(false);
       setCaptureStatus(focusFollowUp.message);
       setShowStatusReport(true);
       setShowFocusDetails(true);
@@ -116,6 +118,7 @@ export function useAssistantCapture({
       setAppointmentReport,
       setShowAppointmentReport,
       setAssistantReply,
+      setAssistantReplyIsAiReview,
       setCaptureText,
       setCaptureStatus,
       setPendingCapture,
@@ -132,6 +135,7 @@ export function useAssistantCapture({
     }
 
     const result = await window.praxis.capture.naturalLanguage({ text: captureText, mode: "preview" });
+    setAssistantReplyIsAiReview(false);
     setCaptureStatus(result.message);
     setPendingCapture(result.candidate.intent !== "unresolved" ? result : null);
     setCaptureDraft(draftFromResult(result));
@@ -174,6 +178,7 @@ export function useAssistantCapture({
     appointmentReport,
     showAppointmentReport,
     assistantReply,
+    assistantReplyIsAiReview,
     captureText,
     captureStatus,
     pendingCapture,

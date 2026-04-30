@@ -367,6 +367,7 @@ export default function App() {
     appointmentReport,
     showAppointmentReport,
     assistantReply,
+    assistantReplyIsAiReview,
     captureText,
     captureStatus,
     pendingConfirmationOptions,
@@ -1008,6 +1009,7 @@ export default function App() {
         captureText={captureText}
         captureStatus={captureStatus}
         assistantReply={assistantReply}
+        assistantReplyIsAiReview={assistantReplyIsAiReview}
         pendingConfirmationOptions={pendingConfirmationOptions}
         captureDraft={captureDraft}
         missionForm={missionForm}

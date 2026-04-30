@@ -1,50 +1,40 @@
 import {
   DEFAULT_AI_SETTINGS,
   normalizeAiSettings,
-  type AiReliancePolicy,
   type AiSettings,
 } from "../shared/settingsModel";
 import type {
   AIReviewContextPacket,
   AIReviewWorkItem,
 } from "../shared/aiReviewContext";
-import type { AssistantReviewRouteKind } from "../shared/assistantRouter";
-
-export type AIReviewMode =
-  | "quick_wins"
-  | "reset"
-  | "forgetting"
-  | "risk_review"
-  | "stale_projects";
-
-export type AIReviewModelPlan = {
-  selectedProvider: "deterministic_fallback";
-  plannedProvider: "none" | "ollama" | "api";
-  localRuntime: AiSettings["localRuntime"];
-  localModelName: string | null;
-  reliancePolicy: AiReliancePolicy;
-  externalApiAllowed: boolean;
-  externalApiRequired: false;
-  reason: string;
-};
+import type {
+  AssistantAIReviewMode,
+  AssistantAIReviewModelPlan,
+  AssistantReviewRouteKind,
+} from "../shared/assistantRouter";
 
 export type AIReviewResponse = {
-  mode: AIReviewMode;
+  mode: AssistantAIReviewMode;
   message: string;
   packet: AIReviewContextPacket;
-  modelPlan: AIReviewModelPlan;
+  modelPlan: AssistantAIReviewModelPlan;
   writeBoundary: "read_only";
   suggestedStableIds: string[];
 };
 
 export type BuildAIReviewResponseInput = {
-  mode: AIReviewMode;
+  mode: AssistantAIReviewMode;
   packet: AIReviewContextPacket;
   settings?: Partial<AiSettings>;
   providerSecretsAvailable?: boolean;
 };
 
-const modeHeadlines: Record<AIReviewMode, string> = {
+export type BuildLocalAIReviewResponseSources = {
+  buildPacket: () => AIReviewContextPacket;
+  getSettings: () => AiSettings;
+};
+
+const modeHeadlines: Record<AssistantAIReviewMode, string> = {
   quick_wins: "A few safe wins from the current work graph:",
   reset: "Reset from the current work graph:",
   forgetting: "Easy-to-miss pressure from the current work graph:",
@@ -56,12 +46,9 @@ const modelConfigured = (settings: AiSettings) => Boolean(settings.localModelNam
 
 export const aiReviewModeFromRouteKind = (
   kind: AssistantReviewRouteKind
-): AIReviewMode | null => {
+): AssistantAIReviewMode | null => {
   if (kind === "person_project_lookup") {
     return null;
-  }
-  if (kind === "reset") {
-    return "reset";
   }
   return kind;
 };
@@ -69,7 +56,7 @@ export const aiReviewModeFromRouteKind = (
 export const planAIReviewModelRoute = (
   input: Partial<AiSettings> = {},
   providerSecretsAvailable = false
-): AIReviewModelPlan => {
+): AssistantAIReviewModelPlan => {
   const settings = normalizeAiSettings(input, DEFAULT_AI_SETTINGS);
   const externalApiAllowed =
     settings.reliancePolicy === "balanced" ||
@@ -187,7 +174,7 @@ const section = (title: string, lines: string[]) => [
   ...lines,
 ].join("\n");
 
-const modeSections = (mode: AIReviewMode, packet: AIReviewContextPacket) => {
+const modeSections = (mode: AssistantAIReviewMode, packet: AIReviewContextPacket) => {
   if (mode === "quick_wins") {
     return [section("Quick wins", quickWinLines(packet))];
   }
@@ -220,7 +207,7 @@ const modeSections = (mode: AIReviewMode, packet: AIReviewContextPacket) => {
   ];
 };
 
-const suggestedStableIds = (mode: AIReviewMode, packet: AIReviewContextPacket) => {
+const suggestedStableIds = (mode: AssistantAIReviewMode, packet: AIReviewContextPacket) => {
   const candidates =
     mode === "quick_wins"
       ? packet.quickWins.items
@@ -238,7 +225,7 @@ const suggestedStableIds = (mode: AIReviewMode, packet: AIReviewContextPacket) =
 };
 
 export const buildAIReviewFallbackMessage = (
-  mode: AIReviewMode,
+  mode: AssistantAIReviewMode,
   packet: AIReviewContextPacket
 ) =>
   [
@@ -262,17 +249,26 @@ export const buildAIReviewResponse = ({
   suggestedStableIds: suggestedStableIds(mode, packet),
 });
 
+export const buildLocalAIReviewResponseFromSources = (
+  mode: AssistantAIReviewMode,
+  sources: BuildLocalAIReviewResponseSources
+): AIReviewResponse =>
+  buildAIReviewResponse({
+    mode,
+    packet: sources.buildPacket(),
+    settings: sources.getSettings(),
+  });
+
 export const buildLocalAIReviewResponse = async (
-  mode: AIReviewMode
+  mode: AssistantAIReviewMode
 ): Promise<AIReviewResponse> => {
   const [{ buildLocalAIReviewContextPacket }, { getAiSettings }] = await Promise.all([
     import("./aiReviewContext"),
     import("./settingsRepository"),
   ]);
 
-  return buildAIReviewResponse({
-    mode,
-    packet: buildLocalAIReviewContextPacket(),
-    settings: getAiSettings(),
+  return buildLocalAIReviewResponseFromSources(mode, {
+    buildPacket: buildLocalAIReviewContextPacket,
+    getSettings: getAiSettings,
   });
 };

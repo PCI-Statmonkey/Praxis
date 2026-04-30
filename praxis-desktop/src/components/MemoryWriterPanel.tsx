@@ -50,6 +50,7 @@ type MemoryWriterPanelProps = {
   captureText: string;
   captureStatus: string;
   assistantReply: string;
+  assistantReplyIsAiReview: boolean;
   pendingConfirmationOptions: Array<Exclude<CaptureIntent, "unresolved">>;
   captureDraft: CaptureDraft | null;
   missionForm: CreateMissionInput;
@@ -107,6 +108,7 @@ export function MemoryWriterPanel({
   captureText,
   captureStatus,
   assistantReply,
+  assistantReplyIsAiReview,
   pendingConfirmationOptions,
   captureDraft,
   missionForm,
@@ -196,7 +198,7 @@ export function MemoryWriterPanel({
         {assistantReply ? (
           <article className="praxis-reply">
             <h4>Praxis</h4>
-            <p>{assistantReply}</p>
+            <p className="assistant-reply-text">{assistantReply}</p>
           </article>
         ) : (
           <article className="praxis-reply">
@@ -209,7 +211,11 @@ export function MemoryWriterPanel({
         </article>
       </div>
 
-      <AssistantReviewSurface snapshot={snapshot} setCaptureText={setCaptureText} />
+      <AssistantReviewSurface
+        snapshot={snapshot}
+        setCaptureText={setCaptureText}
+        suppressLocalPreview={assistantReplyIsAiReview && captureText.trim().length === 0}
+      />
 
       <form onSubmit={(event) => void captureNaturalLanguage(event)}>
         <textarea

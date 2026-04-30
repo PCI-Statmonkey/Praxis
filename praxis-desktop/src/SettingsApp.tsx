@@ -21,6 +21,7 @@ import { DEFAULT_AI_SETTINGS } from "../shared/settingsModel";
 import type {
   CalendarProvider,
   CreateCalendarConnectionInput,
+  OllamaModelAvailabilityResult,
   SettingsSnapshot,
   UpdateAiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
@@ -176,10 +177,6 @@ const emptyOutlookOAuthForm = (): UpdateOutlookOAuthSettingsInput => ({
   clearClientSecret: false,
 });
 
-type SettingsApiWithAi = typeof window.praxis.settings & {
-  updateAISettings: (input: UpdateAiSettingsInput) => Promise<SettingsSnapshot>;
-};
-
 const emptyPersonLinkForm = (): CreatePersonWorkLinkInput => ({
   personId: "",
   entityKind: "project",
@@ -263,6 +260,9 @@ export default function SettingsApp() {
     }));
   const [aiSettingsForm, setAiSettingsForm] =
     useState<UpdateAiSettingsInput>(() => DEFAULT_AI_SETTINGS);
+  const [ollamaProbeResult, setOllamaProbeResult] =
+    useState<OllamaModelAvailabilityResult | null>(null);
+  const [ollamaProbeChecking, setOllamaProbeChecking] = useState(false);
   const [calendarImportSource, setCalendarImportSource] =
     useState<CalendarImportSource>("manual_json");
   const [calendarImportText, setCalendarImportText] = useState(sampleCalendarImport);
@@ -788,16 +788,43 @@ export default function SettingsApp() {
 
   const updateAiSettings = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const nextSettings = await (window.praxis.settings as SettingsApiWithAi).updateAISettings(
-      aiSettingsForm
-    );
+    const nextSettings = await window.praxis.settings.updateAISettings(aiSettingsForm);
     setSettingsSnapshot(nextSettings);
     setAiSettingsForm(nextSettings.ai);
+    setOllamaProbeResult(null);
     setStatus(
       nextSettings.ai.localModelName
         ? `AI settings saved: Ollama model ${nextSettings.ai.localModelName}.`
         : "AI settings saved: no Ollama model selected."
     );
+  };
+
+  const checkOllamaModelAvailability = async () => {
+    const modelName = settingsSnapshot.ai.localModelName;
+
+    setOllamaProbeChecking(true);
+    setStatus(
+      modelName
+        ? `Checking Ollama for saved model ${modelName}...`
+        : "No saved Ollama model is selected."
+    );
+
+    try {
+      const result = await window.praxis.settings.checkOllamaModelAvailability({ modelName });
+      setOllamaProbeResult(result);
+      setStatus(result.message);
+    } catch {
+      setOllamaProbeResult({
+        localRuntime: "ollama",
+        status: "unavailable",
+        modelName,
+        installedModels: [],
+        message: "Ollama is unavailable at 127.0.0.1:11434.",
+      });
+      setStatus("Ollama is unavailable at 127.0.0.1:11434.");
+    } finally {
+      setOllamaProbeChecking(false);
+    }
   };
 
   const updateGoogleOAuthSettings = async (event: FormEvent<HTMLFormElement>) => {
@@ -1056,6 +1083,9 @@ export default function SettingsApp() {
             form={aiSettingsForm}
             setForm={setAiSettingsForm}
             updateAiSettings={updateAiSettings}
+            ollamaProbeResult={ollamaProbeResult}
+            ollamaProbeChecking={ollamaProbeChecking}
+            checkOllamaModelAvailability={checkOllamaModelAvailability}
           />
         ) : null}
 

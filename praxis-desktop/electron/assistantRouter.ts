@@ -6,7 +6,10 @@ import type {
   AssistantRouteRequest,
   AssistantRouteResult,
 } from "../shared/assistantRouter";
-import { classifyAssistantReviewRoute } from "../shared/assistantRouter";
+import {
+  buildAssistantAIReviewRouteResult,
+  classifyAssistantReviewRoute,
+} from "../shared/assistantRouter";
 import { skillReferencesForAssistantIntent } from "../shared/assistantSkillRouting";
 import type {
   DeadlineRecord,
@@ -21,6 +24,12 @@ import {
 } from "../shared/waitingOnAssignment";
 import { getWorkSnapshot } from "./workRepository";
 import { getSkillRegistrySnapshot } from "./skillRegistry";
+import {
+  aiReviewModeFromRouteKind,
+  buildLocalAIReviewResponseFromSources,
+} from "./aiReviewService";
+import { buildLocalAIReviewContextPacket } from "./aiReviewContext";
+import { getAiSettings } from "./settingsRepository";
 
 const WEEKDAYS = [
   "sunday",
@@ -509,13 +518,6 @@ const routeAssistantRequestCore = (request: AssistantRouteRequest): AssistantRou
 
   const reviewRoute = classifyAssistantReviewRoute(text);
   if (reviewRoute) {
-    if (reviewRoute.intent === "daily_report") {
-      return {
-        intent: "daily_report",
-        confidence: reviewRoute.confidence,
-        message: reviewRoute.message,
-      };
-    }
     if (reviewRoute.intent === "person_lookup") {
       return {
         intent: "person_lookup",
@@ -523,11 +525,16 @@ const routeAssistantRequestCore = (request: AssistantRouteRequest): AssistantRou
         message: reviewRoute.message,
       };
     }
-    return {
-      intent: "work_lookup",
-      confidence: reviewRoute.confidence,
-      message: reviewRoute.message,
-    };
+    const mode = aiReviewModeFromRouteKind(reviewRoute.kind);
+    if (mode) {
+      return buildAssistantAIReviewRouteResult(
+        reviewRoute,
+        buildLocalAIReviewResponseFromSources(mode, {
+          buildPacket: buildLocalAIReviewContextPacket,
+          getSettings: getAiSettings,
+        })
+      );
+    }
   }
 
   if (isPersonLookupRequest(text)) {

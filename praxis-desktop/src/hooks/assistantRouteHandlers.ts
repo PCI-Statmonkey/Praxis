@@ -35,6 +35,7 @@ type AssistantRouteHandlerOptions = {
   setAppointmentReport: Dispatch<SetStateAction<AppointmentReport>>;
   setShowAppointmentReport: Dispatch<SetStateAction<boolean>>;
   setAssistantReply: Dispatch<SetStateAction<string>>;
+  setAssistantReplyIsAiReview: Dispatch<SetStateAction<boolean>>;
   setCaptureText: Dispatch<SetStateAction<string>>;
   setCaptureStatus: Dispatch<SetStateAction<string>>;
   setPendingCapture: Dispatch<SetStateAction<CaptureResult | null>>;
@@ -67,6 +68,13 @@ const clearPendingCaptureAndText = (
   clearPendingCapture(options);
   options.setCaptureText("");
 };
+
+const AI_REVIEW_READ_ONLY_GUARDRAIL = "No work has been changed. AI Task Review is read-only.";
+
+const withAiReviewGuardrail = (message: string) =>
+  message.toLowerCase().includes("no work has been changed")
+    ? message
+    : `${message}\n\n${AI_REVIEW_READ_ONLY_GUARDRAIL}`;
 
 const resolveContextAction = async (captureText: string, focusReport: FocusReport | null) => {
   const surfaces = assistantContextActionSurfaces({ includeFocusReport: Boolean(focusReport) });
@@ -225,6 +233,7 @@ export const handleAssistantRoute = async (options: AssistantRouteHandlerOptions
     setAppointmentReport,
     setShowAppointmentReport,
     setAssistantReply,
+    setAssistantReplyIsAiReview,
     setCaptureText,
     setCaptureStatus,
     setPendingCapture,
@@ -235,6 +244,18 @@ export const handleAssistantRoute = async (options: AssistantRouteHandlerOptions
     assignWaitingOn,
     todayTimelineRef,
   } = options;
+
+  if (route.aiReview) {
+    const answer = withAiReviewGuardrail(route.message);
+    setActivePanel("morningPlan");
+    setAssistantReply(answer);
+    setAssistantReplyIsAiReview(true);
+    setCaptureStatus(AI_REVIEW_READ_ONLY_GUARDRAIL);
+    clearPendingCaptureAndText({ setPendingCapture, setCaptureDraft, setCaptureText });
+    return true;
+  }
+
+  setAssistantReplyIsAiReview(false);
 
   if (route.intent === "focus_report") {
     const report = await window.praxis.brief.getFocusReport({

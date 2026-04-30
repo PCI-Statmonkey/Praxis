@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import type {
   AiReliancePolicy,
   AiSettings,
+  OllamaModelAvailabilityResult,
   UpdateAiSettingsInput,
 } from "../../shared/settingsModel";
 
@@ -42,19 +43,61 @@ type AiSettingsPanelProps = {
   form: UpdateAiSettingsInput;
   setForm: (form: UpdateAiSettingsInput) => void;
   updateAiSettings: (event: FormEvent<HTMLFormElement>) => Promise<void>;
+  ollamaProbeResult: OllamaModelAvailabilityResult | null;
+  ollamaProbeChecking: boolean;
+  checkOllamaModelAvailability: () => Promise<void>;
 };
 
 const policyLabel = (policyId: AiReliancePolicy) =>
   reliancePolicies.find((policy) => policy.id === policyId)?.label ?? policyId;
+
+const normalizeDraftModelName = (value: string | null | undefined) => {
+  const trimmed = typeof value === "string" ? value.trim() : "";
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 export function AiSettingsPanel({
   settings,
   form,
   setForm,
   updateAiSettings,
+  ollamaProbeResult,
+  ollamaProbeChecking,
+  checkOllamaModelAvailability,
 }: AiSettingsPanelProps) {
   const selectedPolicy = form.reliancePolicy ?? settings.reliancePolicy;
   const localModelName = form.localModelName ?? "";
+  const draftModelName = normalizeDraftModelName(localModelName);
+  const savedModelName = settings.localModelName ?? null;
+  const modelChanged = draftModelName !== savedModelName;
+  const policyChanged = selectedPolicy !== settings.reliancePolicy;
+  const hasUnsavedChanges = modelChanged || policyChanged;
+  const modelStatusLabel = draftModelName
+    ? modelChanged
+      ? `draft: ${draftModelName}`
+      : `saved: ${draftModelName}`
+    : modelChanged
+      ? "draft: no model selected"
+      : "saved: no model selected";
+  const probeStatusLabel = ollamaProbeChecking
+    ? "checking"
+    : !savedModelName
+      ? "no model selected"
+      : ollamaProbeResult?.modelName !== savedModelName
+        ? "not checked"
+        : ollamaProbeResult.status === "available"
+          ? "saved model found"
+          : ollamaProbeResult.status === "missing"
+            ? "saved model not found"
+            : ollamaProbeResult.status === "unavailable"
+              ? "Ollama unavailable"
+              : "no model selected";
+  const installedModelSummary =
+    ollamaProbeResult &&
+    ollamaProbeResult.modelName === savedModelName &&
+    ollamaProbeResult.installedModels.length > 0
+      ? `Installed tags: ${ollamaProbeResult.installedModels.join(", ")}.`
+      : null;
 
   return (
     <>
@@ -70,9 +113,12 @@ export function AiSettingsPanel({
           </div>
           <div className="setup-status-row">
             <span className="badge">runtime: Ollama</span>
-            <span className="badge">policy: {policyLabel(settings.reliancePolicy)}</span>
+            <span className="badge">saved policy: {policyLabel(settings.reliancePolicy)}</span>
             <span className="badge">
-              model: {settings.localModelName ?? "not selected"}
+              saved model: {settings.localModelName ?? "not selected"}
+            </span>
+            <span className={hasUnsavedChanges ? "badge urgent-badge" : "badge"}>
+              {hasUnsavedChanges ? "unsaved changes" : "saved"}
             </span>
             <span className="badge">API fallback: planned</span>
           </div>
@@ -105,10 +151,27 @@ export function AiSettingsPanel({
                   />
                 </label>
               </div>
+              <p className="setup-muted">
+                {modelStatusLabel}. Blank names are saved as no selected local model.
+              </p>
               <p className="brief-path">
                 Leave the model name blank to clear it. Open-weight candidates such as gpt-oss-20b
                 and gpt-oss-120b can be entered after installation. Praxis will not bundle model
                 weights.
+              </p>
+              <div className="settings-next-action-buttons">
+                <button
+                  type="button"
+                  disabled={ollamaProbeChecking}
+                  onClick={() => void checkOllamaModelAvailability()}
+                >
+                  Check Ollama Model Availability
+                </button>
+              </div>
+              <p className="brief-path">
+                Availability status: {probeStatusLabel}. This only checks the local Ollama runtime
+                for installed tags and does not change assistant routing.
+                {installedModelSummary ? ` ${installedModelSummary}` : ""}
               </p>
             </section>
 
@@ -136,6 +199,10 @@ export function AiSettingsPanel({
                 API keys must use encrypted secret storage, matching the existing OAuth secret
                 pattern. They are not stored in plain settings JSON.
               </p>
+              <p className="brief-path">
+                Provider selection and API key entry stay disabled until encrypted provider-secret
+                storage and routing policy are implemented.
+              </p>
             </section>
           </article>
 
@@ -144,6 +211,10 @@ export function AiSettingsPanel({
             <p className="setup-muted">
               Local-first modes keep normal assistant work on the machine and require clear
               escalation before API fallback.
+            </p>
+            <p className="brief-path">
+              Saved policy: {policyLabel(settings.reliancePolicy)}. Draft policy:{" "}
+              {policyLabel(selectedPolicy)}.
             </p>
             <div className="settings-field-grid">
               {reliancePolicies.map((policy) => (
@@ -168,7 +239,9 @@ export function AiSettingsPanel({
                 </label>
               ))}
             </div>
-            <button type="submit">Save AI Settings</button>
+            <button type="submit" disabled={!hasUnsavedChanges}>
+              {hasUnsavedChanges ? "Save AI Settings" : "AI Settings Saved"}
+            </button>
           </article>
         </form>
 

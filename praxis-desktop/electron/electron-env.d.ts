@@ -90,10 +90,13 @@ import type {
 } from "../shared/chatImport";
 import type {
   CalendarConnectionRecord,
+  CheckOllamaModelAvailabilityInput,
   CreateCalendarConnectionInput,
   DeleteCalendarConnectionInput,
   CreateEmailConnectionInput,
+  OllamaModelAvailabilityResult,
   SettingsSnapshot,
+  UpdateAiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateCalendarConnectionInput,
   UpdateEmailConnectionInput,
@@ -200,6 +203,10 @@ declare global {
         updateCalendarAutoSync: (
           input: UpdateCalendarAutoSyncSettingsInput
         ) => Promise<SettingsSnapshot>;
+        updateAISettings: (input: UpdateAiSettingsInput) => Promise<SettingsSnapshot>;
+        checkOllamaModelAvailability: (
+          input: CheckOllamaModelAvailabilityInput
+        ) => Promise<OllamaModelAvailabilityResult>;
         updateGoogleOAuth: (
           input: UpdateGoogleOAuthSettingsInput
         ) => Promise<SettingsSnapshot>;

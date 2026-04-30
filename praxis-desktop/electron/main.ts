@@ -43,6 +43,7 @@ import type {
   UpdateWorkStatusInput,
 } from '../shared/workModel'
 import type {
+  CheckOllamaModelAvailabilityInput,
   CreateCalendarConnectionInput,
   DeleteCalendarConnectionInput,
   CreateEmailConnectionInput,
@@ -102,6 +103,7 @@ import {
   updateOutlookOAuthSettings,
   updateSlackSettings,
 } from './settingsRepository'
+import { checkOllamaModelAvailability } from './ollamaProbe'
 import {
   acceptEmailSuggestion,
   archiveEmailSuggestion,
@@ -632,6 +634,11 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('settings:updateAISettings', async (_event, input: UpdateAiSettingsInput) =>
     updateAiSettings(input)
+  )
+  ipcMain.handle(
+    'settings:checkOllamaModelAvailability',
+    async (_event, input: CheckOllamaModelAvailabilityInput) =>
+      checkOllamaModelAvailability(input)
   )
   ipcMain.handle(
     'settings:updateGoogleOAuth',

@@ -1,3 +1,8 @@
+import type {
+  AiReliancePolicy,
+  AiSettings,
+} from "./settingsModel";
+
 export type AssistantRouteRequest = {
   text: string;
   surface?: import("./skillRegistry").PraxisSkillSurface;
@@ -17,6 +22,7 @@ export const formatAssistantChoiceReply = (choices: string[]) =>
 export type AssistantReviewRouteKind =
   | "quick_wins"
   | "reset"
+  | "forgetting"
   | "risk_review"
   | "stale_projects"
   | "person_project_lookup";
@@ -26,6 +32,31 @@ export type AssistantReviewRoute = {
   intent: "daily_report" | "person_lookup" | "work_lookup";
   confidence: number;
   message: string;
+};
+
+export type AssistantAIReviewMode =
+  | "quick_wins"
+  | "reset"
+  | "forgetting"
+  | "risk_review"
+  | "stale_projects";
+
+export type AssistantAIReviewModelPlan = {
+  selectedProvider: "deterministic_fallback";
+  plannedProvider: "none" | "ollama" | "api";
+  localRuntime: AiSettings["localRuntime"];
+  localModelName: string | null;
+  reliancePolicy: AiReliancePolicy;
+  externalApiAllowed: boolean;
+  externalApiRequired: false;
+  reason: string;
+};
+
+export type AssistantAIReviewRoutePayload = {
+  mode: AssistantAIReviewMode;
+  writeBoundary: "read_only";
+  suggestedStableIds: string[];
+  modelPlan: AssistantAIReviewModelPlan;
 };
 
 const normalizeReviewText = (value: string) =>
@@ -70,7 +101,7 @@ export const classifyAssistantReviewRoute = (text: string): AssistantReviewRoute
 
   if (/\b(forgetting|forgot|missed|missing)\b/.test(normalized)) {
     return {
-      kind: "reset",
+      kind: "forgetting",
       intent: "daily_report",
       confidence: 0.82,
       message: "Checking the daily status report for anything easy to miss.",
@@ -115,7 +146,11 @@ type AssistantRouteSkillContext = {
   skillReferences?: AssistantRouteSkillReference[];
 };
 
-export type AssistantRouteResult = AssistantRouteSkillContext & (
+type AssistantRouteAIReviewContext = {
+  aiReview?: AssistantAIReviewRoutePayload;
+};
+
+export type AssistantRouteResult = AssistantRouteSkillContext & AssistantRouteAIReviewContext & (
   | {
       intent: "focus_report";
       entityKind: "mission" | "project";
@@ -216,3 +251,24 @@ export type AssistantRouteResult = AssistantRouteSkillContext & (
       message: string;
     }
 );
+
+export const buildAssistantAIReviewRouteResult = (
+  reviewRoute: AssistantReviewRoute,
+  response: {
+    mode: AssistantAIReviewMode;
+    message: string;
+    writeBoundary: "read_only";
+    suggestedStableIds: string[];
+    modelPlan: AssistantAIReviewModelPlan;
+  }
+): AssistantRouteResult => ({
+  intent: reviewRoute.intent,
+  confidence: reviewRoute.confidence,
+  message: response.message,
+  aiReview: {
+    mode: response.mode,
+    writeBoundary: response.writeBoundary,
+    suggestedStableIds: response.suggestedStableIds,
+    modelPlan: response.modelPlan,
+  },
+});

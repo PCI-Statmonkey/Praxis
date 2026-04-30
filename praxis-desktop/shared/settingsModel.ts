@@ -159,6 +159,24 @@ export type UpdateAiSettingsInput = {
   reliancePolicy?: AiReliancePolicy;
 };
 
+export type CheckOllamaModelAvailabilityInput = {
+  modelName?: string | null;
+};
+
+export type OllamaModelAvailabilityStatus =
+  | "no_model_selected"
+  | "unavailable"
+  | "available"
+  | "missing";
+
+export type OllamaModelAvailabilityResult = {
+  localRuntime: AiLocalRuntime;
+  status: OllamaModelAvailabilityStatus;
+  modelName: string | null;
+  installedModels: string[];
+  message: string;
+};
+
 export const DEFAULT_AI_SETTINGS: AiSettings = {
   localRuntime: "ollama",
   localModelName: null,

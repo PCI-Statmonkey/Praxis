@@ -6,6 +6,7 @@ type ReviewMode = "reset" | "wins" | "forgetting" | "risk" | "stale";
 type AssistantReviewSurfaceProps = {
   snapshot: WorkSnapshot;
   setCaptureText: (value: string) => void;
+  suppressLocalPreview?: boolean;
 };
 
 const priorityRank: Record<WorkPriority, number> = {
@@ -78,7 +79,11 @@ const describeTodo = (todo: TodoRecord) => {
 const describeDeadline = (deadline: DeadlineRecord) =>
   `${deadline.title} (${deadline.priority}, due ${formatWhen(deadline.dueAt)})`;
 
-export function AssistantReviewSurface({ snapshot, setCaptureText }: AssistantReviewSurfaceProps) {
+export function AssistantReviewSurface({
+  snapshot,
+  setCaptureText,
+  suppressLocalPreview = false,
+}: AssistantReviewSurfaceProps) {
   const [mode, setMode] = useState<ReviewMode>("reset");
 
   const review = useMemo(() => {
@@ -183,18 +188,24 @@ export function AssistantReviewSurface({ snapshot, setCaptureText }: AssistantRe
           </button>
         ))}
       </div>
-      <article className="praxis-reply assistant-review-reply">
-        <h4>Praxis</h4>
-        <p>{promptByMode[mode]}</p>
-        <ol>
-          {activeLines.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ol>
-        <p className="assistant-review-guardrail">
-          No writes made. Creating or changing work still requires explicit confirmation or Review Inbox.
+      {suppressLocalPreview ? (
+        <p className="assistant-review-guardrail assistant-review-preview-note">
+          Packet-backed review is shown in Talk above. No work has been changed.
         </p>
-      </article>
+      ) : (
+        <article className="praxis-reply assistant-review-reply">
+          <h4>Praxis</h4>
+          <p>{promptByMode[mode]}</p>
+          <ol>
+            {activeLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ol>
+          <p className="assistant-review-guardrail">
+            No writes made. Creating or changing work still requires explicit confirmation or Review Inbox.
+          </p>
+        </article>
+      )}
     </section>
   );
 }

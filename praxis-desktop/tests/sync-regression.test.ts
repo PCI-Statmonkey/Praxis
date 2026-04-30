@@ -18,6 +18,10 @@ import {
   statusGuidance,
   syncLabel,
 } from "../shared/settingsModel";
+import {
+  isOllamaModelInstalled,
+  parseOllamaModelTags,
+} from "../electron/ollamaProbe";
 
 assert.equal(normalizeEmailSuggestionSubject("Re: FWD:  Project Plan  "), "Project Plan");
 
@@ -227,5 +231,21 @@ assert.deepEqual(
     reliancePolicy: "local_only",
   }
 );
+
+assert.deepEqual(
+  parseOllamaModelTags({
+    models: [
+      { name: "phi3:latest" },
+      { model: "gpt-oss-20b:latest" },
+      { name: "  " },
+      { name: "phi3:latest" },
+      null,
+    ],
+  }),
+  ["phi3:latest", "gpt-oss-20b:latest"]
+);
+assert.equal(isOllamaModelInstalled("phi3", ["phi3:latest"]), true);
+assert.equal(isOllamaModelInstalled("gpt-oss-20b:latest", ["gpt-oss-20b:latest"]), true);
+assert.equal(isOllamaModelInstalled("gpt-oss-120b", ["gpt-oss-20b:latest"]), false);
 
 console.log("sync import regression tests passed");

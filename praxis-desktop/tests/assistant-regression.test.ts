@@ -20,6 +20,7 @@ import {
 import { buildWorkItemActions } from "../shared/workLookupContext";
 import type { WorkSnapshot } from "../shared/workModel";
 import {
+  buildAssistantAIReviewRouteResult,
   classifyAssistantReviewRoute,
   formatAssistantChoiceReply,
   type AssistantReviewRoute,
@@ -328,7 +329,7 @@ const assertReviewRoute = (
 assertReviewRoute("Give me a few wins.", "daily_report", "quick_wins");
 assertReviewRoute("What can I knock out today?", "work_lookup", "quick_wins");
 assertReviewRoute("I'm overwhelmed, reset me.", "daily_report", "reset");
-assertReviewRoute("What am I forgetting?", "daily_report", "reset");
+assertReviewRoute("What am I forgetting?", "daily_report", "forgetting");
 assertReviewRoute("What's about to bite me?", "daily_report", "risk_review");
 assertReviewRoute("What projects are stale?", "daily_report", "stale_projects");
 assertReviewRoute("Hey, you have that project with Stacy.", "person_lookup", "person_project_lookup");
@@ -920,8 +921,55 @@ const aiReviewStale = buildAIReviewResponse({
 assert.match(aiReviewStale.message, /Stale project pressure/);
 assert.match(aiReviewStale.message, /Powerless Sourcebook/);
 
+const assertAIReviewFallbackRoute = (
+  text: string,
+  expectedMode: NonNullable<ReturnType<typeof aiReviewModeFromRouteKind>>,
+  expectedMessage: RegExp
+) => {
+  const reviewRoute = classifyAssistantReviewRoute(text);
+  assert.notEqual(reviewRoute, null, `${text} should classify as an AI review route`);
+  const mode = reviewRoute ? aiReviewModeFromRouteKind(reviewRoute.kind) : null;
+  assert.equal(mode, expectedMode);
+  assert.notEqual(mode, null, `${text} should map to an AI review mode`);
+  if (!reviewRoute || !mode) {
+    return;
+  }
+
+  const response = buildAIReviewResponse({
+    mode,
+    packet: aiReviewPacket,
+    settings: {
+      localRuntime: "ollama",
+      localModelName: null,
+      reliancePolicy: "local_only",
+    },
+  });
+  const routeResult = buildAssistantAIReviewRouteResult(reviewRoute, response);
+  assert.equal(routeResult.aiReview?.mode, expectedMode);
+  assert.equal(routeResult.aiReview?.writeBoundary, "read_only");
+  assert.equal(routeResult.aiReview?.modelPlan.selectedProvider, "deterministic_fallback");
+  assert.equal(routeResult.aiReview?.modelPlan.externalApiAllowed, false);
+  assert.match(routeResult.message, expectedMessage);
+  assert.match(routeResult.message, /No work has been changed/);
+};
+
+assertAIReviewFallbackRoute("I'm overwhelmed, reset me.", "reset", /Reset from the current work graph/);
+assertAIReviewFallbackRoute("Give me a few wins.", "quick_wins", /A few safe wins/);
+assertAIReviewFallbackRoute("What am I forgetting?", "forgetting", /Easy-to-miss pressure/);
+assertAIReviewFallbackRoute("What's about to bite me?", "risk_review", /Near-term pressure/);
+assertAIReviewFallbackRoute("What projects are stale?", "stale_projects", /Stale project pressure/);
+
+const personProjectReviewRoute = classifyAssistantReviewRoute("Hey, you have that project with Stacy.");
+assert.equal(personProjectReviewRoute?.intent, "person_lookup");
+assert.equal(personProjectReviewRoute?.kind, "person_project_lookup");
+assert.equal(
+  personProjectReviewRoute ? aiReviewModeFromRouteKind(personProjectReviewRoute.kind) : "missing",
+  null
+);
+
 assert.equal(aiReviewModeFromRouteKind("quick_wins"), "quick_wins");
 assert.equal(aiReviewModeFromRouteKind("reset"), "reset");
+assert.equal(aiReviewModeFromRouteKind("forgetting"), "forgetting");
 assert.equal(aiReviewModeFromRouteKind("risk_review"), "risk_review");
 assert.equal(aiReviewModeFromRouteKind("stale_projects"), "stale_projects");
 assert.equal(aiReviewModeFromRouteKind("person_project_lookup"), null);

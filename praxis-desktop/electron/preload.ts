@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld('praxis', {
     updateCalendarAutoSync: (input: unknown) =>
       ipcRenderer.invoke('settings:updateCalendarAutoSync', input),
     updateAISettings: (input: unknown) => ipcRenderer.invoke('settings:updateAISettings', input),
+    checkOllamaModelAvailability: (input: unknown) =>
+      ipcRenderer.invoke('settings:checkOllamaModelAvailability', input),
     updateGoogleOAuth: (input: unknown) => ipcRenderer.invoke('settings:updateGoogleOAuth', input),
     updateOutlookOAuth: (input: unknown) => ipcRenderer.invoke('settings:updateOutlookOAuth', input),
   },
