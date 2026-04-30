@@ -1,5 +1,25 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - AI Review Copy Smoke Follow-Up
+
+### Validated
+
+- Ran quick live Electron Talk smoke against checkpoint `4ef1489 Polish AI review rendered copy`.
+- Confirmed mode-specific model-ranked headings appear: `Start here`, `Take this win`, `Do not let this slip`, and `Watch this first`.
+- Confirmed `Recommended starting point` no longer appears in model-ranked output.
+- Confirmed exact packet titles, no invented facts, no internal mode leaks, and the no-write guardrail remain intact.
+- Confirmed stale-project review safely falls back when the packet has no stale project IDs.
+- Confirmed the work snapshot before and after QA matched exactly.
+
+### Still Open
+
+- Duplicate visible todo/deadline presentation remains for `3292 n 29th ct NEW RACKS 5-6-2025`.
+- The current renderer can only de-dupe relationships visible in the packet. Linked deadline source entity data exists in `DeadlineRecord`, but the AI review packet currently flattens deadline items to deadline identity only.
+
+### Verification
+
+- `npm run build:app` passes.
+
 ## 2026-04-30 - AI Review Render Copy Polish
 
 ### Built
@@ -11,7 +31,7 @@
 
 ### Still Open
 
-- Duplicate reduction can only catch relationships visible in the packet. If linked todo/deadline records use different titles and have no shared relationship field, the renderer should not infer the relationship.
+- Follow-up live smoke found linked todo/deadline duplicates still visible when the packet does not expose the deadline's linked source entity.
 
 ### Verification
 
