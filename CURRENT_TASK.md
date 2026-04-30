@@ -31,16 +31,16 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - AI Task Review route/service plumbing now produces packet-backed read-only review responses for reset/wins/forgetting/risk/stale prompts, and the Talk UI consumes those responses while preserving the no-write guardrail.
 - AI Settings now persists local model/policy drafts, can probe local Ollama model availability, and shows scan-friendly probe results.
 - Local Ollama AI Review generation now exists for selected available models through `127.0.0.1:11434/api/generate`, with deterministic fallback for no selected model, missing model, unavailable Ollama, timeout, invalid response, empty response, and HTTP/error cases.
-- The routed Talk path is still deterministic because assistant routing is synchronous; async routing/UI wiring is needed before Talk can display model-generated summaries.
+- Async AI Review IPC now lets Talk request local review generation, show checking/generating/model/fallback states, display Ollama summaries when available, and fall back to deterministic `route.message` on IPC failure.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Complete Async AI Review Routing Policy
+### 1. Complete AI Review Routing Policy And External Exposure
 
 **GOAL**
 
-Turn the local Ollama review-generation path into an async routed Talk experience without weakening deterministic fallback or write boundaries. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
+Turn the async local Ollama review path into a polished routing policy that remains local-first, observable, and safe across PRAXIS surfaces. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
 
 **DIRECTION**
 
@@ -53,8 +53,10 @@ Turn the local Ollama review-generation path into an async routed Talk experienc
 - Writes must go through Review Inbox candidates, staged drafts, or explicit confirmation commands.
 - Model execution defaults local-first through Ollama.
 - Settings now supports a configurable local model and local availability probing; routing still needs to decide whether probe results are live, cached, or stored as explicit state.
-- The Talk route still needs async wiring so model-generated summaries can replace deterministic fallback responses when available.
+- Talk now uses async AI Review IPC to display model-generated summaries when available and deterministic fallback when needed.
 - Optional API provider settings and encrypted provider secrets remain future work.
+- Slack and companion exposure remain open if not already routed through the AI Review path.
+- Live Electron real-data QA remains open if the current async path has not been validated against the operator workspace.
 - The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
 
 **FILES**
@@ -66,10 +68,11 @@ Turn the local Ollama review-generation path into an async routed Talk experienc
 
 **DONE WHEN**
 
-- Async assistant routing can request local Ollama generation and return model-generated read-only summaries to Talk.
+- Availability policy is explicit: model availability is checked live, cached, or stored as explicit routing state.
 - Routing behavior accounts for unavailable, missing, available, no-model, timeout, invalid, empty, and HTTP/error states.
-- The team has decided whether model availability is checked live, cached, or stored as explicit state for routing.
 - API provider fallback remains disabled until secret storage and policy are implemented.
+- Slack/companion review exposure is either wired through the same AI Review path or deliberately deferred.
+- Live Electron QA against real operator data is complete or documented as remaining validation debt.
 - AI Task Review appears as the next core roadmap track before Rainmeter/background polish.
 - Packet-backed read-only UX/routing/settings behavior remains intact.
 

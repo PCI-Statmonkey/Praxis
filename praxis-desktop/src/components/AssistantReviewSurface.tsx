@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import type { DeadlineRecord, TodoRecord, WorkPriority, WorkSnapshot } from "../../shared/workModel";
+import type { AssistantReviewUiState } from "../hooks/assistantRouteHandlers";
 
 type ReviewMode = "reset" | "wins" | "forgetting" | "risk" | "stale";
 
 type AssistantReviewSurfaceProps = {
   snapshot: WorkSnapshot;
   setCaptureText: (value: string) => void;
+  reviewState: AssistantReviewUiState;
   suppressLocalPreview?: boolean;
 };
 
@@ -30,6 +32,14 @@ const labelByMode: Record<ReviewMode, string> = {
   forgetting: "Forgetting",
   risk: "Risks",
   stale: "Stale",
+};
+
+const statusCopy: Record<AssistantReviewUiState["status"], string> = {
+  idle: "Local preview",
+  checking: "Checking packet",
+  generating: "Generating review",
+  fallback: "Fallback summary",
+  model: "Model response",
 };
 
 const formatWhen = (value: string | null) => {
@@ -82,9 +92,14 @@ const describeDeadline = (deadline: DeadlineRecord) =>
 export function AssistantReviewSurface({
   snapshot,
   setCaptureText,
+  reviewState,
   suppressLocalPreview = false,
 }: AssistantReviewSurfaceProps) {
   const [mode, setMode] = useState<ReviewMode>("reset");
+  const showInFlightStatus =
+    !suppressLocalPreview &&
+    reviewState.active &&
+    (reviewState.status === "checking" || reviewState.status === "generating");
 
   const review = useMemo(() => {
     const activeTodos = snapshot.todos.filter((todo) => todo.status !== "completed");
@@ -188,10 +203,23 @@ export function AssistantReviewSurface({
           </button>
         ))}
       </div>
+      {showInFlightStatus ? (
+        <div className="assistant-review-preview-note">
+          <p>{statusCopy[reviewState.status]}. No work has been changed.</p>
+          <div className="assistant-review-meta" aria-label="AI review state">
+            {reviewState.sourceLabel ? <span>{reviewState.sourceLabel}</span> : null}
+          </div>
+        </div>
+      ) : null}
       {suppressLocalPreview ? (
-        <p className="assistant-review-guardrail assistant-review-preview-note">
-          Packet-backed review is shown in Talk above. No work has been changed.
-        </p>
+        <div className="assistant-review-preview-note">
+          <p>Packet-backed review is shown in Talk above. No work has been changed.</p>
+          <div className="assistant-review-meta" aria-label="AI review state">
+            <span>{statusCopy[reviewState.status]}</span>
+            {reviewState.sourceLabel ? <span>{reviewState.sourceLabel}</span> : null}
+            {reviewState.fallbackReason ? <small>{reviewState.fallbackReason}</small> : null}
+          </div>
+        </div>
       ) : (
         <article className="praxis-reply assistant-review-reply">
           <h4>Praxis</h4>

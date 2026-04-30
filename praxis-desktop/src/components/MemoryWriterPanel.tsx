@@ -23,6 +23,7 @@ import type {
   WorkPriority,
   WorkSnapshot,
 } from "../../shared/workModel";
+import type { AssistantReviewUiState } from "../hooks/assistantRouteHandlers";
 import { AssistantReviewSurface } from "./AssistantReviewSurface";
 import { WorkCreationPanel, WorkEditPanels } from "./WorkFormsPanel";
 
@@ -50,7 +51,7 @@ type MemoryWriterPanelProps = {
   captureText: string;
   captureStatus: string;
   assistantReply: string;
-  assistantReplyIsAiReview: boolean;
+  assistantReplyIsAiReview: AssistantReviewUiState;
   pendingConfirmationOptions: Array<Exclude<CaptureIntent, "unresolved">>;
   captureDraft: CaptureDraft | null;
   missionForm: CreateMissionInput;
@@ -159,6 +160,18 @@ export function MemoryWriterPanel({
   createAppointment,
   importManualChatSnippet,
 }: MemoryWriterPanelProps) {
+  const assistantReplyIsCurrentAiReview =
+    assistantReplyIsAiReview.active && captureText.trim().length === 0;
+  const assistantReviewStatusLabel =
+    assistantReplyIsAiReview.status === "checking"
+      ? "Checking packet"
+      : assistantReplyIsAiReview.status === "generating"
+        ? "Generating review"
+        : assistantReplyIsAiReview.status === "fallback"
+          ? "Fallback summary"
+          : assistantReplyIsAiReview.status === "model"
+            ? "Model summary"
+            : null;
   const activeEditTitle = editingMission
     ? "Edit Mission"
     : editingProject
@@ -199,6 +212,17 @@ export function MemoryWriterPanel({
           <article className="praxis-reply">
             <h4>Praxis</h4>
             <p className="assistant-reply-text">{assistantReply}</p>
+            {assistantReplyIsAiReview.active ? (
+              <div className="assistant-review-meta" aria-label="AI review source">
+                {assistantReviewStatusLabel ? <span>{assistantReviewStatusLabel}</span> : null}
+                {assistantReplyIsAiReview.sourceLabel ? (
+                  <span>{assistantReplyIsAiReview.sourceLabel}</span>
+                ) : null}
+                {assistantReplyIsAiReview.fallbackReason ? (
+                  <small>{assistantReplyIsAiReview.fallbackReason}</small>
+                ) : null}
+              </div>
+            ) : null}
           </article>
         ) : (
           <article className="praxis-reply">
@@ -214,7 +238,8 @@ export function MemoryWriterPanel({
       <AssistantReviewSurface
         snapshot={snapshot}
         setCaptureText={setCaptureText}
-        suppressLocalPreview={assistantReplyIsAiReview && captureText.trim().length === 0}
+        reviewState={assistantReplyIsAiReview}
+        suppressLocalPreview={assistantReplyIsCurrentAiReview}
       />
 
       <form onSubmit={(event) => void captureNaturalLanguage(event)}>

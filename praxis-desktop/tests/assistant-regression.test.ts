@@ -23,6 +23,7 @@ import {
   buildAssistantAIReviewRouteResult,
   classifyAssistantReviewRoute,
   formatAssistantChoiceReply,
+  resolveAssistantAIReviewGenerateMode,
   type AssistantReviewRoute,
 } from "../shared/assistantRouter";
 import { buildAIReviewContextPacket } from "../shared/aiReviewContext";
@@ -35,6 +36,7 @@ import {
   buildAIReviewResponse,
   buildAIReviewResponseWithOllama,
   planAIReviewModelRoute,
+  toAssistantAIReviewGenerateResult,
 } from "../electron/aiReviewService";
 import { generateOllamaReviewSummary } from "../electron/ollamaClient";
 
@@ -978,6 +980,34 @@ assert.equal(aiReviewOllamaSuccess.writeBoundary, "read_only");
 assert.equal(aiReviewOllamaSuccess.fallbackReason, null);
 assert.match(aiReviewOllamaSuccess.message, /Model summary/);
 assert.match(aiReviewOllamaSuccess.message, /No work has been changed/);
+
+const aiReviewIpcResult = toAssistantAIReviewGenerateResult(aiReviewOllamaSuccess);
+assert.equal(aiReviewIpcResult.ok, true);
+assert.equal(aiReviewIpcResult.ok ? aiReviewIpcResult.mode : "", "quick_wins");
+assert.equal(aiReviewIpcResult.ok ? aiReviewIpcResult.summarySource : "", "ollama");
+assert.equal(aiReviewIpcResult.writeBoundary, "read_only");
+assert.equal("packet" in aiReviewIpcResult, false);
+assert.deepEqual(
+  resolveAssistantAIReviewGenerateMode({ mode: "risk_review" }),
+  {
+    ok: true,
+    mode: "risk_review",
+  }
+);
+assert.deepEqual(
+  resolveAssistantAIReviewGenerateMode({ routeKind: "stale_projects" }),
+  {
+    ok: true,
+    mode: "stale_projects",
+  }
+);
+assert.deepEqual(
+  resolveAssistantAIReviewGenerateMode({ routeKind: "person_project_lookup" }),
+  {
+    ok: false,
+    message: "AI review generation requires a supported review mode.",
+  }
+);
 
 const aiReviewTimeoutFallback = await buildAIReviewResponseWithOllama({
   mode: "reset",

@@ -1103,7 +1103,50 @@ ol {
 }
 
 .assistant-review-preview-note {
-  margin: 0 !important;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  border-top: 1px solid rgba(185, 222, 219, 0.12);
+  color: var(--dim);
+  padding-top: 9px;
+}
+
+.assistant-review-preview-note p {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.82rem;
+}
+
+.assistant-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  min-width: 0;
+}
+
+.assistant-review-preview-note .assistant-review-meta {
+  margin-top: 0;
+}
+
+.assistant-review-meta span,
+.assistant-review-meta small {
+  border: 1px solid rgba(185, 222, 219, 0.13);
+  border-radius: 999px;
+  color: var(--dim);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  padding: 4px 7px;
+}
+
+.assistant-review-meta span {
+  color: var(--text);
+}
+
+.assistant-review-meta small {
+  flex-basis: 100%;
+  border-radius: 8px;
 }
 
 .praxis-reply,

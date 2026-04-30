@@ -1,5 +1,33 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - Async AI Review IPC And Talk Wiring
+
+### Built
+
+- Added async AI Review IPC through `window.praxis.assistant.generateAIReview({ mode })`.
+- Returned `message`, `mode`, `summarySource`, `fallbackReason`, `modelPlan`, `suggestedStableIds`, and `writeBoundary` from async review generation.
+- Wired the IPC path to `buildLocalAIReviewResponse`.
+- Returned read-only failure responses for invalid or non-review kinds.
+- Preserved the no-mutation boundary and made no API provider calls from the async IPC path.
+- Wired Talk so routes with `route.aiReview` trigger async generation.
+- Added Talk UI states for checking, generating, model, and fallback responses.
+- Displayed model state when `summarySource` is `ollama`.
+- Displayed deterministic fallback state and fallback reason when local generation falls back.
+- Kept IPC failure on the existing deterministic `route.message` fallback.
+- Preserved the no-write guardrail, person/project lookup behavior, and capture confirmations.
+
+### Still Open
+
+- The team still needs to decide whether model availability should be checked live, cached, or stored as explicit availability state for routing.
+- API provider secret storage and remote model fallback remain open.
+- Slack and companion exposure remain open if not already routed through the AI Review path.
+- Live Electron real-data QA remains open if the current async path has not been validated against the operator workspace.
+- The write boundary remains read-only: AI Review may explain and suggest, but task graph writes still require Review Inbox, staged drafts, or explicit confirmation.
+
+### Verification
+
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-30 - Ollama Review Generation And Probe Polish
 
 ### Built

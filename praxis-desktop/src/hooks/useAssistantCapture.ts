@@ -11,7 +11,11 @@ import {
   storeReportContext,
 } from "./assistantOperationalActions";
 import { draftFromResult, type CaptureDraft } from "./assistantCaptureDraft";
-import { handleAssistantRoute } from "./assistantRouteHandlers";
+import {
+  assistantReviewIdleState,
+  handleAssistantRoute,
+  type AssistantReviewUiState,
+} from "./assistantRouteHandlers";
 
 export { storeProactiveSuggestionContext, storeReportContext };
 
@@ -24,6 +28,21 @@ const EMPTY_APPOINTMENT_REPORT: AppointmentReport = {
   spokenSummary: "Appointment report unavailable.",
   appointments: [],
   thereIsMore: false,
+};
+
+const AI_REVIEW_REQUEST_PATTERNS = [
+  "reset me",
+  "few wins",
+  "knock out",
+  "forgetting",
+  "about to bite",
+  "stale",
+  "overwhelmed",
+];
+
+const looksLikeAiReviewRequest = (value: string) => {
+  const normalized = value.toLowerCase();
+  return AI_REVIEW_REQUEST_PATTERNS.some((pattern) => normalized.includes(pattern));
 };
 
 type UseAssistantCaptureOptions = {
@@ -64,7 +83,8 @@ export function useAssistantCapture({
   );
   const [showAppointmentReport, setShowAppointmentReport] = useState(false);
   const [assistantReply, setAssistantReply] = useState("");
-  const [assistantReplyIsAiReview, setAssistantReplyIsAiReview] = useState(false);
+  const [assistantReplyIsAiReview, setAssistantReplyIsAiReview] =
+    useState<AssistantReviewUiState>(assistantReviewIdleState);
   const [captureText, setCaptureText] = useState("");
   const [captureStatus, setCaptureStatus] = useState("Try: Doctor appointment tomorrow at 9.");
   const [pendingCapture, setPendingCapture] = useState<CaptureResult | null>(null);
@@ -90,7 +110,7 @@ export function useAssistantCapture({
     const focusFollowUp = answerFocusReportFollowUp(captureText, focusReport);
     if (focusFollowUp.matched) {
       setAssistantReply(focusFollowUp.message);
-      setAssistantReplyIsAiReview(false);
+      setAssistantReplyIsAiReview(assistantReviewIdleState);
       setCaptureStatus(focusFollowUp.message);
       setShowStatusReport(true);
       setShowFocusDetails(true);
@@ -98,6 +118,16 @@ export function useAssistantCapture({
       setCaptureDraft(null);
       setCaptureText("");
       return;
+    }
+
+    if (looksLikeAiReviewRequest(captureText)) {
+      setAssistantReplyIsAiReview({
+        active: true,
+        status: "checking",
+        mode: null,
+        sourceLabel: "Checking work packet",
+        fallbackReason: null,
+      });
     }
 
     const route = await window.praxis.assistant.route({ text: captureText, surface: "desktop" });
@@ -135,7 +165,7 @@ export function useAssistantCapture({
     }
 
     const result = await window.praxis.capture.naturalLanguage({ text: captureText, mode: "preview" });
-    setAssistantReplyIsAiReview(false);
+    setAssistantReplyIsAiReview(assistantReviewIdleState);
     setCaptureStatus(result.message);
     setPendingCapture(result.candidate.intent !== "unresolved" ? result : null);
     setCaptureDraft(draftFromResult(result));

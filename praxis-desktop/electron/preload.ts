@@ -142,6 +142,7 @@ contextBridge.exposeInMainWorld('praxis', {
   },
   assistant: {
     route: (input: unknown) => ipcRenderer.invoke('assistant:route', input),
+    generateAIReview: (input: unknown) => ipcRenderer.invoke('assistant:generateAIReview', input),
     storeContext: (input: unknown) => ipcRenderer.invoke('assistant:storeContext', input),
     resolveContext: (input: unknown) => ipcRenderer.invoke('assistant:resolveContext', input),
     lookupPerson: (input: unknown) => ipcRenderer.invoke('assistant:lookupPerson', input),

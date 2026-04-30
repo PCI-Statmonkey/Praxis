@@ -59,6 +59,87 @@ export type AssistantAIReviewRoutePayload = {
   modelPlan: AssistantAIReviewModelPlan;
 };
 
+export type AssistantAIReviewGenerateRequest =
+  | {
+      mode: AssistantAIReviewMode;
+      routeKind?: never;
+    }
+  | {
+      mode?: never;
+      routeKind: AssistantReviewRouteKind;
+    };
+
+export type AssistantAIReviewGenerateResult =
+  | {
+      ok: true;
+      mode: AssistantAIReviewMode;
+      message: string;
+      summarySource: "deterministic_fallback" | "ollama";
+      fallbackReason: string | null;
+      writeBoundary: "read_only";
+      suggestedStableIds: string[];
+      modelPlan: AssistantAIReviewModelPlan;
+    }
+  | {
+      ok: false;
+      message: string;
+      writeBoundary: "read_only";
+    };
+
+const assistantAIReviewModes = new Set<AssistantAIReviewMode>([
+  "quick_wins",
+  "reset",
+  "forgetting",
+  "risk_review",
+  "stale_projects",
+]);
+
+export const isAssistantAIReviewMode = (value: unknown): value is AssistantAIReviewMode =>
+  typeof value === "string" && assistantAIReviewModes.has(value as AssistantAIReviewMode);
+
+export const assistantAIReviewModeFromRouteKind = (
+  kind: AssistantReviewRouteKind
+): AssistantAIReviewMode | null => {
+  if (kind === "person_project_lookup") {
+    return null;
+  }
+  return kind;
+};
+
+export const resolveAssistantAIReviewGenerateMode = (
+  input: AssistantAIReviewGenerateRequest
+):
+  | {
+      ok: true;
+      mode: AssistantAIReviewMode;
+    }
+  | {
+      ok: false;
+      message: string;
+    } => {
+  if (isAssistantAIReviewMode(input.mode)) {
+    return {
+      ok: true,
+      mode: input.mode,
+    };
+  }
+
+  if (typeof input.routeKind === "string") {
+    const mode = assistantAIReviewModeFromRouteKind(input.routeKind);
+    if (mode) {
+      return {
+        ok: true,
+        mode,
+      };
+    }
+  }
+
+  return {
+    ok: false,
+    message: "AI review generation requires a supported review mode.",
+  };
+};
+
 const normalizeReviewText = (value: string) =>
   value
     .toLowerCase()

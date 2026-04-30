@@ -5,7 +5,7 @@ import {
 } from "../../shared/assistantContext";
 import type { AppointmentReport } from "../../shared/appointmentReport";
 import type { DailyBrief, FocusReport } from "../../shared/dailyBrief";
-import type { AssistantRouteResult } from "../../shared/assistantRouter";
+import type { AssistantAIReviewGenerateResult, AssistantRouteResult } from "../../shared/assistantRouter";
 import type { CaptureResult } from "../../shared/naturalLanguageCapture";
 import {
   buildBestProactiveSuggestion,
@@ -17,6 +17,29 @@ import type { CaptureDraft } from "./assistantCaptureDraft";
 import { storeProactiveSuggestionContext, storeReportContext } from "./assistantOperationalActions";
 
 type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+
+export type AssistantReviewGenerationStatus =
+  | "idle"
+  | "checking"
+  | "generating"
+  | "fallback"
+  | "model";
+
+export type AssistantReviewUiState = {
+  active: boolean;
+  status: AssistantReviewGenerationStatus;
+  mode: string | null;
+  sourceLabel: string | null;
+  fallbackReason: string | null;
+};
+
+export const assistantReviewIdleState: AssistantReviewUiState = {
+  active: false,
+  status: "idle",
+  mode: null,
+  sourceLabel: null,
+  fallbackReason: null,
+};
 
 type AssistantRouteHandlerOptions = {
   route: AssistantRouteResult;
@@ -35,7 +58,7 @@ type AssistantRouteHandlerOptions = {
   setAppointmentReport: Dispatch<SetStateAction<AppointmentReport>>;
   setShowAppointmentReport: Dispatch<SetStateAction<boolean>>;
   setAssistantReply: Dispatch<SetStateAction<string>>;
-  setAssistantReplyIsAiReview: Dispatch<SetStateAction<boolean>>;
+  setAssistantReplyIsAiReview: Dispatch<SetStateAction<AssistantReviewUiState>>;
   setCaptureText: Dispatch<SetStateAction<string>>;
   setCaptureStatus: Dispatch<SetStateAction<string>>;
   setPendingCapture: Dispatch<SetStateAction<CaptureResult | null>>;
@@ -75,6 +98,59 @@ const withAiReviewGuardrail = (message: string) =>
   message.toLowerCase().includes("no work has been changed")
     ? message
     : `${message}\n\n${AI_REVIEW_READ_ONLY_GUARDRAIL}`;
+
+const formatPlannedProvider = (provider: string) =>
+  provider === "api" ? "API" : provider.charAt(0).toUpperCase() + provider.slice(1);
+
+const summarizeAiReviewSource = (route: AssistantRouteResult): AssistantReviewUiState => {
+  if (!route.aiReview) {
+    return assistantReviewIdleState;
+  }
+
+  const { modelPlan } = route.aiReview;
+  const plannedProviderLabel =
+    modelPlan.plannedProvider === "none"
+      ? "No model provider configured"
+      : `${formatPlannedProvider(modelPlan.plannedProvider)} planned`;
+  const fallbackReason =
+    modelPlan.selectedProvider === "deterministic_fallback"
+      ? `${plannedProviderLabel}; showing deterministic packet fallback until async review generation is available.`
+      : null;
+
+  return {
+    active: true,
+    status: modelPlan.selectedProvider === "deterministic_fallback" ? "fallback" : "model",
+    mode: route.aiReview.mode,
+    sourceLabel:
+      modelPlan.selectedProvider === "deterministic_fallback"
+        ? "Packet fallback"
+        : `${modelPlan.selectedProvider} model`,
+    fallbackReason,
+  };
+};
+
+const summarizeGeneratedAiReview = (
+  result: Extract<AssistantAIReviewGenerateResult, { ok: true }>
+): AssistantReviewUiState => ({
+  active: true,
+  status: result.summarySource === "ollama" ? "model" : "fallback",
+  mode: result.mode,
+  sourceLabel: result.summarySource === "ollama" ? "Ollama" : "Deterministic fallback",
+  fallbackReason: result.summarySource === "deterministic_fallback" ? result.fallbackReason : null,
+});
+
+const summarizeFailedAiReview = (
+  route: AssistantRouteResult,
+  fallbackReason: string
+): AssistantReviewUiState => ({
+  ...summarizeAiReviewSource(route),
+  status: "fallback",
+  sourceLabel: "Route fallback",
+  fallbackReason,
+});
+
+const describeUnknownError = (error: unknown) =>
+  error instanceof Error && error.message.trim() ? error.message : "AI Review request failed.";
 
 const resolveContextAction = async (captureText: string, focusReport: FocusReport | null) => {
   const surfaces = assistantContextActionSurfaces({ includeFocusReport: Boolean(focusReport) });
@@ -246,16 +322,38 @@ export const handleAssistantRoute = async (options: AssistantRouteHandlerOptions
   } = options;
 
   if (route.aiReview) {
-    const answer = withAiReviewGuardrail(route.message);
     setActivePanel("morningPlan");
-    setAssistantReply(answer);
-    setAssistantReplyIsAiReview(true);
+    setAssistantReply("Generating a read-only AI Task Review.");
+    setAssistantReplyIsAiReview({
+      active: true,
+      status: "generating",
+      mode: route.aiReview.mode,
+      sourceLabel: "Generating AI Review",
+      fallbackReason: null,
+    });
+    setCaptureStatus("Generating a read-only AI Task Review.");
+    clearPendingCapture({ setPendingCapture, setCaptureDraft });
+    try {
+      const generated = await window.praxis.assistant.generateAIReview({
+        mode: route.aiReview.mode,
+      });
+      if (generated.ok) {
+        setAssistantReply(withAiReviewGuardrail(generated.message));
+        setAssistantReplyIsAiReview(summarizeGeneratedAiReview(generated));
+      } else {
+        setAssistantReply(withAiReviewGuardrail(route.message));
+        setAssistantReplyIsAiReview(summarizeFailedAiReview(route, generated.message));
+      }
+    } catch (error) {
+      setAssistantReply(withAiReviewGuardrail(route.message));
+      setAssistantReplyIsAiReview(summarizeFailedAiReview(route, describeUnknownError(error)));
+    }
     setCaptureStatus(AI_REVIEW_READ_ONLY_GUARDRAIL);
-    clearPendingCaptureAndText({ setPendingCapture, setCaptureDraft, setCaptureText });
+    setCaptureText("");
     return true;
   }
 
-  setAssistantReplyIsAiReview(false);
+  setAssistantReplyIsAiReview(assistantReviewIdleState);
 
   if (route.intent === "focus_report") {
     const report = await window.praxis.brief.getFocusReport({

@@ -22,7 +22,11 @@ import type {
   CaptureRequest,
   SaveCaptureCandidateRequest,
 } from '../shared/naturalLanguageCapture'
-import type { AssistantRouteRequest } from '../shared/assistantRouter'
+import {
+  resolveAssistantAIReviewGenerateMode,
+  type AssistantAIReviewGenerateRequest,
+  type AssistantRouteRequest,
+} from '../shared/assistantRouter'
 import type {
   ResolveAssistantContextInput,
   StoreAssistantContextInput,
@@ -118,6 +122,10 @@ import {
   autoSyncReadyEmailConnections,
 } from './emailAutoSync'
 import { routeAssistantRequest } from './assistantRouter'
+import {
+  buildLocalAIReviewResponse,
+  toAssistantAIReviewGenerateResult,
+} from './aiReviewService'
 import {
   resolveAssistantContextReply,
   storeAssistantContext,
@@ -733,6 +741,20 @@ app.whenReady().then(() => {
   })
   ipcMain.handle('assistant:route', async (_event, input: AssistantRouteRequest) =>
     routeAssistantRequest(input)
+  )
+  ipcMain.handle(
+    'assistant:generateAIReview',
+    async (_event, input: AssistantAIReviewGenerateRequest) => {
+      const resolved = resolveAssistantAIReviewGenerateMode(input)
+      if (!resolved.ok) {
+        return {
+          ok: false,
+          message: resolved.message,
+          writeBoundary: 'read_only',
+        }
+      }
+      return toAssistantAIReviewGenerateResult(await buildLocalAIReviewResponse(resolved.mode))
+    }
   )
   ipcMain.handle('assistant:storeContext', async (_event, input: StoreAssistantContextInput) =>
     storeAssistantContext(input)

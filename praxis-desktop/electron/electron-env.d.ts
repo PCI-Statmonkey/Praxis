@@ -104,7 +104,12 @@ import type {
   UpdateOutlookOAuthSettingsInput,
   UpdateSlackSettingsInput,
 } from "../shared/settingsModel";
-import type { AssistantRouteRequest, AssistantRouteResult } from "../shared/assistantRouter";
+import type {
+  AssistantAIReviewGenerateRequest,
+  AssistantAIReviewGenerateResult,
+  AssistantRouteRequest,
+  AssistantRouteResult,
+} from "../shared/assistantRouter";
 import type {
   ResolveAssistantContextInput,
   ResolveAssistantContextResult,
@@ -290,6 +295,9 @@ declare global {
       };
       assistant: {
         route: (input: AssistantRouteRequest) => Promise<AssistantRouteResult>;
+        generateAIReview: (
+          input: AssistantAIReviewGenerateRequest
+        ) => Promise<AssistantAIReviewGenerateResult>;
         storeContext: (input: StoreAssistantContextInput) => Promise<{ ok: true }>;
         resolveContext: (
           input: ResolveAssistantContextInput

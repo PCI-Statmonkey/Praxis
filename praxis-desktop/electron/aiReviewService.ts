@@ -7,10 +7,12 @@ import type {
   AIReviewContextPacket,
   AIReviewWorkItem,
 } from "../shared/aiReviewContext";
-import type {
-  AssistantAIReviewMode,
-  AssistantAIReviewModelPlan,
-  AssistantReviewRouteKind,
+import {
+  assistantAIReviewModeFromRouteKind,
+  type AssistantAIReviewGenerateResult,
+  type AssistantAIReviewMode,
+  type AssistantAIReviewModelPlan,
+  type AssistantReviewRouteKind,
 } from "../shared/assistantRouter";
 import {
   generateOllamaReviewSummary,
@@ -57,10 +59,7 @@ const modelConfigured = (settings: AiSettings) => Boolean(settings.localModelNam
 export const aiReviewModeFromRouteKind = (
   kind: AssistantReviewRouteKind
 ): AssistantAIReviewMode | null => {
-  if (kind === "person_project_lookup") {
-    return null;
-  }
-  return kind;
+  return assistantAIReviewModeFromRouteKind(kind);
 };
 
 export const planAIReviewModelRoute = (
@@ -305,6 +304,19 @@ export const buildAIReviewResponseWithOllama = async ({
     fallbackReason: null,
   };
 };
+
+export const toAssistantAIReviewGenerateResult = (
+  response: AIReviewResponse
+): AssistantAIReviewGenerateResult => ({
+  ok: true,
+  mode: response.mode,
+  message: response.message,
+  summarySource: response.summarySource,
+  fallbackReason: response.fallbackReason,
+  writeBoundary: response.writeBoundary,
+  suggestedStableIds: response.suggestedStableIds,
+  modelPlan: response.modelPlan,
+});
 
 export const buildLocalAIReviewResponseFromSources = (
   mode: AssistantAIReviewMode,
