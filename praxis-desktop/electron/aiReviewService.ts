@@ -133,26 +133,43 @@ const formatWorkItem = (item: AIReviewWorkItem) => {
 
 const emptyLine = (message: string) => [`- ${message}`];
 
-const quickWinLines = (packet: AIReviewContextPacket) => {
-  if (packet.quickWins.items.length === 0) {
-    return emptyLine("No quick wins are currently marked. Use the due-soon list as the fallback.");
-  }
-  return packet.quickWins.items.slice(0, 3).map(formatWorkItem);
-};
-
-const pressureLines = (packet: AIReviewContextPacket) => {
-  const items = packet.overdueDueSoon.items.slice(0, 4);
+const workLines = (
+  items: AIReviewWorkItem[],
+  limit: number,
+  emptyMessage: string,
+  seenKeys?: Set<string>
+) => {
   if (items.length === 0) {
-    return emptyLine("No overdue or due-soon work is currently visible.");
+    return emptyLine(emptyMessage);
   }
-  return items.map(formatWorkItem);
+  return uniqueWorkItemsForPresentation(items, seenKeys).slice(0, limit).map(formatWorkItem);
 };
 
-const waitingLines = (packet: AIReviewContextPacket) => {
-  if (packet.waitingOn.items.length === 0) {
-    return emptyLine("No active waiting-on items are currently visible.");
-  }
-  return packet.waitingOn.items.slice(0, 3).map(formatWorkItem);
+const quickWinLines = (packet: AIReviewContextPacket, seenKeys?: Set<string>) => {
+  return workLines(
+    packet.quickWins.items,
+    3,
+    "No quick wins are currently marked. Use the due-soon list as the fallback.",
+    seenKeys
+  );
+};
+
+const pressureLines = (packet: AIReviewContextPacket, seenKeys?: Set<string>) => {
+  return workLines(
+    packet.overdueDueSoon.items,
+    4,
+    "No overdue or due-soon work is currently visible.",
+    seenKeys
+  );
+};
+
+const waitingLines = (packet: AIReviewContextPacket, seenKeys?: Set<string>) => {
+  return workLines(
+    packet.waitingOn.items,
+    3,
+    "No active waiting-on items are currently visible.",
+    seenKeys
+  );
 };
 
 const inboxLines = (packet: AIReviewContextPacket) => {
@@ -173,11 +190,13 @@ const appointmentLines = (packet: AIReviewContextPacket) => {
     .map((item) => `- ${item.title}${formatReasons(item)}`);
 };
 
-const staleProjectLines = (packet: AIReviewContextPacket) => {
-  if (packet.staleProjects.items.length === 0) {
-    return emptyLine("No stale, paused, or blocked projects are currently visible.");
-  }
-  return packet.staleProjects.items.slice(0, 4).map(formatWorkItem);
+const staleProjectLines = (packet: AIReviewContextPacket, seenKeys?: Set<string>) => {
+  return workLines(
+    packet.staleProjects.items,
+    4,
+    "No stale, paused, or blocked projects are currently visible.",
+    seenKeys
+  );
 };
 
 const section = (title: string, lines: string[]) => [
@@ -185,37 +204,45 @@ const section = (title: string, lines: string[]) => [
   ...lines,
 ].join("\n");
 
+const sectionIfLines = (title: string, lines: string[]) =>
+  lines.length > 0 ? section(title, lines) : null;
+
+const compactSections = (sections: Array<string | null>) =>
+  sections.filter((candidate): candidate is string => Boolean(candidate));
+
 const modeSections = (mode: AssistantAIReviewMode, packet: AIReviewContextPacket) => {
+  const seenKeys = new Set<string>();
+
   if (mode === "quick_wins") {
-    return [section("Quick wins", quickWinLines(packet))];
+    return compactSections([sectionIfLines("Quick wins", quickWinLines(packet, seenKeys))]);
   }
 
   if (mode === "risk_review") {
-    return [
-      section("Overdue / due soon", pressureLines(packet)),
+    return compactSections([
+      sectionIfLines("Overdue / due soon", pressureLines(packet, seenKeys)),
       section("Calendar pressure", appointmentLines(packet)),
-      section("Waiting on", waitingLines(packet)),
-    ];
+      sectionIfLines("Waiting on", waitingLines(packet, seenKeys)),
+    ]);
   }
 
   if (mode === "stale_projects") {
-    return [section("Stale projects", staleProjectLines(packet))];
+    return compactSections([sectionIfLines("Stale projects", staleProjectLines(packet, seenKeys))]);
   }
 
   if (mode === "forgetting") {
-    return [
-      section("Overdue / due soon", pressureLines(packet)),
+    return compactSections([
+      sectionIfLines("Overdue / due soon", pressureLines(packet, seenKeys)),
       section("Review Inbox", inboxLines(packet)),
       section("Calendar pressure", appointmentLines(packet)),
-    ];
+    ]);
   }
 
-  return [
-    section("Start here", pressureLines(packet)),
-    section("Then take a small win", quickWinLines(packet)),
-    section("Waiting on", waitingLines(packet).slice(0, 2)),
+  return compactSections([
+    sectionIfLines("Start here", pressureLines(packet, seenKeys)),
+    sectionIfLines("Then take a small win", quickWinLines(packet, seenKeys)),
+    sectionIfLines("Waiting on", waitingLines(packet, seenKeys).slice(0, 2)),
     section("Review Inbox", inboxLines(packet).slice(0, 2)),
-  ];
+  ]);
 };
 
 const suggestedStableIds = (mode: AssistantAIReviewMode, packet: AIReviewContextPacket) => {
@@ -293,6 +320,49 @@ type RenderableAIReviewItem = {
   stableId: string;
   title: string;
   line: string;
+  presentationKeys: string[];
+};
+
+const normalizePresentationText = (value: string | null | undefined) =>
+  (value ?? "").trim().toLocaleLowerCase().replace(/\s+/g, " ");
+
+const workPresentationKeys = (item: AIReviewWorkItem) => [
+  `stable:${item.stableId}`,
+  [
+    "work",
+    normalizePresentationText(item.title),
+    normalizePresentationText(item.projectId ?? item.projectTitle),
+    normalizePresentationText(item.missionId ?? item.missionTitle),
+  ].join("|"),
+];
+
+const uniqueWorkItemsForPresentation = (
+  items: AIReviewWorkItem[],
+  seenKeys = new Set<string>()
+) => {
+  const uniqueItems: AIReviewWorkItem[] = [];
+  for (const item of items) {
+    const keys = workPresentationKeys(item);
+    if (keys.some((key) => seenKeys.has(key))) {
+      continue;
+    }
+    keys.forEach((key) => seenKeys.add(key));
+    uniqueItems.push(item);
+  }
+  return uniqueItems;
+};
+
+const uniqueRenderableItemsForPresentation = (items: RenderableAIReviewItem[]) => {
+  const seenKeys = new Set<string>();
+  const uniqueItems: RenderableAIReviewItem[] = [];
+  for (const item of items) {
+    if (item.presentationKeys.some((key) => seenKeys.has(key))) {
+      continue;
+    }
+    item.presentationKeys.forEach((key) => seenKeys.add(key));
+    uniqueItems.push(item);
+  }
+  return uniqueItems;
 };
 
 const inboxItemLine = (item: AIReviewInboxItem) =>
@@ -305,18 +375,21 @@ const workRenderable = (item: AIReviewWorkItem): RenderableAIReviewItem => ({
   stableId: item.stableId,
   title: item.title,
   line: formatWorkItem(item),
+  presentationKeys: workPresentationKeys(item),
 });
 
 const inboxRenderable = (item: AIReviewInboxItem): RenderableAIReviewItem => ({
   stableId: item.stableId,
   title: item.title,
   line: inboxItemLine(item),
+  presentationKeys: [`stable:${item.stableId}`],
 });
 
 const appointmentRenderable = (item: AIReviewAppointmentItem): RenderableAIReviewItem => ({
   stableId: item.stableId,
   title: item.title,
   line: appointmentItemLine(item),
+  presentationKeys: [`stable:${item.stableId}`],
 });
 
 const allowedModelItems = (
@@ -512,13 +585,12 @@ const parseAIReviewModelSelection = (
   };
 };
 
-const emphasisSectionTitles: Record<AIReviewEmphasis, string> = {
-  start_here: "Recommended starting point",
-  quick_win: "Recommended quick win",
-  risk: "Risk to review",
-  waiting_on: "Waiting on",
-  review_inbox: "Review Inbox",
-  stale: "Stale work",
+const modeSelectionSectionTitles: Record<AssistantAIReviewMode, string> = {
+  reset: "Start here",
+  quick_wins: "Take this win",
+  forgetting: "Do not let this slip",
+  risk_review: "Watch this first",
+  stale_projects: "Review this stale lane",
 };
 
 const renderAIReviewModelSelection = (
@@ -527,13 +599,15 @@ const renderAIReviewModelSelection = (
   selection: AIReviewModelSelection
 ) => {
   const itemById = new Map(allowedModelItems(mode, packet).map((item) => [item.stableId, item]));
-  const lines = selection.priorityStableIds
-    .map((stableId) => itemById.get(stableId)?.line ?? "")
-    .filter((line) => line.length > 0);
+  const lines = uniqueRenderableItemsForPresentation(
+    selection.priorityStableIds
+      .map((stableId) => itemById.get(stableId))
+      .filter((item): item is RenderableAIReviewItem => Boolean(item))
+  ).map((item) => item.line);
 
   return [
     modeHeadlines[mode],
-    section(emphasisSectionTitles[selection.emphasis], lines),
+    section(modeSelectionSectionTitles[mode], lines),
     "No work has been changed.",
   ].join("\n\n");
 };

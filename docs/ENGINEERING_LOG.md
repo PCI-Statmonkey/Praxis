@@ -1,5 +1,26 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - AI Review Render Copy Polish
+
+### Built
+
+- Replaced generic accepted-model selection headings with mode-specific coach copy: `Start here`, `Take this win`, `Do not let this slip`, `Watch this first`, and `Review this stale lane`.
+- Added deterministic presentation de-duping for model-ranked work items by stable ID and normalized title/project/mission context.
+- Preserved exact packet title rendering, factual lines, fallback behavior, safety validation, the read-only write boundary, and `No work has been changed.`
+- Added regression coverage for mode heading copy and duplicate todo/deadline presentation.
+
+### Still Open
+
+- Duplicate reduction can only catch relationships visible in the packet. If linked todo/deadline records use different titles and have no shared relationship field, the renderer should not infer the relationship.
+
+### Verification
+
+- `npm run test:assistant` passes.
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm test` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-30 - Structured AI Review Talk QA
 
 ### Validated
@@ -15,7 +36,7 @@
 
 ### Still Open
 
-- Minor copy polish remains: several modes use the generic heading `Recommended starting point`, and reset/risk can show both a todo and its deadline for the same underlying item.
+- The immediate heading and duplicate visible-item copy polish passed in the follow-up AI Review Render Copy Polish entry.
 - Stale-project empty-state behavior remains safe as fallback; if product wants an Ollama-labeled empty-state response, add an explicit synthetic empty-state selectable item rather than asking the model to invent one.
 
 ### Verification

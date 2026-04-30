@@ -34,6 +34,7 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - Async AI Review IPC now lets Talk request local review generation, show checking/generating/model/fallback states, display Ollama summaries when available, and fall back to deterministic `route.message` on IPC failure.
 - Live Electron QA passed for the Talk fallback path with runtime `ollama`, no saved model, reliance policy `prefer_local`, probe status `no_model_selected`, all five AI Review prompts returning deterministic fallback, no-write guardrail visible, no work snapshot mutation, and desktop/narrow overflow checks passing.
 - Local model-path Talk UI QA now passes with saved model `qwen2.5:0.5b-instruct`: reset, wins, forgetting, and risk show `Ollama / Model summary` with deterministic packet-rendered copy, stale projects safely falls back when there are no stale IDs to rank, the write boundary stays read-only, the work snapshot remains unchanged, and desktop/narrow Talk overflow checks pass.
+- AI Review model-ranked rendering now uses mode-specific coach headings and suppresses duplicate presentation of the same visible work item when the packet exposes a shared stable ID or matching title/project/mission context.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
@@ -58,7 +59,7 @@ Turn the async local Ollama review path into a polished routing policy that rema
 - Talk now uses async AI Review IPC to display model-generated summaries when available and deterministic fallback when needed.
 - Optional API provider settings and encrypted provider secrets remain future work.
 - Slack and companion exposure remain open if not already routed through the AI Review path.
-- Live Electron model-generated Talk QA reached structured model-ranked output with `qwen2.5:0.5b-instruct`; minor copy polish remains around generic headings and duplicate todo/deadline presentation for the same underlying item.
+- Live Electron model-generated Talk QA reached structured model-ranked output with `qwen2.5:0.5b-instruct`; the immediate generic-heading and duplicate visible-item copy polish is complete.
 - The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
 
 **FILES**

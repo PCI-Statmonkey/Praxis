@@ -1006,11 +1006,116 @@ const aiReviewOllamaSuccess = await buildAIReviewResponseWithOllama({
 assert.equal(aiReviewOllamaSuccess.summarySource, "ollama");
 assert.equal(aiReviewOllamaSuccess.writeBoundary, "read_only");
 assert.equal(aiReviewOllamaSuccess.fallbackReason, null);
-assert.match(aiReviewOllamaSuccess.message, /Recommended quick win/);
+assert.match(aiReviewOllamaSuccess.message, /Take this win/);
 assert.match(aiReviewOllamaSuccess.message, /Send short Stacy follow-up/);
 assert.doesNotMatch(aiReviewOllamaSuccess.message, /Start here\./);
+assert.doesNotMatch(aiReviewOllamaSuccess.message, /Recommended starting point/);
 assert.match(aiReviewOllamaSuccess.message, /No work has been changed/);
 assert.deepEqual(aiReviewOllamaSuccess.suggestedStableIds, ["todo:todo-3"]);
+
+const aiReviewModeHeadingCases = [
+  {
+    mode: "reset",
+    stableId: "deadline:deadline-1",
+    emphasis: "start_here",
+    heading: /Start here/,
+  },
+  {
+    mode: "forgetting",
+    stableId: "deadline:deadline-1",
+    emphasis: "review_inbox",
+    heading: /Do not let this slip/,
+  },
+  {
+    mode: "risk_review",
+    stableId: "deadline:deadline-1",
+    emphasis: "risk",
+    heading: /Watch this first/,
+  },
+  {
+    mode: "stale_projects",
+    stableId: "project:project-1",
+    emphasis: "stale",
+    heading: /Review this stale lane/,
+  },
+] as const;
+
+for (const headingCase of aiReviewModeHeadingCases) {
+  const response = await buildAIReviewResponseWithOllama({
+    mode: headingCase.mode,
+    packet: aiReviewPacket,
+    settings: {
+      localRuntime: "ollama",
+      localModelName: "llama3.2",
+      reliancePolicy: "local_only",
+    },
+    generateSummary: async () => ({
+      ok: true,
+      status: "ok",
+      modelName: "llama3.2",
+      text: JSON.stringify({
+        schemaVersion: 1,
+        mode: headingCase.mode,
+        priorityStableIds: [headingCase.stableId],
+        emphasis: headingCase.emphasis,
+      }),
+    }),
+  });
+  assert.equal(response.summarySource, "ollama");
+  assert.match(response.message, headingCase.heading);
+  assert.doesNotMatch(response.message, /Recommended starting point/);
+}
+
+const aiReviewDuplicatePresentationPacket = buildAIReviewContextPacket({
+  snapshot: {
+    ...aiReviewSnapshot,
+    deadlines: [
+      {
+        ...snapshot.deadlines[0],
+        id: "deadline-duplicate",
+        entityKind: "todo",
+        entityId: "todo-3",
+        title: "Send short Stacy follow-up",
+        dueAt: "2026-04-28T17:00:00.000Z",
+      },
+    ],
+  },
+  emailSuggestions: aiReviewSuggestions,
+  emailConnections: aiReviewConnections,
+  storage: {
+    ok: true,
+    checkedAt: "2026-04-28T11:00:00.000Z",
+    errorCount: 0,
+    warningCount: 1,
+  },
+  generatedAt: "2026-04-28T12:00:00.000Z",
+});
+
+const aiReviewDuplicatePresentation = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: aiReviewDuplicatePresentationPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "reset",
+      priorityStableIds: ["deadline:deadline-duplicate", "todo:todo-3"],
+      emphasis: "start_here",
+    }),
+  }),
+});
+assert.equal(aiReviewDuplicatePresentation.summarySource, "ollama");
+assert.equal(
+  aiReviewDuplicatePresentation.message.indexOf("Send short Stacy follow-up"),
+  aiReviewDuplicatePresentation.message.lastIndexOf("Send short Stacy follow-up")
+);
 
 const aiReviewIpcResult = toAssistantAIReviewGenerateResult(aiReviewOllamaSuccess);
 assert.equal(aiReviewIpcResult.ok, true);
