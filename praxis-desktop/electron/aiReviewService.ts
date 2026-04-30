@@ -12,6 +12,10 @@ import type {
   AssistantAIReviewModelPlan,
   AssistantReviewRouteKind,
 } from "../shared/assistantRouter";
+import {
+  generateOllamaReviewSummary,
+  type OllamaReviewGenerateResult,
+} from "./ollamaClient";
 
 export type AIReviewResponse = {
   mode: AssistantAIReviewMode;
@@ -20,6 +24,8 @@ export type AIReviewResponse = {
   modelPlan: AssistantAIReviewModelPlan;
   writeBoundary: "read_only";
   suggestedStableIds: string[];
+  summarySource: "deterministic_fallback" | "ollama";
+  fallbackReason: string | null;
 };
 
 export type BuildAIReviewResponseInput = {
@@ -27,6 +33,10 @@ export type BuildAIReviewResponseInput = {
   packet: AIReviewContextPacket;
   settings?: Partial<AiSettings>;
   providerSecretsAvailable?: boolean;
+};
+
+export type BuildAIReviewResponseWithOllamaInput = BuildAIReviewResponseInput & {
+  generateSummary?: typeof generateOllamaReviewSummary;
 };
 
 export type BuildLocalAIReviewResponseSources = {
@@ -247,7 +257,54 @@ export const buildAIReviewResponse = ({
   modelPlan: planAIReviewModelRoute(settings, providerSecretsAvailable),
   writeBoundary: "read_only",
   suggestedStableIds: suggestedStableIds(mode, packet),
+  summarySource: "deterministic_fallback",
+  fallbackReason: null,
 });
+
+const fallbackWithReason = (
+  input: BuildAIReviewResponseInput,
+  reason: string
+): AIReviewResponse => ({
+  ...buildAIReviewResponse(input),
+  fallbackReason: reason,
+});
+
+export const buildAIReviewResponseWithOllama = async ({
+  mode,
+  packet,
+  settings = DEFAULT_AI_SETTINGS,
+  providerSecretsAvailable = false,
+  generateSummary = generateOllamaReviewSummary,
+}: BuildAIReviewResponseWithOllamaInput): Promise<AIReviewResponse> => {
+  const normalizedSettings = normalizeAiSettings(settings, DEFAULT_AI_SETTINGS);
+  const fallbackInput = {
+    mode,
+    packet,
+    settings: normalizedSettings,
+    providerSecretsAvailable,
+  };
+
+  if (!normalizedSettings.localModelName) {
+    return fallbackWithReason(fallbackInput, "No saved Ollama model is selected.");
+  }
+
+  const generated: OllamaReviewGenerateResult = await generateSummary({
+    modelName: normalizedSettings.localModelName,
+    mode,
+    packet,
+  });
+
+  if (!generated.ok) {
+    return fallbackWithReason(fallbackInput, generated.reason);
+  }
+
+  return {
+    ...buildAIReviewResponse(fallbackInput),
+    message: `${generated.text}\n\nNo work has been changed.`,
+    summarySource: "ollama",
+    fallbackReason: null,
+  };
+};
 
 export const buildLocalAIReviewResponseFromSources = (
   mode: AssistantAIReviewMode,
@@ -267,8 +324,9 @@ export const buildLocalAIReviewResponse = async (
     import("./settingsRepository"),
   ]);
 
-  return buildLocalAIReviewResponseFromSources(mode, {
-    buildPacket: buildLocalAIReviewContextPacket,
-    getSettings: getAiSettings,
+  return buildAIReviewResponseWithOllama({
+    mode,
+    packet: buildLocalAIReviewContextPacket(),
+    settings: getAiSettings(),
   });
 };

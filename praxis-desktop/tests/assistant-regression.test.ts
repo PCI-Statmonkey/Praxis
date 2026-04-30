@@ -33,8 +33,10 @@ import type {
 import {
   aiReviewModeFromRouteKind,
   buildAIReviewResponse,
+  buildAIReviewResponseWithOllama,
   planAIReviewModelRoute,
 } from "../electron/aiReviewService";
+import { generateOllamaReviewSummary } from "../electron/ollamaClient";
 
 const snapshot: WorkSnapshot = {
   missions: [
@@ -920,6 +922,142 @@ const aiReviewStale = buildAIReviewResponse({
 });
 assert.match(aiReviewStale.message, /Stale project pressure/);
 assert.match(aiReviewStale.message, /Powerless Sourcebook/);
+
+const ollamaSuccessFetch: typeof fetch = async (input) => {
+  const url = String(input);
+  if (url.endsWith("/api/tags")) {
+    return new Response(
+      JSON.stringify({
+        models: [{ name: "llama3.2:latest" }],
+      }),
+      { status: 200 }
+    );
+  }
+  if (url.endsWith("/api/generate")) {
+    return new Response(
+      JSON.stringify({
+        response: "Ollama says: start with the short Stacy follow-up.",
+      }),
+      { status: 200 }
+    );
+  }
+  return new Response("not found", { status: 404 });
+};
+
+const ollamaGenerated = await generateOllamaReviewSummary(
+  {
+    modelName: "llama3.2",
+    mode: "quick_wins",
+    packet: aiReviewPacket,
+  },
+  {
+    fetchFn: ollamaSuccessFetch,
+    timeoutMs: 1000,
+  }
+);
+assert.equal(ollamaGenerated.ok, true);
+assert.equal(ollamaGenerated.ok ? ollamaGenerated.text : "", "Ollama says: start with the short Stacy follow-up.");
+
+const aiReviewOllamaSuccess = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "llama3.2",
+    text: "Model summary: do the Stacy follow-up first.",
+  }),
+});
+assert.equal(aiReviewOllamaSuccess.summarySource, "ollama");
+assert.equal(aiReviewOllamaSuccess.writeBoundary, "read_only");
+assert.equal(aiReviewOllamaSuccess.fallbackReason, null);
+assert.match(aiReviewOllamaSuccess.message, /Model summary/);
+assert.match(aiReviewOllamaSuccess.message, /No work has been changed/);
+
+const aiReviewTimeoutFallback = await buildAIReviewResponseWithOllama({
+  mode: "reset",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: "llama3.2",
+    reliancePolicy: "prefer_local",
+  },
+  generateSummary: async () => ({
+    ok: false,
+    status: "timeout",
+    modelName: "llama3.2",
+    reason: "Ollama generation timed out.",
+  }),
+});
+assert.equal(aiReviewTimeoutFallback.summarySource, "deterministic_fallback");
+assert.equal(aiReviewTimeoutFallback.writeBoundary, "read_only");
+assert.equal(aiReviewTimeoutFallback.fallbackReason, "Ollama generation timed out.");
+assert.match(aiReviewTimeoutFallback.message, /Reset from the current work graph/);
+
+let noModelClientCalled = false;
+const aiReviewNoModelFallback = await buildAIReviewResponseWithOllama({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "local_only",
+  },
+  generateSummary: async () => {
+    noModelClientCalled = true;
+    return {
+      ok: true,
+      status: "ok",
+      modelName: "unused",
+      text: "should not happen",
+    };
+  },
+});
+assert.equal(noModelClientCalled, false);
+assert.equal(aiReviewNoModelFallback.summarySource, "deterministic_fallback");
+assert.match(aiReviewNoModelFallback.fallbackReason ?? "", /No saved Ollama model/);
+
+const ollamaMissing = await generateOllamaReviewSummary(
+  {
+    modelName: "missing-model",
+    mode: "reset",
+    packet: aiReviewPacket,
+  },
+  {
+    fetchFn: async () =>
+      new Response(
+        JSON.stringify({
+          models: [{ name: "llama3.2:latest" }],
+        }),
+        { status: 200 }
+      ),
+    timeoutMs: 1000,
+  }
+);
+assert.equal(ollamaMissing.ok, false);
+assert.equal(ollamaMissing.ok ? "" : ollamaMissing.status, "missing");
+
+const ollamaEmpty = await generateOllamaReviewSummary(
+  {
+    modelName: "llama3.2",
+    mode: "reset",
+    packet: aiReviewPacket,
+  },
+  {
+    fetchFn: async (input) =>
+      String(input).endsWith("/api/tags")
+        ? new Response(JSON.stringify({ models: [{ name: "llama3.2:latest" }] }), { status: 200 })
+        : new Response(JSON.stringify({ response: "   " }), { status: 200 }),
+    timeoutMs: 1000,
+  }
+);
+assert.equal(ollamaEmpty.ok, false);
+assert.equal(ollamaEmpty.ok ? "" : ollamaEmpty.status, "empty_response");
 
 const assertAIReviewFallbackRoute = (
   text: string,

@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import { summarizeOllamaInstalledModels } from "../../shared/settingsModel";
 import type {
   AiReliancePolicy,
   AiSettings,
@@ -56,6 +57,22 @@ const normalizeDraftModelName = (value: string | null | undefined) => {
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const probeBadgeClass = (statusLabel: string) => {
+  switch (statusLabel) {
+    case "saved model found":
+      return "badge";
+    case "checking":
+    case "not checked":
+    case "saved model not found":
+      return "badge waiting-badge";
+    case "Ollama unavailable":
+    case "no model selected":
+      return "badge urgent-badge";
+    default:
+      return "badge";
+  }
+};
+
 export function AiSettingsPanel({
   settings,
   form,
@@ -95,9 +112,10 @@ export function AiSettingsPanel({
   const installedModelSummary =
     ollamaProbeResult &&
     ollamaProbeResult.modelName === savedModelName &&
-    ollamaProbeResult.installedModels.length > 0
-      ? `Installed tags: ${ollamaProbeResult.installedModels.join(", ")}.`
+    ollamaProbeResult.status !== "unavailable"
+      ? summarizeOllamaInstalledModels(ollamaProbeResult.installedModels).label
       : null;
+  const probeModelLabel = savedModelName ? `saved model: ${savedModelName}` : "saved model: none";
 
   return (
     <>
@@ -168,10 +186,20 @@ export function AiSettingsPanel({
                   Check Ollama Model Availability
                 </button>
               </div>
+              <div className="setup-status-row" aria-label="Ollama model availability status">
+                <span className={probeBadgeClass(probeStatusLabel)}>
+                  availability: {probeStatusLabel}
+                </span>
+                <span className="badge">{probeModelLabel}</span>
+                {ollamaProbeResult?.modelName === savedModelName ? (
+                  <span className="badge">
+                    installed tags: {ollamaProbeResult.installedModels.length}
+                  </span>
+                ) : null}
+              </div>
               <p className="brief-path">
-                Availability status: {probeStatusLabel}. This only checks the local Ollama runtime
-                for installed tags and does not change assistant routing.
-                {installedModelSummary ? ` ${installedModelSummary}` : ""}
+                {installedModelSummary ?? "Installed tags are shown after a successful check."} The
+                probe is Settings-only; assistant routing does not depend on this status yet.
               </p>
             </section>
 

@@ -29,28 +29,31 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - Private ARM64 tester handoff is documented with artifact path, SHA-256, unsigned/private-only warning, expected install/reconnect/close/uninstall behavior, known empty-folder uninstall debt, and user-data safety notes.
 - Uninstall still leaves an empty `%LOCALAPPDATA%\Programs\PraxisDesk` directory; this is accepted as low-priority release debt for private validation and tracked in `docs/TECH_DEBT.md`.
 - AI Task Review route/service plumbing now produces packet-backed read-only review responses for reset/wins/forgetting/risk/stale prompts, and the Talk UI consumes those responses while preserving the no-write guardrail.
-- AI Settings now persists local model/policy drafts and can probe local Ollama model availability, but assistant routing does not yet use probe results.
+- AI Settings now persists local model/policy drafts, can probe local Ollama model availability, and shows scan-friendly probe results.
+- Local Ollama AI Review generation now exists for selected available models through `127.0.0.1:11434/api/generate`, with deterministic fallback for no selected model, missing model, unavailable Ollama, timeout, invalid response, empty response, and HTTP/error cases.
+- The routed Talk path is still deterministic because assistant routing is synchronous; async routing/UI wiring is needed before Talk can display model-generated summaries.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Complete AI Review Model Invocation And Routing Policy
+### 1. Complete Async AI Review Routing Policy
 
 **GOAL**
 
-Turn the packet-backed deterministic AI Review loop into model-assisted review without weakening the local fallback or write boundaries. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
+Turn the local Ollama review-generation path into an async routed Talk experience without weakening deterministic fallback or write boundaries. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
 
 **DIRECTION**
 
 - Natural language remains the interface. Packet-backed read-only review routes exist for reset, wins, forgetting, risk, and stale projects; person/project lookup remains a lookup route.
 - PRAXIS now builds a factual context packet before involving a model.
 - The context packet is assembled from the work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, daily brief/closeout summaries, and service health.
-- The LLM summarizes, prioritizes, explains tradeoffs, and suggests next moves.
+- Local Ollama generation can summarize, prioritize, explain tradeoffs, and suggest next moves when a selected local model is available.
 - Rule-based ranking remains the safety net and should still produce deterministic fallback output when a model is unavailable or uncertain.
 - The LLM must not silently mutate the task graph.
 - Writes must go through Review Inbox candidates, staged drafts, or explicit confirmation commands.
-- Model execution should default local-first through Ollama when available.
+- Model execution defaults local-first through Ollama.
 - Settings now supports a configurable local model and local availability probing; routing still needs to decide whether probe results are live, cached, or stored as explicit state.
+- The Talk route still needs async wiring so model-generated summaries can replace deterministic fallback responses when available.
 - Optional API provider settings and encrypted provider secrets remain future work.
 - The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
 
@@ -63,8 +66,9 @@ Turn the packet-backed deterministic AI Review loop into model-assisted review w
 
 **DONE WHEN**
 
-- The implementation wires real Ollama invocation for AI review summaries without making the model the source of truth.
-- Routing behavior accounts for unavailable, missing, available, no-model, and timeout probe states.
+- Async assistant routing can request local Ollama generation and return model-generated read-only summaries to Talk.
+- Routing behavior accounts for unavailable, missing, available, no-model, timeout, invalid, empty, and HTTP/error states.
+- The team has decided whether model availability is checked live, cached, or stored as explicit state for routing.
 - API provider fallback remains disabled until secret storage and policy are implemented.
 - AI Task Review appears as the next core roadmap track before Rainmeter/background polish.
 - Packet-backed read-only UX/routing/settings behavior remains intact.

@@ -1,5 +1,32 @@
 # ENGINEERING LOG
 
+## 2026-04-30 - Ollama Review Generation And Probe Polish
+
+### Built
+
+- Polished the AI Settings probe display with scan-friendly availability badges.
+- Added saved model and installed tag count display for local Ollama status.
+- Capped the installed tag summary with `+N more` for long local model lists.
+- Clarified in Settings copy that assistant routing does not depend on probe status yet.
+- Added real local-only Ollama AI Review generation against `127.0.0.1:11434`.
+- Checked local model availability through `/api/tags` before generation.
+- Generated model summaries through `/api/generate` with `stream: false`.
+- Added timeout, HTTP/error, invalid response, and empty response handling.
+- Kept no selected model, missing model, unavailable Ollama, timeout, invalid response, and empty response paths on deterministic fallback output.
+- Preserved read-only output for successful Ollama summaries and appended `No work has been changed.`
+
+### Still Open
+
+- The routed Talk path remains deterministic because assistant routing is synchronous; async route/UI wiring is still needed before Talk can display model-generated summaries.
+- The team still needs to decide whether model availability should be checked live, cached, or stored as explicit availability state for routing.
+- API provider secret storage and remote model fallback remain open.
+- Slack and companion exposure remain open if not already routed through the AI Review path.
+- The write boundary remains read-only: AI Review may explain and suggest, but task graph writes still require Review Inbox, staged drafts, or explicit confirmation.
+
+### Verification
+
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-04-30 - AI Review Routed Into Talk And Ollama Probe
 
 ### Built

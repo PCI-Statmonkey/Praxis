@@ -177,6 +177,32 @@ export type OllamaModelAvailabilityResult = {
   message: string;
 };
 
+export type OllamaInstalledModelSummary = {
+  visibleModels: string[];
+  hiddenCount: number;
+  label: string;
+};
+
+export const summarizeOllamaInstalledModels = (
+  installedModels: string[],
+  limit = 6
+): OllamaInstalledModelSummary => {
+  const normalizedLimit = Number.isFinite(limit) ? Math.max(Math.floor(limit), 1) : 6;
+  const visibleModels = installedModels.slice(0, normalizedLimit);
+  const hiddenCount = Math.max(installedModels.length - visibleModels.length, 0);
+  const visibleLabel = visibleModels.join(", ");
+  const hiddenLabel = hiddenCount > 0 ? `, +${hiddenCount} more` : "";
+
+  return {
+    visibleModels,
+    hiddenCount,
+    label:
+      installedModels.length > 0
+        ? `Installed tags: ${visibleLabel}${hiddenLabel}.`
+        : "Installed tags: none reported.",
+  };
+};
+
 export const DEFAULT_AI_SETTINGS: AiSettings = {
   localRuntime: "ollama",
   localModelName: null,

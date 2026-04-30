@@ -16,6 +16,7 @@ import {
   isActivelySyncing,
   normalizeAiSettings,
   statusGuidance,
+  summarizeOllamaInstalledModels,
   syncLabel,
 } from "../shared/settingsModel";
 import {
@@ -247,5 +248,23 @@ assert.deepEqual(
 assert.equal(isOllamaModelInstalled("phi3", ["phi3:latest"]), true);
 assert.equal(isOllamaModelInstalled("gpt-oss-20b:latest", ["gpt-oss-20b:latest"]), true);
 assert.equal(isOllamaModelInstalled("gpt-oss-120b", ["gpt-oss-20b:latest"]), false);
+assert.deepEqual(
+  summarizeOllamaInstalledModels([
+    "model-1:latest",
+    "model-2:latest",
+    "model-3:latest",
+    "model-4:latest",
+  ], 2),
+  {
+    visibleModels: ["model-1:latest", "model-2:latest"],
+    hiddenCount: 2,
+    label: "Installed tags: model-1:latest, model-2:latest, +2 more.",
+  }
+);
+assert.deepEqual(summarizeOllamaInstalledModels([], 2), {
+  visibleModels: [],
+  hiddenCount: 0,
+  label: "Installed tags: none reported.",
+});
 
 console.log("sync import regression tests passed");
