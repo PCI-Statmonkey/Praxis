@@ -12,11 +12,15 @@ import type {
 } from "../../shared/workModel";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
+import { AtRiskLane } from "./mission-control/AtRiskLane";
+import { CalendarPressureLane } from "./mission-control/CalendarPressureLane";
+import { CommandStatusHeader } from "./mission-control/CommandStatusHeader";
 import { DailyBriefHero } from "./mission-control/DailyBriefHero";
 import { DailyRhythmCard } from "./mission-control/DailyRhythmCard";
-import { DashboardReadinessCard } from "./mission-control/DashboardReadinessCard";
 import { PriorityStackLane } from "./mission-control/PriorityStackLane";
 import { ReviewInboxLane } from "./mission-control/ReviewInboxLane";
+import { ReviewResetEntry } from "./mission-control/ReviewResetEntry";
+import { ServiceHealthLane } from "./mission-control/ServiceHealthLane";
 
 type TodayTimelinePanelProps = {
   isActive: boolean;
@@ -140,90 +144,78 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       (reviewInboxItems.length > 0
         ? `${reviewInboxItems.length} review candidate${reviewInboxItems.length === 1 ? "" : "s"} need accept or archive.`
         : "No overdue, waiting-on, or review-inbox pressure in the current brief.");
-    const shortTime = (value: string) => {
-      const date = new Date(value);
-      if (Number.isNaN(date.getTime())) {
-        return value;
-      }
-
-      return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-    };
-    const timelineItems = [
-      ...upcomingAppointments.slice(0, 4).map((appointment) => ({
-        id: `appointment-${appointment.id}`,
-        title: appointment.title,
-        at: appointment.startsAt,
-        meta: appointment.allDay ? "all day" : "appointment",
-        kind: "appointment",
-      })),
-      ...upcomingDeadlines.slice(0, 3).map((deadline) => ({
-        id: `deadline-${deadline.id}`,
-        title: deadline.title,
-        at: deadline.dueAt,
-        meta: deadline.priority,
-        kind: "deadline",
-      })),
-    ]
-      .sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime())
-      .slice(0, 5);
-
     return (
       <section ref={ref} className={`panel center${isActive ? " is-active-panel" : ""}`}>
-        <p className="panel-status-line">{status}</p>
+        <div className="mission-control-root">
+          <CommandStatusHeader
+            status={status}
+            localDate={dailyBrief.localDate}
+            dashboardReadiness={dashboardReadiness}
+            operationalLoad={operationalLoad}
+          />
 
-        <DailyBriefHero
-          recommendedMove={dailyBrief.recommendedMove}
-          operationalLoad={operationalLoad}
-          showBriefDetails={showBriefDetails}
-          setShowStatusReport={setShowStatusReport}
-          setShowBriefDetails={setShowBriefDetails}
-        />
+          <div className="mission-control-first-screen">
+            <div className="mission-control-primary">
+              <DailyBriefHero
+                recommendedMove={dailyBrief.recommendedMove}
+                operationalLoad={operationalLoad}
+                showBriefDetails={showBriefDetails}
+                setShowStatusReport={setShowStatusReport}
+                setShowBriefDetails={setShowBriefDetails}
+              />
 
-        <DashboardReadinessCard
-          dashboardReadiness={dashboardReadiness}
-          serviceHealthItems={serviceHealthItems}
-        />
+              <div className="mission-control-lane-grid">
+                <CalendarPressureLane
+                  upcomingAppointments={upcomingAppointments}
+                  upcomingDeadlines={upcomingDeadlines}
+                  openCapture={openCapture}
+                />
+                <AtRiskLane
+                  dashboardReadiness={dashboardReadiness}
+                  serviceHealthItems={serviceHealthItems}
+                  closeout={closeout}
+                  upcomingDeadlines={upcomingDeadlines}
+                  formatDateTime={formatDateTime}
+                />
+              </div>
+            </div>
 
-        <div className="operator-main-grid">
-          <article className="brief-card timeline-card">
-            <h3>Today Timeline</h3>
-            {timelineItems.length > 0 ? (
-              <ol className="timeline-list">
-                {timelineItems.map((item) => (
-                  <li key={item.id} className={`timeline-item is-${item.kind}`}>
-                    <div>
-                      <strong>{shortTime(item.at)}</strong>
-                      <p>{item.title}</p>
-                    </div>
-                    <span className={item.kind === "deadline" ? "badge urgent-badge" : "badge"}>
-                      {item.meta}
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState
-                title="Timeline clear"
-                detail="Upcoming appointments and active deadlines will appear here once they are recorded or synced."
-              >
-                <button type="button" onClick={openCapture}>
-                  Capture Appointment
-                </button>
-              </EmptyState>
-            )}
-          </article>
+            <div className="mission-control-secondary">
+              <PriorityStackLane
+                priorityItems={dailyBrief.priorityItems}
+                openCapture={openCapture}
+              />
+              <ReviewResetEntry
+                reviewInboxItemCount={reviewInboxItems.length}
+                closeoutSummary={closeoutSummary}
+                setShowStatusReport={setShowStatusReport}
+                setShowBriefDetails={setShowBriefDetails}
+              />
+            </div>
+          </div>
 
-          <PriorityStackLane priorityItems={dailyBrief.priorityItems} openCapture={openCapture} />
+          <DailyRhythmCard
+            dailyBrief={dailyBrief}
+            quickWinCount={quickWinCount}
+            reviewInboxItemCount={reviewInboxItems.length}
+            closeoutSummary={closeoutSummary}
+            setShowStatusReport={setShowStatusReport}
+            setShowBriefDetails={setShowBriefDetails}
+          />
+
+          <ReviewInboxLane
+            items={reviewInboxItems}
+            formatDateTime={formatDateTime}
+            acceptEmailSuggestion={acceptEmailSuggestion}
+            archiveEmailSuggestion={archiveEmailSuggestion}
+            dismissEmailSuggestion={dismissEmailSuggestion}
+            acceptChatSuggestion={acceptChatSuggestion}
+            archiveChatSuggestion={archiveChatSuggestion}
+            dismissChatSuggestion={dismissChatSuggestion}
+          />
+
+          <ServiceHealthLane serviceHealthItems={serviceHealthItems} />
         </div>
-
-        <DailyRhythmCard
-          dailyBrief={dailyBrief}
-          quickWinCount={quickWinCount}
-          reviewInboxItemCount={reviewInboxItems.length}
-          closeoutSummary={closeoutSummary}
-          setShowStatusReport={setShowStatusReport}
-          setShowBriefDetails={setShowBriefDetails}
-        />
 
         <article className="brief-card focus-card">
           <h3>Focus Controls</h3>
@@ -487,17 +479,6 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
             ) : null}
           </>
         ) : null}
-
-        <ReviewInboxLane
-          items={reviewInboxItems}
-          formatDateTime={formatDateTime}
-          acceptEmailSuggestion={acceptEmailSuggestion}
-          archiveEmailSuggestion={archiveEmailSuggestion}
-          dismissEmailSuggestion={dismissEmailSuggestion}
-          acceptChatSuggestion={acceptChatSuggestion}
-          archiveChatSuggestion={archiveChatSuggestion}
-          dismissChatSuggestion={dismissChatSuggestion}
-        />
 
         <h3>Upcoming Appointments</h3>
         {upcomingAppointments.length > 0 ? (
