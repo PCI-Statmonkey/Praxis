@@ -12,7 +12,11 @@ import type {
 } from "../../shared/workModel";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
-import { ReviewInboxPanel } from "./ReviewInboxPanel";
+import { DailyBriefHero } from "./mission-control/DailyBriefHero";
+import { DailyRhythmCard } from "./mission-control/DailyRhythmCard";
+import { DashboardReadinessCard } from "./mission-control/DashboardReadinessCard";
+import { PriorityStackLane } from "./mission-control/PriorityStackLane";
+import { ReviewInboxLane } from "./mission-control/ReviewInboxLane";
 
 type TodayTimelinePanelProps = {
   isActive: boolean;
@@ -130,10 +134,6 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
     const quickWinCount = dailyBrief.todos.filter((item) =>
       item.reason.toLowerCase().includes("quick action")
     ).length;
-    const servicesNeedingAttention = serviceHealthItems.filter(
-      (item) => item.state === "problem" || item.state === "setup" || item.state === "loading"
-    );
-    const nextAppointment = dailyBrief.appointments[0] ?? null;
     const closeout = dailyBrief.closeout;
     const closeoutSummary =
       closeout.summary ||
@@ -171,61 +171,18 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       <section ref={ref} className={`panel center${isActive ? " is-active-panel" : ""}`}>
         <p className="panel-status-line">{status}</p>
 
-        <article className="brief-card daily-brief-hero">
-          <div className="daily-brief-copy">
-            <span className="recommended-label">Daily Brief / Top Move</span>
-            <h2>{dailyBrief.recommendedMove.directive}</h2>
-            <p className="brief-spoken">{dailyBrief.recommendedMove.rationale}</p>
-            <p className="brief-path">{dailyBrief.recommendedMove.actionHint}</p>
-            <div className="filter-actions">
-              <button type="button" className="primary-action-button" onClick={() => setShowStatusReport(true)}>
-                Start Top Move
-              </button>
-              <button type="button" onClick={() => setShowBriefDetails((current) => !current)}>
-                {showBriefDetails ? "Hide Brief" : "Read Brief"}
-              </button>
-              <button type="button" onClick={() => setShowStatusReport(false)}>
-                Later
-              </button>
-            </div>
-          </div>
-          <div className="operational-load">
-            <span>Operational Load</span>
-            <strong>{operationalLoad}%</strong>
-            <div className="progress-meter" aria-hidden="true">
-              <span style={{ width: `${operationalLoad}%` }} />
-            </div>
-            <p>appointments, overdue work, people waiting, money tasks</p>
-          </div>
-        </article>
+        <DailyBriefHero
+          recommendedMove={dailyBrief.recommendedMove}
+          operationalLoad={operationalLoad}
+          showBriefDetails={showBriefDetails}
+          setShowStatusReport={setShowStatusReport}
+          setShowBriefDetails={setShowBriefDetails}
+        />
 
-        <article className={`brief-card readiness-card is-${dashboardReadiness.state}`}>
-          <div className="readiness-copy">
-            <span className="recommended-label">Dashboard Readiness</span>
-            <h3>{dashboardReadiness.title}</h3>
-            <p>{dashboardReadiness.detail}</p>
-            <p className="brief-path">{dashboardReadiness.action}</p>
-          </div>
-          {servicesNeedingAttention.length > 0 ? (
-            <ul className="readiness-list" aria-label="Services needing attention">
-              {servicesNeedingAttention.map((item) => (
-                <li key={item.label}>
-                  <strong>{item.label}</strong>
-                  <span className={`badge ${item.state === "problem" ? "urgent-badge" : ""}`}>
-                    {item.state}
-                  </span>
-                  <p>{item.detail}</p>
-                  <small>{item.action}</small>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="readiness-clear">
-              <strong>{serviceHealthItems.filter((item) => item.state === "online").length}</strong>
-              <span>services ready</span>
-            </div>
-          )}
-        </article>
+        <DashboardReadinessCard
+          dashboardReadiness={dashboardReadiness}
+          serviceHealthItems={serviceHealthItems}
+        />
 
         <div className="operator-main-grid">
           <article className="brief-card timeline-card">
@@ -256,96 +213,17 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
             )}
           </article>
 
-          <article className="brief-card priority-stack-card">
-            <h3>Priority Stack</h3>
-            {dailyBrief.priorityItems.length > 0 ? (
-              <ol className="operator-list priority-stack-list">
-                {dailyBrief.priorityItems.slice(0, 5).map((item) => (
-                  <li key={`${item.entityKind}-${item.id}`} className="operator-card">
-                    <div className="operator-card-header">
-                      <strong>{item.title}</strong>
-                      <span className="badge">{item.priority}</span>
-                    </div>
-                    <p>reason: {item.reason}</p>
-                    {item.waitingOnPersonName ? (
-                      <span className="badge waiting-badge">
-                        waiting on: {item.waitingOnPersonName}
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState
-                title="No ranked priorities"
-                detail="Praxis will populate this stack from active todos, deadlines, calendar pressure, and waiting-on work."
-              >
-                <button type="button" onClick={openCapture}>
-                  Capture Work
-                </button>
-              </EmptyState>
-            )}
-          </article>
+          <PriorityStackLane priorityItems={dailyBrief.priorityItems} openCapture={openCapture} />
         </div>
 
-        <article className="brief-card daily-rhythm-card">
-          <div className="rhythm-header">
-            <div>
-              <span className="recommended-label">Daily Operating Rhythm</span>
-              <h3>Arrival / Triage / Closeout</h3>
-            </div>
-            <div className="rhythm-badges">
-              <span className="badge">{dailyBrief.localDate || "today"}</span>
-              <span className="badge">{closeout.changedTodayCount} changed</span>
-              <span className="badge">{closeout.completedTodayCount} completed</span>
-            </div>
-          </div>
-          <div className="rhythm-grid">
-            <section className="rhythm-step">
-              <span>Arrival</span>
-              <strong>{dailyBrief.recommendedMove.directive}</strong>
-              <p>{nextAppointment ? `First calendar pressure: ${nextAppointment.title}.` : "No near-term appointment pressure."}</p>
-            </section>
-            <section className="rhythm-step">
-              <span>Triage</span>
-              <strong>
-                {reviewInboxItems.length > 0
-                  ? `${reviewInboxItems.length} review candidate${reviewInboxItems.length === 1 ? "" : "s"}`
-                  : "Review Inbox clear"}
-              </strong>
-              <p>
-                {quickWinCount > 0
-                  ? `${quickWinCount} quick action${quickWinCount === 1 ? "" : "s"} available.`
-                  : "No quick-action pressure in the current stack."}
-              </p>
-            </section>
-            <section className="rhythm-step">
-              <span>Closeout</span>
-              <strong>{closeoutSummary}</strong>
-              <p>
-                {closeout.moveTomorrowCandidates.length > 0
-                  ? `Move or decide: ${closeout.moveTomorrowCandidates.join(", ")}.`
-                  : dailyBrief.thereIsMore
-                  ? `Follow-up topics: ${dailyBrief.followUpTopics.join(", ") || "additional work"}.`
-                  : "The visible brief covers the current active stack."}
-              </p>
-            </section>
-          </div>
-          <div className="filter-actions">
-            <button
-              type="button"
-              onClick={() => {
-                setShowStatusReport(true);
-                setShowBriefDetails(true);
-              }}
-            >
-              Open Brief
-            </button>
-            <button type="button" onClick={() => setShowStatusReport(true)}>
-              Show Status
-            </button>
-          </div>
-        </article>
+        <DailyRhythmCard
+          dailyBrief={dailyBrief}
+          quickWinCount={quickWinCount}
+          reviewInboxItemCount={reviewInboxItems.length}
+          closeoutSummary={closeoutSummary}
+          setShowStatusReport={setShowStatusReport}
+          setShowBriefDetails={setShowBriefDetails}
+        />
 
         <article className="brief-card focus-card">
           <h3>Focus Controls</h3>
@@ -610,7 +488,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
           </>
         ) : null}
 
-        <ReviewInboxPanel
+        <ReviewInboxLane
           items={reviewInboxItems}
           formatDateTime={formatDateTime}
           acceptEmailSuggestion={acceptEmailSuggestion}
