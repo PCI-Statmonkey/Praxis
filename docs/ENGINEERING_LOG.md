@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control First-Screen QA
+
+### Validated
+
+- Ran live Electron visual QA against checkpoint `0fd6fc4 Record Mission Control first-screen composition`.
+- Confirmed the Mission Control first screen is present and functional.
+- Confirmed command header/status, Top Move, Calendar Pressure, At Risk, Priority Stack, Review/Reset, Daily Rhythm, Review Inbox, Service Health, and existing Talk/AI Review surfaces are visible.
+- Confirmed Review Inbox action controls remain reachable through the action menu.
+- Confirmed AI Review remained read-only, `No work has been changed.` stayed visible, and the work snapshot before and after matched.
+- Confirmed narrow layout loads without horizontal overflow or broken controls.
+- Accepted Bibi's first-screen copy QA recommendations for immediate polish.
+
+### Still Open
+
+- Reduce Top Move title wrapping so the primary directive remains scan-friendly.
+- Dedupe or compress Service Health prominence across the app-level strip, At Risk, and Service Health sections.
+- Make At Risk read as work risk rather than mostly service readiness.
+- Improve secondary-column balance for Priority Stack and Review/Reset.
+- Make `Review / Reset` launch actual AI Review or rename the card/action to avoid implying model reset behavior.
+- Apply immediate copy fixes: `Command`, `Top Move`, `No calendar pressure`, `Daily Rhythm`, `confirmation`, and `No ranked priorities yet`.
+
+### Verification
+
+- `npm run build:app` passes.
+
 ## 2026-05-01 - Mission Control First-Screen Composition
 
 ### Built
@@ -12,9 +37,7 @@
 
 ### Still Open
 
-- Live visual QA should review desktop column balance after Priority Stack and Review/Reset moved into the secondary column.
-- Service Health now appears inside Today while the app-level service strip still exists; the next polish slice should decide whether to compress or remove the duplicate first-screen prominence.
-- The `Review / Reset` entry currently opens brief/status views rather than directly launching AI Review; confirm whether that is acceptable for this slice or should become a true AI Review trigger.
+- Follow-up visual and copy QA passed in the Mission Control First-Screen QA entry and produced the targeted polish list.
 
 ### Verification
 
