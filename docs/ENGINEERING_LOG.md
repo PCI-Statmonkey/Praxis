@@ -1,5 +1,32 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control Selector And Copy Foundation
+
+### Built
+
+- Extracted dashboard selector/data shaping helpers from `src/App.tsx` into `src/dashboardSelectors.ts`.
+- Moved review inbox composition, upcoming appointment/deadline filtering, service health shaping, and dashboard readiness derivation behind named selector helpers.
+- Preserved the current JSX, CSS, action callbacks, assistant routing, and write-confirmation behavior.
+- Added `docs/MISSION_CONTROL_COPY_GUIDE.md` with Mission Control labels, directive phrases, empty-state tone, service warning tone, AI Review wording, Review Inbox confirmation wording, Talk copy, and narrow-screen label guidance.
+
+### Planned
+
+- Accepted Ptolemy's first-screen design QA: desktop should preserve the shell but reweight hierarchy toward command header, Top Move, Priority Stack, Calendar Pressure, compact Daily Rhythm, Review/Reset, compact trust state, and reachable Command Channel.
+- Accepted the narrow/mobile order: command header, Top Move, Calendar Pressure, At Risk/Blockers, Priority Stack, Review/Reset, Daily Rhythm, Review Inbox, Command Channel, Projects/Missions, full service health, full appointment/deadline lists, memory documents, and checklist.
+
+### Still Open
+
+- The next implementation slice should split Today/Mission Control lanes into presentational components before broad CSS/layout changes.
+- Visual work must continue to avoid assistant routing, capture forms, Review Inbox write actions, Settings, and sync behavior.
+
+### Verification
+
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm run test:assistant` passes.
+- `npm test` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-05-01 - Mission Control Planning Reconciled
 
 ### Planned

@@ -40,6 +40,9 @@ Move the immediate execution queue to the Mission Control dashboard redesign. AI
 - Mission Control planning is accepted at coordinator checkpoint `bab4fa7 Add Mission Control technical map`.
 - Mission Control redesign is now the next active planning/implementation track, guided by `docs/MISSION_CONTROL_UI_PLAN.md` and `docs/MISSION_CONTROL_TECH_PLAN.md`.
 - Ana's baseline QA report is accepted as the dashboard visual/behavior baseline for the Mission Control redesign.
+- Ptolemy's first-screen design QA is accepted: Mission Control should lead with command header, Top Move, Calendar Pressure, At Risk/Blockers, Priority Stack, Review/Reset, compact Daily Rhythm, Review Inbox, and a reachable Command Channel, with Talk and full service diagnostics lower or secondary on narrow screens.
+- `docs/MISSION_CONTROL_COPY_GUIDE.md` now defines Mission Control labels, directive copy, service warning tone, AI Review wording, Review Inbox confirmation wording, and narrow-screen label guidance.
+- The first implementation slice is complete: dashboard selector/data shaping helpers were extracted from `src/App.tsx` into `src/dashboardSelectors.ts` without intended UI or behavior changes.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
@@ -59,16 +62,17 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 - Treat AI Review as an analysis/reset mode attached to the primary decision surface, not the whole dashboard.
 - Keep Talk visible as the command channel without letting it dominate the dashboard.
 - Preserve Review Inbox write-confirmation paths and assistant no-write boundaries.
-- Start with dashboard selector extraction / data shaping before visual layout changes.
-- Then move through Today lane component split, Mission Control layout CSS, and first-screen composition.
+- Dashboard selector extraction / data shaping is complete.
+- Next move through Today lane component split, Mission Control layout CSS, and first-screen composition.
 - Avoid mixing dashboard visual work with assistant routing, capture forms, Settings, or sync behavior.
 
 **FILES**
 
 - `docs/MISSION_CONTROL_UI_PLAN.md`
 - `docs/MISSION_CONTROL_TECH_PLAN.md`
+- `docs/MISSION_CONTROL_COPY_GUIDE.md`
 - `src/App.tsx`
-- Optional new file: `src/dashboardSelectors.ts`
+- `src/dashboardSelectors.ts`
 - `src/components/TodayTimelinePanel.tsx`
 - `src/components/MemoryWriterPanel.tsx`
 - `src/components/AssistantReviewSurface.tsx`
@@ -76,7 +80,7 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 
 **DONE WHEN**
 
-- The first implementation slice extracts dashboard selectors/data shaping for service health, readiness, timeline items, review inbox composition, and operational-load inputs without changing JSX or CSS.
+- Dashboard selectors/data shaping remain extracted and behavior-equivalent.
 - The dashboard first screen answers: what is the top move, what time pressure exists, what is at risk, who is waiting, what PRAXIS cannot currently see, and whether the operator should work, triage, reset, or prepare.
 - Mission Control uses the accepted UI hierarchy: command header, primary decision surface, calendar pressure, daily rhythm, Review Inbox, service health, and Talk.
 - Implementation follows the technical map without changing assistant routing semantics, data semantics, or write-confirmation boundaries by accident.
