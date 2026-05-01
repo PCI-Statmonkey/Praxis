@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control Layout Hooks
+
+### Built
+
+- Added CSS-only Mission Control layout hooks in `src/App.css`.
+- Added hooks for root layout, first-screen composition, status strip, lane grid, primary/secondary columns, lane container, lane header, and lane body.
+- Added responsive collapse rules for the new Mission Control hooks inside the existing mobile media query.
+- Kept existing selectors intact and avoided Talk, Settings, forms, and write-action CSS.
+
+### Validated
+
+- Accepted Ana's lane split visual smoke: Daily Brief / Top Move, Dashboard Readiness, Priority Stack, Daily Rhythm, Review Inbox, Talk / AI Review, and narrow layout still render with no visible regression.
+- Accepted Bibi's first-screen composition spec: desktop order should be Command, Top Move, Calendar Pressure, At Risk, Priority Stack, Review/Reset, Daily Rhythm, Review Inbox, Service Health, and Talk; narrow order should be Now, Move, Time, Risks, Stack, Review, Rhythm, Inbox, Talk, Health, Projects/Missions, full lists, memory documents, and checklist.
+
+### Still Open
+
+- The next implementation slice should apply the Mission Control hooks in JSX and compose the first-screen hierarchy from existing data and split components.
+- Future JSX work should not move Talk forms, capture drafts, assistant routing, Review Inbox write actions, or service settings.
+
+### Verification
+
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm run build:app` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-05-01 - Mission Control Lane Split
 
 ### Built

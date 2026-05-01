@@ -46,6 +46,9 @@ Move the immediate execution queue to the Mission Control dashboard redesign. AI
 - Selector extraction visual smoke passed: Today dashboard, Review Inbox, appointments/deadlines, service readiness, Talk/AI Review, and narrow layout still load with no visible regression.
 - Today lane component split is complete: Daily Brief hero, Dashboard Readiness, Priority Stack, Daily Rhythm, and Review Inbox wrapper now live under `src/components/mission-control/` without CSS or behavior changes.
 - Bibi's component naming review is accepted for future Mission Control surfaces: prefer product-level names like `CommandHeader`, `TopMoveCard`, `CalendarPressureStrip`, `ReviewInboxSummary`, `ServiceHealthSummary`, and `TalkRail` while keeping transitional names where they reduce risk.
+- Mission Control layout CSS hooks are in place in `src/App.css` for future first-screen composition, including root, first-screen, status strip, lane grid, primary/secondary, lane header/body, and responsive collapse classes.
+- Lane split visual smoke passed: Daily Brief/Top Move, Dashboard Readiness, Priority Stack, Daily Rhythm, Review Inbox, Talk/AI Review, and narrow layout still render without visible regression.
+- Bibi's first-screen composition spec is accepted: desktop should order Command, Top Move, Calendar Pressure, At Risk, Priority Stack, Review/Reset, Daily Rhythm, Review Inbox, Service Health, and Talk; narrow should order Now, Move, Time, Risks, Stack, Review, Rhythm, Inbox, Talk, Health, Projects/Missions, full lists, memory, and checklist.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
@@ -67,7 +70,8 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 - Preserve Review Inbox write-confirmation paths and assistant no-write boundaries.
 - Dashboard selector extraction / data shaping is complete.
 - Today lane component split is complete.
-- Next move through isolated Mission Control layout CSS and first-screen composition.
+- Isolated Mission Control layout CSS hooks are complete.
+- Next move through first-screen JSX composition using existing data and split components.
 - Avoid mixing dashboard visual work with assistant routing, capture forms, Settings, or sync behavior.
 
 **FILES**
@@ -87,6 +91,7 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 
 - Dashboard selectors/data shaping remain extracted and behavior-equivalent.
 - Today lane components remain split without changing existing behavior.
+- Mission Control layout hooks remain isolated and do not disrupt existing Talk, Settings, forms, or write-action CSS.
 - The dashboard first screen answers: what is the top move, what time pressure exists, what is at risk, who is waiting, what PRAXIS cannot currently see, and whether the operator should work, triage, reset, or prepare.
 - Mission Control uses the accepted UI hierarchy: command header, primary decision surface, calendar pressure, daily rhythm, Review Inbox, service health, and Talk.
 - Implementation follows the technical map without changing assistant routing semantics, data semantics, or write-confirmation boundaries by accident.
