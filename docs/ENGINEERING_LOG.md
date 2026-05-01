@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control Lane Split
+
+### Built
+
+- Split the Today dashboard lane rendering into presentational Mission Control components without changing CSS or intended behavior.
+- Added `DailyBriefHero`, `DashboardReadinessCard`, `PriorityStackLane`, `DailyRhythmCard`, and `ReviewInboxLane` under `src/components/mission-control/`.
+- Kept Today timeline, focus controls, proactive suggestion, reports/details, appointment/deadline lists, and memory-backed documents inline for later slices.
+- Preserved Review Inbox accept/archive/dismiss callback wiring through a thin wrapper.
+
+### Validated
+
+- Accepted Ana's selector extraction visual smoke: Today dashboard, Review Inbox, upcoming appointments/deadlines, service health/readiness, Talk/AI Review, and narrow layout still load with no visible regression.
+- Accepted Bibi's component naming review for future Mission Control work: prefer product-level names such as `CommandHeader`, `TopMoveCard`, `CalendarPressureStrip`, `ReviewInboxSummary`, `ServiceHealthSummary`, and `TalkRail`, while keeping transitional component names where they reduce refactor risk.
+
+### Still Open
+
+- The next implementation slice should isolate Mission Control layout CSS and begin first-screen composition without touching assistant routing, capture forms, Review Inbox write actions, Settings, or sync behavior.
+
+### Verification
+
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm run test:assistant` passes.
+- `npm test` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-05-01 - Mission Control Selector And Copy Foundation
 
 ### Built
