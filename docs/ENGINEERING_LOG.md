@@ -1,5 +1,26 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control Planning Reconciled
+
+### Planned
+
+- Reconciled the immediate execution queue after accepted Mission Control planning checkpoint `bab4fa7 Add Mission Control technical map`.
+- Marked the AI Review model/output slice complete for the local Talk path, including local Ollama generation, deterministic fallback, model-ranked rendering, no-write guardrails, live fallback QA, live model-path QA, copy polish, linked deadline de-dupe, and final duplicate smoke.
+- Promoted Mission Control dashboard redesign to the next active planning/implementation track.
+- Referenced `docs/MISSION_CONTROL_UI_PLAN.md` as the product and first-screen information-architecture source.
+- Referenced `docs/MISSION_CONTROL_TECH_PLAN.md` as the implementation map and safe-slice guide.
+- Preserved persistent presence, Rainmeter, and background wallpaper surfaces as follow-on V1.1 planning after Mission Control.
+
+### Still Open
+
+- Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
+- Mission Control implementation should preserve assistant routing semantics, data semantics, Review Inbox write-confirmation paths, and AI Review no-write boundaries.
+
+### Verification
+
+- `git status --short` showed only untracked `memory/` before this documentation update.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-05-01 - AI Review Final Duplicate Smoke
 
 ### Validated

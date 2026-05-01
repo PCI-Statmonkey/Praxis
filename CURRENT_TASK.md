@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. This is core PRAXIS near-term work, not optional V1.1 polish. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after the AI review loop can explain what matters and help the operator reset.
+Move the immediate execution queue to the Mission Control dashboard redesign. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is now complete enough to support the next dashboard layer. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -36,49 +36,48 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - Local model-path Talk UI QA now passes with saved model `qwen2.5:0.5b-instruct`: reset, wins, forgetting, and risk show `Ollama / Model summary` with deterministic packet-rendered copy, stale projects safely falls back when there are no stale IDs to rank, the write boundary stays read-only, the work snapshot remains unchanged, and desktop/narrow Talk overflow checks pass.
 - AI Review model-ranked rendering now uses mode-specific coach headings and source-aware de-duping. AI Review work items now preserve linked deadline source identity so todo/project/mission items and their linked deadlines can be presented once while standalone deadlines remain distinct.
 - Final live Talk smoke confirmed the linked todo/deadline duplicate is gone for `3292 n 29th ct NEW RACKS 5-6-2025`, exact packet titles remain intact, no invented facts or internal mode leaks appeared, `No work has been changed.` stayed visible, and the work snapshot remained unchanged.
+- AI Review model/output slice is complete for the local Talk path: packet-backed routing, local Ollama generation, deterministic fallback, model-ranked rendering, no-write guardrails, live fallback QA, live model-path QA, copy polish, linked deadline de-dupe, and final duplicate smoke are complete.
+- Mission Control planning is accepted at coordinator checkpoint `bab4fa7 Add Mission Control technical map`.
+- Mission Control redesign is now the next active planning/implementation track, guided by `docs/MISSION_CONTROL_UI_PLAN.md` and `docs/MISSION_CONTROL_TECH_PLAN.md`.
+- Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Complete AI Review Routing Policy And External Exposure
+### 1. Implement Mission Control Dashboard Redesign
 
 **GOAL**
 
-Turn the async local Ollama review path into a polished routing policy that remains local-first, observable, and safe across PRAXIS surfaces. The feature should help the operator recover context, decide what matters, and restart work when attention has scattered.
+Turn the current dashboard into Mission Control: a dense, calm, directive command center that tells the operator what needs attention now, why it matters, and what to do next.
 
 **DIRECTION**
 
-- Natural language remains the interface. Packet-backed read-only review routes exist for reset, wins, forgetting, risk, and stale projects; person/project lookup remains a lookup route.
-- PRAXIS now builds a factual context packet before involving a model.
-- The context packet is assembled from the work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, daily brief/closeout summaries, and service health.
-- Local Ollama generation can summarize, prioritize, explain tradeoffs, and suggest next moves when a selected local model is available.
-- Rule-based ranking remains the safety net and should still produce deterministic fallback output when a model is unavailable or uncertain.
-- The LLM must not silently mutate the task graph.
-- Writes must go through Review Inbox candidates, staged drafts, or explicit confirmation commands.
-- Model execution defaults local-first through Ollama.
-- Settings now supports a configurable local model and local availability probing; routing still needs to decide whether probe results are live, cached, or stored as explicit state.
-- Talk now uses async AI Review IPC to display model-generated summaries when available and deterministic fallback when needed.
-- Optional API provider settings and encrypted provider secrets remain future work.
-- Slack and companion exposure remain open if not already routed through the AI Review path.
-- Live Electron model-generated Talk QA reached structured model-ranked output with `qwen2.5:0.5b-instruct`; generic headings and source-aware linked deadline de-dupe are confirmed in live Talk.
-- The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
+- Use `docs/MISSION_CONTROL_UI_PLAN.md` as the product and information-architecture source.
+- Use `docs/MISSION_CONTROL_TECH_PLAN.md` as the implementation map and safe slicing guide.
+- Lead the first screen with the operator's top move, time pressure, risks, waiting-on items, and service blind spots.
+- Treat AI Review as an analysis/reset mode attached to the primary decision surface, not the whole dashboard.
+- Keep Talk visible as the command channel without letting it dominate the dashboard.
+- Preserve Review Inbox write-confirmation paths and assistant no-write boundaries.
+- Prefer small implementation slices: dashboard data selectors, Today lane component split, Mission Control layout CSS, and then first-screen composition.
+- Avoid mixing dashboard visual work with assistant routing, capture forms, Settings, or sync behavior.
 
 **FILES**
 
-- `docs/ARCHITECTURE.md`
-- `docs/Roadmap.md`
-- `docs/TECH_DEBT.md`
-- `docs/MISSION_PLAN.md`
+- `docs/MISSION_CONTROL_UI_PLAN.md`
+- `docs/MISSION_CONTROL_TECH_PLAN.md`
+- `src/App.tsx`
+- `src/components/TodayTimelinePanel.tsx`
+- `src/components/MemoryWriterPanel.tsx`
+- `src/components/AssistantReviewSurface.tsx`
+- `src/App.css`
 
 **DONE WHEN**
 
-- Availability policy is explicit: model availability is checked live, cached, or stored as explicit routing state.
-- Routing behavior accounts for unavailable, missing, available, no-model, timeout, invalid, empty, and HTTP/error states.
-- API provider fallback remains disabled until secret storage and policy are implemented.
-- Slack/companion review exposure is either wired through the same AI Review path or deliberately deferred.
-- Live Electron QA against structured model-ranked AI Review output is complete, including actual Talk-surface model/fallback state validation.
-- AI Task Review appears as the next core roadmap track before Rainmeter/background polish.
-- Packet-backed read-only UX/routing/settings behavior remains intact.
+- The dashboard first screen answers: what is the top move, what time pressure exists, what is at risk, who is waiting, what PRAXIS cannot currently see, and whether the operator should work, triage, reset, or prepare.
+- Mission Control uses the accepted UI hierarchy: command header, primary decision surface, calendar pressure, daily rhythm, Review Inbox, service health, and Talk.
+- Implementation follows the technical map without changing assistant routing semantics, data semantics, or write-confirmation boundaries by accident.
+- Desktop and narrow layouts remain usable.
+- AI Review model/output behavior remains intact and read-only.
 
 ### 2. Plan V1.1 Persistent Presence After AI Review
 
