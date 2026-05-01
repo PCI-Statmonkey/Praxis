@@ -9,6 +9,8 @@
 - Promoted Mission Control dashboard redesign to the next active planning/implementation track.
 - Referenced `docs/MISSION_CONTROL_UI_PLAN.md` as the product and first-screen information-architecture source.
 - Referenced `docs/MISSION_CONTROL_TECH_PLAN.md` as the implementation map and safe-slice guide.
+- Accepted Ana's baseline QA report as the dashboard visual/behavior baseline for Mission Control work.
+- Set the first implementation slice to dashboard selector extraction / data shaping before visual layout changes.
 - Preserved persistent presence, Rainmeter, and background wallpaper surfaces as follow-on V1.1 planning after Mission Control.
 
 ### Still Open

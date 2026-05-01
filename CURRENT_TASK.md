@@ -39,6 +39,7 @@ Move the immediate execution queue to the Mission Control dashboard redesign. AI
 - AI Review model/output slice is complete for the local Talk path: packet-backed routing, local Ollama generation, deterministic fallback, model-ranked rendering, no-write guardrails, live fallback QA, live model-path QA, copy polish, linked deadline de-dupe, and final duplicate smoke are complete.
 - Mission Control planning is accepted at coordinator checkpoint `bab4fa7 Add Mission Control technical map`.
 - Mission Control redesign is now the next active planning/implementation track, guided by `docs/MISSION_CONTROL_UI_PLAN.md` and `docs/MISSION_CONTROL_TECH_PLAN.md`.
+- Ana's baseline QA report is accepted as the dashboard visual/behavior baseline for the Mission Control redesign.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
@@ -58,7 +59,8 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 - Treat AI Review as an analysis/reset mode attached to the primary decision surface, not the whole dashboard.
 - Keep Talk visible as the command channel without letting it dominate the dashboard.
 - Preserve Review Inbox write-confirmation paths and assistant no-write boundaries.
-- Prefer small implementation slices: dashboard data selectors, Today lane component split, Mission Control layout CSS, and then first-screen composition.
+- Start with dashboard selector extraction / data shaping before visual layout changes.
+- Then move through Today lane component split, Mission Control layout CSS, and first-screen composition.
 - Avoid mixing dashboard visual work with assistant routing, capture forms, Settings, or sync behavior.
 
 **FILES**
@@ -66,6 +68,7 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 - `docs/MISSION_CONTROL_UI_PLAN.md`
 - `docs/MISSION_CONTROL_TECH_PLAN.md`
 - `src/App.tsx`
+- Optional new file: `src/dashboardSelectors.ts`
 - `src/components/TodayTimelinePanel.tsx`
 - `src/components/MemoryWriterPanel.tsx`
 - `src/components/AssistantReviewSurface.tsx`
@@ -73,6 +76,7 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 
 **DONE WHEN**
 
+- The first implementation slice extracts dashboard selectors/data shaping for service health, readiness, timeline items, review inbox composition, and operational-load inputs without changing JSX or CSS.
 - The dashboard first screen answers: what is the top move, what time pressure exists, what is at risk, who is waiting, what PRAXIS cannot currently see, and whether the operator should work, triage, reset, or prepare.
 - Mission Control uses the accepted UI hierarchy: command header, primary decision surface, calendar pressure, daily rhythm, Review Inbox, service health, and Talk.
 - Implementation follows the technical map without changing assistant routing semantics, data semantics, or write-confirmation boundaries by accident.
