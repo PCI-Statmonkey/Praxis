@@ -35,6 +35,7 @@ Move the immediate post-validation queue to AI Task Review / ADHD Reset Mode. Th
 - Live Electron QA passed for the Talk fallback path with runtime `ollama`, no saved model, reliance policy `prefer_local`, probe status `no_model_selected`, all five AI Review prompts returning deterministic fallback, no-write guardrail visible, no work snapshot mutation, and desktop/narrow overflow checks passing.
 - Local model-path Talk UI QA now passes with saved model `qwen2.5:0.5b-instruct`: reset, wins, forgetting, and risk show `Ollama / Model summary` with deterministic packet-rendered copy, stale projects safely falls back when there are no stale IDs to rank, the write boundary stays read-only, the work snapshot remains unchanged, and desktop/narrow Talk overflow checks pass.
 - AI Review model-ranked rendering now uses mode-specific coach headings and source-aware de-duping. AI Review work items now preserve linked deadline source identity so todo/project/mission items and their linked deadlines can be presented once while standalone deadlines remain distinct.
+- Final live Talk smoke confirmed the linked todo/deadline duplicate is gone for `3292 n 29th ct NEW RACKS 5-6-2025`, exact packet titles remain intact, no invented facts or internal mode leaks appeared, `No work has been changed.` stayed visible, and the work snapshot remained unchanged.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
@@ -59,7 +60,7 @@ Turn the async local Ollama review path into a polished routing policy that rema
 - Talk now uses async AI Review IPC to display model-generated summaries when available and deterministic fallback when needed.
 - Optional API provider settings and encrypted provider secrets remain future work.
 - Slack and companion exposure remain open if not already routed through the AI Review path.
-- Live Electron model-generated Talk QA reached structured model-ranked output with `qwen2.5:0.5b-instruct`; generic headings are fixed, and source-aware linked deadline de-dupe is implemented pending one final live Talk smoke confirmation.
+- Live Electron model-generated Talk QA reached structured model-ranked output with `qwen2.5:0.5b-instruct`; generic headings and source-aware linked deadline de-dupe are confirmed in live Talk.
 - The AI reliance policy should be explicit: model output can advise, summarize, and draft, but trusted local services own state changes.
 
 **FILES**

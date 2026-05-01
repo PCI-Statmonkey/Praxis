@@ -1,5 +1,26 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - AI Review Final Duplicate Smoke
+
+### Validated
+
+- Ran focused live Electron Talk smoke against checkpoint `0291efb Deduplicate linked AI review deadlines`.
+- Confirmed AI Settings are saved as `qwen2.5:0.5b-instruct` with `prefer_local`.
+- Confirmed the Settings probe reports the saved model is available.
+- Tested `I'm overwhelmed, reset me`, `What am I forgetting?`, and `What's about to bite me?`.
+- Confirmed `3292 n 29th ct NEW RACKS 5-6-2025` appears once as the todo and the linked `Todo due:` deadline no longer appears in the same model-ranked response.
+- Confirmed headings remain mode-specific: `Start here`, `Do not let this slip`, and `Watch this first`.
+- Confirmed exact packet title rendering, no invented dates or tasks, no internal mode leaks, and `No work has been changed.`
+- Confirmed the work snapshot before and after QA matched exactly.
+
+### Still Open
+
+- No remaining visible copy issues were found in this focused duplicate smoke.
+
+### Verification
+
+- `npm run build:app` passes.
+
 ## 2026-04-30 - AI Review Linked Deadline De-Dupe
 
 ### Built
@@ -13,7 +34,7 @@
 
 ### Still Open
 
-- One final live Talk smoke should confirm the exact `3292 n 29th ct NEW RACKS 5-6-2025` duplicate no longer appears on the real workspace data.
+- Final live Talk smoke passed in the follow-up AI Review Final Duplicate Smoke entry.
 
 ### Verification
 
