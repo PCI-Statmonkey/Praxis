@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control First-Screen Composition
+
+### Built
+
+- Composed the Today panel's first-screen Mission Control hierarchy using the existing layout hooks and split lane components.
+- Added `CommandStatusHeader`, `CalendarPressureLane`, `AtRiskLane`, `ReviewResetEntry`, and `ServiceHealthLane`.
+- Reworked `TodayTimelinePanel` to lead with command status, Top Move, Calendar Pressure, At Risk, Priority Stack, Review/Reset, Daily Rhythm, Review Inbox, and Service Health.
+- Kept Focus Controls, proactive suggestions, focus reports, daily brief/status details, full appointment/deadline lists, and memory-backed documents below the first-screen composition.
+- Preserved Talk forms, capture drafts, assistant routing, Review Inbox write actions, Settings, and sync behavior.
+
+### Still Open
+
+- Live visual QA should review desktop column balance after Priority Stack and Review/Reset moved into the secondary column.
+- Service Health now appears inside Today while the app-level service strip still exists; the next polish slice should decide whether to compress or remove the duplicate first-screen prominence.
+- The `Review / Reset` entry currently opens brief/status views rather than directly launching AI Review; confirm whether that is acceptable for this slice or should become a true AI Review trigger.
+
+### Verification
+
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm run test:assistant` passes.
+- `npm test` passes after retrying a transient Windows file-lock on `.assistant-test-dist`.
+- `npm run build:app` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-05-01 - Mission Control Layout Hooks
 
 ### Built
