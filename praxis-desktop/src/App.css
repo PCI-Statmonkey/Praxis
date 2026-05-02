@@ -508,7 +508,7 @@ ol {
 
 .daily-brief-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
+  grid-template-columns: minmax(0, 1fr) minmax(170px, 0.28fr);
   gap: 18px;
   border-color: rgba(244, 198, 109, 0.35);
   background:
@@ -519,11 +519,13 @@ ol {
 .daily-brief-copy h2 {
   margin: 10px 0;
   color: var(--text);
-  font-size: clamp(1.65rem, 3vw, 2.55rem);
-  line-height: 1.05;
+  max-width: 24ch;
+  font-size: clamp(1.45rem, 2.35vw, 2.2rem);
+  line-height: 1.08;
   letter-spacing: 0;
   text-transform: none;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .daily-brief-copy,

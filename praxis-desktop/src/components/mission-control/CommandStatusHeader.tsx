@@ -16,7 +16,7 @@ export function CommandStatusHeader({
   return (
     <header className="mission-control-lane-header">
       <div>
-        <span className="recommended-label">Now</span>
+        <span className="recommended-label">Command</span>
         <p className="panel-status-line">{status}</p>
       </div>
       <div className="rhythm-badges">

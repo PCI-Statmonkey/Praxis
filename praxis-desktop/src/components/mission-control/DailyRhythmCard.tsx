@@ -25,7 +25,7 @@ export function DailyRhythmCard({
     <article className="brief-card daily-rhythm-card">
       <div className="rhythm-header">
         <div>
-          <span className="recommended-label">Daily Operating Rhythm</span>
+          <span className="recommended-label">Daily Rhythm</span>
           <h3>Arrival / Triage / Closeout</h3>
         </div>
         <div className="rhythm-badges">

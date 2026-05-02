@@ -142,7 +142,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
     const closeoutSummary =
       closeout.summary ||
       (reviewInboxItems.length > 0
-        ? `${reviewInboxItems.length} review candidate${reviewInboxItems.length === 1 ? "" : "s"} need accept or archive.`
+        ? `${reviewInboxItems.length} review candidate${reviewInboxItems.length === 1 ? "" : "s"} need confirmation.`
         : "No overdue, waiting-on, or review-inbox pressure in the current brief.");
     return (
       <section ref={ref} className={`panel center${isActive ? " is-active-panel" : ""}`}>

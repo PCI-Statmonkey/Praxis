@@ -19,7 +19,7 @@ export function DailyBriefHero({
   return (
     <article className="brief-card daily-brief-hero">
       <div className="daily-brief-copy">
-        <span className="recommended-label">Daily Brief / Top Move</span>
+        <span className="recommended-label">Top Move</span>
         <h2>{recommendedMove.directive}</h2>
         <p className="brief-spoken">{recommendedMove.rationale}</p>
         <p className="brief-path">{recommendedMove.actionHint}</p>

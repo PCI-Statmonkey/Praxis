@@ -67,7 +67,7 @@ export function CalendarPressureLane({
         </ol>
       ) : (
         <EmptyState
-          title="Timeline clear"
+          title="No calendar pressure"
           detail="Upcoming appointments and active deadlines will appear here once they are recorded or synced."
         >
           <button type="button" onClick={openCapture}>

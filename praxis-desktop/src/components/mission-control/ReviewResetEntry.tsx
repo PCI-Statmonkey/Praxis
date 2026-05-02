@@ -18,7 +18,7 @@ export function ReviewResetEntry({
       <div className="mission-control-lane-header">
         <div>
           <span className="recommended-label">Review</span>
-          <h3>Review / Reset</h3>
+          <h3>Brief Review</h3>
         </div>
         <span className="badge">
           {reviewInboxItemCount} candidate{reviewInboxItemCount === 1 ? "" : "s"}

@@ -27,7 +27,7 @@ export function PriorityStackLane({ priorityItems, openCapture }: PriorityStackL
         </ol>
       ) : (
         <EmptyState
-          title="No ranked priorities"
+          title="No ranked priorities yet"
           detail="Praxis will populate this stack from active todos, deadlines, calendar pressure, and waiting-on work."
         >
           <button type="button" onClick={openCapture}>
