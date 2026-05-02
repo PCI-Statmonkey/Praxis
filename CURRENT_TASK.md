@@ -52,8 +52,8 @@ Move the immediate execution queue to the Mission Control dashboard redesign. AI
 - First-screen Mission Control JSX composition is in place in `TodayTimelinePanel`: command status header, Top Move, Calendar Pressure, At Risk, Priority Stack, Review/Reset entry, Daily Rhythm, Review Inbox, and Service Health now use the Mission Control hooks and split lane components.
 - Full focus controls, reports/details, appointment/deadline lists, and memory-backed documents remain below the first-screen composition.
 - First-screen visual QA passed as an acceptable first Mission Control pass with no hard functional regression, no new overflow, Review Inbox actions reachable, Talk/AI Review still visible and read-only, and snapshot unchanged during AI Review.
-- Targeted first-screen polish remains open: reduce Top Move title wrapping, dedupe Service Health prominence across app strip / At Risk / Service Health, make At Risk read as work risk rather than service readiness, improve secondary-column balance, and make `Review / Reset` either trigger actual AI Review or rename it to avoid implying model reset behavior.
-- Immediate copy polish remains open: `Now` should become `Command` on desktop, `Daily Brief / Top Move` should become `Top Move`, `Timeline clear` should become `No calendar pressure`, `Daily Operating Rhythm` should become `Daily Rhythm`, Review Inbox pressure should say `confirmation` instead of `accept or archive`, and empty priority copy should say `No ranked priorities yet`.
+- Targeted first-screen polish is applied at checkpoint `e1d96a7 Polish Mission Control first screen`: Top Move wrapping was reduced, At Risk now leads with work pressure, Today Service Health is compact, `Review / Reset` was renamed to `Brief Review` pending a safe AI Review launcher path, and the immediate copy fixes are applied.
+- Final visual QA for the polished Mission Control first screen remains open.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
@@ -77,7 +77,7 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 - Today lane component split is complete.
 - Isolated Mission Control layout CSS hooks are complete.
 - First-screen JSX composition using existing data and split components is complete.
-- Next move through targeted visual/copy polish of the composed Mission Control screen based on Ana and Bibi QA.
+- Next move through final visual QA of the polished Mission Control first screen.
 - Avoid mixing dashboard visual work with assistant routing, capture forms, Settings, or sync behavior.
 
 **FILES**
@@ -99,7 +99,7 @@ Turn the current dashboard into Mission Control: a dense, calm, directive comman
 - Today lane components remain split without changing existing behavior.
 - Mission Control layout hooks remain isolated and do not disrupt existing Talk, Settings, forms, or write-action CSS.
 - First-screen composition keeps full detail lanes available below the primary Mission Control surface.
-- First-screen polish resolves the accepted QA findings without changing assistant routing, capture forms, Review Inbox write actions, Settings, or sync behavior.
+- Final visual QA confirms the accepted polish findings are resolved without changing assistant routing, capture forms, Review Inbox write actions, Settings, or sync behavior.
 - The dashboard first screen answers: what is the top move, what time pressure exists, what is at risk, who is waiting, what PRAXIS cannot currently see, and whether the operator should work, triage, reset, or prepare.
 - Mission Control uses the accepted UI hierarchy: command header, primary decision surface, calendar pressure, daily rhythm, Review Inbox, service health, and Talk.
 - Implementation follows the technical map without changing assistant routing semantics, data semantics, or write-confirmation boundaries by accident.

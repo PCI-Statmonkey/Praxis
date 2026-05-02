@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-01 - Mission Control First-Screen Polish
+
+### Built
+
+- Applied targeted Ana/Bibi polish to the composed Mission Control first screen.
+- Renamed first-screen labels to `Command`, `Top Move`, `No calendar pressure`, `Daily Rhythm`, `confirmation`, and `No ranked priorities yet`.
+- Renamed `Review / Reset` to `Brief Review` because there is not yet a safe direct AI Review launcher path in the Today composition.
+- Reduced Top Move wrapping without truncating the directive.
+- Reworked `At Risk` to lead with overdue, waiting, due-today, and work pressure while keeping service blind spots secondary.
+- Made Today Service Health compact and expanded only for degraded/setup/loading service states.
+- Preserved assistant routing, Talk/forms, capture flows, sync, Settings, and Review Inbox action behavior.
+
+### Still Open
+
+- Final visual QA should confirm Top Move scanability, At Risk hierarchy, Service Health compact/degraded states, Brief Review honesty, narrow/mobile overflow, Review Inbox actions, and AI Review no-write behavior.
+
+### Verification
+
+- `npx tsc --noEmit` passes.
+- `npm run lint` passes.
+- `npm run test:assistant` passes.
+- `npm test` passes.
+- `npm run build:app` passes.
+- `git diff --check` passes with line-ending normalization warnings only.
+
 ## 2026-05-01 - Mission Control First-Screen QA
 
 ### Validated
@@ -14,12 +39,7 @@
 
 ### Still Open
 
-- Reduce Top Move title wrapping so the primary directive remains scan-friendly.
-- Dedupe or compress Service Health prominence across the app-level strip, At Risk, and Service Health sections.
-- Make At Risk read as work risk rather than mostly service readiness.
-- Improve secondary-column balance for Priority Stack and Review/Reset.
-- Make `Review / Reset` launch actual AI Review or rename the card/action to avoid implying model reset behavior.
-- Apply immediate copy fixes: `Command`, `Top Move`, `No calendar pressure`, `Daily Rhythm`, `confirmation`, and `No ranked priorities yet`.
+- Follow-up first-screen polish was implemented in the Mission Control First-Screen Polish entry and needs final visual QA.
 
 ### Verification
 
