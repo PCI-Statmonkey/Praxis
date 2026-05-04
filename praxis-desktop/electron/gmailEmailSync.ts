@@ -1,7 +1,7 @@
 import type { NormalizedEmailMessage } from "../shared/emailModel";
 import type { SyncGmailEmailInput, SyncGmailEmailResult } from "../shared/gmailEmailSync";
 import { getPraxisDatabase } from "./praxisDb";
-import { readSecret, storeSecret } from "./secretRepository";
+import { isSecretReadError, readSecret, storeSecret } from "./secretRepository";
 import { getGoogleOAuthClientConfig } from "./settingsRepository";
 import { importEmailMessages } from "./emailRepository";
 import { fetchJsonWithRetry, recoverableSyncMessage } from "./syncRecovery";
@@ -94,7 +94,20 @@ const getGmailConnection = (connectionId: string) => {
 };
 
 const parseTokenSecret = (connectionId: string): GmailTokenSecret | null => {
-  const raw = readSecret("email_connection", connectionId, "oauth_token");
+  let raw: string | null;
+  try {
+    raw = readSecret("email_connection", connectionId, "oauth_token");
+  } catch (error) {
+    if (isSecretReadError(error)) {
+      throw new GmailSyncError(
+        "Saved Gmail sign-in could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this inbox.",
+        "error",
+        "error"
+      );
+    }
+    throw error;
+  }
+
   if (!raw) {
     return null;
   }

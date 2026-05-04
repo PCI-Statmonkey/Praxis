@@ -36,7 +36,7 @@ import {
   deleteSecretsForOwner,
   getSecretStorageStatus,
   hasSecret,
-  readSecret,
+  readSecretOrNull,
   storeSecret,
 } from "./secretRepository";
 
@@ -580,7 +580,7 @@ export const getGoogleOAuthClientConfig = () => {
     clientId: settings.clientId ?? process.env["PRAXIS_GOOGLE_CLIENT_ID"]?.trim() ?? "",
     clientSecret:
       process.env["PRAXIS_GOOGLE_CLIENT_SECRET"]?.trim() ??
-      readSecret("integration_config", googleOAuthIntegrationOwnerId, "oauth_client_secret") ??
+      readSecretOrNull("integration_config", googleOAuthIntegrationOwnerId, "oauth_client_secret") ??
       "",
     redirectUri:
       settings.redirectUri ??
@@ -595,7 +595,7 @@ export const getOutlookOAuthClientConfig = () => {
     clientId: settings.clientId ?? process.env["PRAXIS_OUTLOOK_CLIENT_ID"]?.trim() ?? "",
     clientSecret:
       process.env["PRAXIS_OUTLOOK_CLIENT_SECRET"]?.trim() ??
-      readSecret("integration_config", outlookOAuthIntegrationOwnerId, "oauth_client_secret") ??
+      readSecretOrNull("integration_config", outlookOAuthIntegrationOwnerId, "oauth_client_secret") ??
       "",
   };
 };

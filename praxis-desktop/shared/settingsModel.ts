@@ -45,6 +45,34 @@ export type ServiceReadinessState = {
   message: string;
 };
 
+export const SAFE_STORAGE_DECRYPT_ERROR_PATTERN =
+  /Error while decrypting the ciphertext provided to safeStorage\.decryptString/i;
+
+export const DECRYPTED_SIGN_IN_ERROR_GUIDANCE =
+  "Saved sign-in data could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this source.";
+
+export const RECONNECT_SIGN_IN_ERROR_GUIDANCE =
+  "Saved sign-in needs attention. Reconnect or refresh sign-in for this source.";
+
+const OPAQUE_PROVIDER_AUTH_ERROR_PATTERN =
+  /^(?:(?:google|gmail|outlook|microsoft|provider|oauth)\s+(?:oauth\s+)?(?:failed|error):\s*)?(invalid_request|invalid_grant|unauthorized_client|access_denied)\.?$/i;
+
+export const sanitizeServiceConnectionErrorMessage = (lastSyncError: string | null) => {
+  if (!lastSyncError) {
+    return null;
+  }
+
+  const trimmedError = lastSyncError.trim();
+  if (SAFE_STORAGE_DECRYPT_ERROR_PATTERN.test(trimmedError)) {
+    return DECRYPTED_SIGN_IN_ERROR_GUIDANCE;
+  }
+  if (OPAQUE_PROVIDER_AUTH_ERROR_PATTERN.test(trimmedError)) {
+    return RECONNECT_SIGN_IN_ERROR_GUIDANCE;
+  }
+
+  return lastSyncError;
+};
+
 export const isStaleSyncing = (connection: ServiceConnectionState) => {
   if (connection.syncStatus !== "syncing") {
     return false;
@@ -101,8 +129,11 @@ export const statusGuidance = (
   connection: ServiceConnectionState,
   readiness: ServiceReadinessState
 ) => {
+  if (connection.authStatus === "error") {
+    return connection.lastSyncError ? null : RECONNECT_SIGN_IN_ERROR_GUIDANCE;
+  }
   if (connection.authStatus === "needs_credentials") {
-    return readiness.ready ? "Connect this source before syncing." : readiness.message;
+    return readiness.ready ? "Finish setup for this source before syncing." : readiness.message;
   }
   if (connection.authStatus === "not_configured") {
     return readiness.message;
@@ -122,10 +153,43 @@ export const statusGuidance = (
 export const canSyncConnection = (connection: ServiceConnectionState) =>
   connection.authStatus === "ready" && !isActivelySyncing(connection);
 
-export const connectActionLabel = (connection: ServiceConnectionState) =>
-  connection.authStatus === "needs_credentials" || connection.authStatus === "not_configured"
-    ? "Connect"
-    : "Reconnect";
+export const connectActionLabel = (connection: ServiceConnectionState) => {
+  switch (connection.authStatus) {
+    case "ready":
+      return "Refresh Sign-In";
+    case "error":
+      return "Reconnect";
+    case "needs_credentials":
+    case "not_configured":
+      return "Finish Setup";
+    default:
+      return "Reconnect";
+  }
+};
+
+export const serviceConnectionErrorMessage = (connection: ServiceConnectionState) => {
+  return sanitizeServiceConnectionErrorMessage(connection.lastSyncError);
+};
+
+export const shouldShowNoNewMailSuccessCopy = (
+  connection: ServiceConnectionState,
+  messageCount: number
+) =>
+  Boolean(connection.lastSyncedAt) &&
+  connection.authStatus === "ready" &&
+  connection.syncStatus === "ready_to_sync" &&
+  !serviceConnectionErrorMessage(connection) &&
+  messageCount === 0;
+
+export const selectEmailConnectionsByProvider = (
+  connections: EmailConnectionRecord[],
+  provider: EmailProvider
+) => connections.filter((connection) => connection.provider === provider);
+
+export const selectCalendarConnectionsByProvider = (
+  connections: CalendarConnectionRecord[],
+  provider: CalendarProvider
+) => connections.filter((connection) => connection.provider === provider);
 
 export type GoogleOAuthSettings = {
   clientId: string | null;

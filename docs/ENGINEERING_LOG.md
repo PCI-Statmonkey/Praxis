@@ -1,5 +1,36 @@
 # ENGINEERING LOG
 
+## 2026-05-04 - Google/Outlook Persistence Fix Closed
+
+### Closed
+
+- Closed the Google/Outlook restart persistence bug.
+- Confirmed saved Google/Outlook rows remain visible in Settings after restart even when saved token secrets are unreadable.
+- Confirmed degraded token state shows friendly reconnect/refresh sign-in guidance instead of collapsing Settings to zero sources/calendars.
+- Confirmed Mission Control Service Health and At Risk/readiness report degraded services honestly without raw `safeStorage.decryptString` or bare `invalid_request` copy.
+- Confirmed Outlook ready rows show `Refresh Sign-In` as secondary copy and keep sync as the primary available action.
+- Recorded that affected users with unreadable encrypted OAuth token secrets may need a one-time reconnect/refresh sign-in.
+
+### Data Safety
+
+- `secure_secrets` was not deleted or rewritten.
+- OAuth tokens, refresh tokens, client secrets, and provider payloads remain out of docs and logs.
+
+### Verification
+
+- Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
+- Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`.
+- Ana live QA confirmed Google Settings rows visible with `mail sources: 1` and `calendars: 1`.
+- Ana live QA confirmed Outlook Settings rows visible and ready where tokens are readable.
+- Ana live QA confirmed Mission Control and At Risk copy is sanitized.
+
+### Queue
+
+- Moved `Fix Google/Outlook Reconnect And Sync Persistence` from active blocker to completed current-state history.
+- Promoted `Continue Mission Control Follow-Up Polish` as the next active queue item.
+- Kept Slack/companion AI Review exposure open.
+- Kept V1.1 persistent presence and future capture/intelligence tracks as later items.
+
 ## 2026-05-04 - Service Persistence Reproduction
 
 ### Investigated

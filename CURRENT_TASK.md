@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue to the Mission Control dashboard redesign. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is now complete enough to support the next dashboard layer. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue back to Mission Control follow-up polish now that the Google/Outlook restart persistence blocker is closed. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next dashboard layer. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -54,60 +54,20 @@ Move the immediate execution queue to the Mission Control dashboard redesign. AI
 - First-screen visual QA passed as an acceptable first Mission Control pass with no hard functional regression, no new overflow, Review Inbox actions reachable, Talk/AI Review still visible and read-only, and snapshot unchanged during AI Review.
 - Targeted first-screen polish is applied at checkpoint `e1d96a7 Polish Mission Control first screen`: Top Move wrapping was reduced, At Risk now leads with work pressure, Today Service Health is compact, `Review / Reset` was renamed to `Brief Review` pending a safe AI Review launcher path, and the immediate copy fixes are applied.
 - Final visual QA for the polished Mission Control first screen passed: the first screen is acceptable for this pass, Top Move scanability improved, At Risk reads as work pressure, Brief Review is honest, Review Inbox actions remain reachable, Talk/AI Review stays visible and read-only, narrow layout has no horizontal overflow, and the only remaining UI polish is non-blocking service-health duplication and later mobile ordering.
-- Startup connected-service persistence is now the next active bug: on app start, Google and Outlook appear to require reconnect and sync again instead of preserving usable auth/sync state.
-- Reproduction confirmed saved Google/Outlook rows are not deleted: existing Gmail, Google Calendar, Outlook Mail, and Outlook Calendar rows still exist, but they are in `authStatus: error` and `syncStatus: error` with `Error while decrypting the ciphertext provided to safeStorage.decryptString.`
-- Settings currently fails to hydrate those saved rows after the safeStorage decrypt failure and falls back to empty lists, showing mail sources 0 / calendars 0 and Add Source controls even though rows exist.
-- Dashboard/Mission Control Service Health correctly surfaces degraded Google/Outlook state with the safeStorage decrypt error, but Settings makes the failure look like the connections vanished.
-- Cristy identified a secondary UI copy issue: ready rows can still render primary `Reconnect` wording, but the blocker is unreadable encrypted token secrets plus Settings hiding existing rows after readiness failure.
+- Google/Outlook restart persistence bug is closed.
+- Saved Google/Outlook rows remain visible in Settings after restart even when saved token secrets are unreadable.
+- Degraded Google/Outlook token state now shows friendly reconnect/refresh sign-in guidance instead of collapsing Settings to zero sources/calendars.
+- Mission Control Service Health and At Risk/readiness report degraded services honestly without exposing raw `safeStorage.decryptString` or bare `invalid_request` copy.
+- Outlook ready rows show `Refresh Sign-In` as secondary copy and keep sync as the primary available action.
+- Affected users with unreadable encrypted OAuth token secrets may need a one-time reconnect/refresh sign-in.
+- `secure_secrets` was not deleted or rewritten during the fix.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
-- Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
+- Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
+- Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Google Settings rows were visible with `mail sources: 1` and `calendars: 1`; Outlook Settings rows were visible and ready where tokens are readable; Mission Control and At Risk copy was sanitized.
 
 ## NEXT STEPS
 
-### 1. Fix Google/Outlook Reconnect And Sync Persistence
-
-**GOAL**
-
-Ensure Google and Outlook service connections persist across app restarts so the operator does not have to reconnect and manually sync every time PRAXIS starts.
-
-**DIRECTION**
-
-- Reproduce the startup behavior for Google and Outlook after a clean app close/reopen.
-- Determine whether saved connection rows, OAuth credentials, encrypted tokens, refresh tokens, auth status, sync status, or UI readiness mapping are being reset or misread.
-- Current evidence says saved rows persist, but encrypted OAuth token secrets cannot be decrypted after restart and Settings hydration is not resilient to that failure.
-- Check both Google Mail/Calendar and Outlook Mail/Calendar because the symptom spans providers.
-- Preserve local user data and do not delete connections as part of diagnosis.
-- Do not expose provider secrets or raw tokens in logs, docs, screenshots, or worker reports.
-- If the bug is only stale status display, fix state/readiness refresh without forcing reconnect.
-- If the bug is token persistence, safeStorage decrypt failure, or refresh failure, fix the repository/OAuth/sync path and add regression coverage.
-- Settings must show saved rows even when token secrets are unreadable; degraded rows should explain that reconnect/refresh sign-in is needed without deleting or hiding the row.
-- Keep Mission Control service-health display honest while the bug is open.
-
-**FILES**
-
-- `praxis-desktop/electron/settingsRepository.ts`
-- `praxis-desktop/electron/googleOAuthShared.ts`
-- `praxis-desktop/electron/outlookEmailOAuth.ts`
-- `praxis-desktop/electron/outlookCalendarOAuth.ts`
-- `praxis-desktop/electron/gmailEmailSync.ts`
-- `praxis-desktop/electron/googleCalendarSync.ts`
-- `praxis-desktop/electron/outlookEmailSync.ts`
-- `praxis-desktop/electron/outlookCalendarSync.ts`
-- `praxis-desktop/src/components/ConnectedServiceSettingsPanel.tsx`
-- `praxis-desktop/src/dashboardSelectors.ts`
-- tests covering sync/recovery/settings behavior
-
-**DONE WHEN**
-
-- Restarting the app preserves saved Google and Outlook connection/auth state.
-- Previously connected Google and Outlook rows remain visible in Settings after restart, including when token secrets are degraded.
-- Previously connected Google and Outlook services do not ask for reconnect unless tokens are actually invalid, revoked, or unreadable.
-- Sync can run after restart without re-authorizing.
-- Service Health reports the true state after restart.
-- Regression coverage protects the fixed persistence/refresh behavior.
-- `npx tsc --noEmit`, `npm run lint`, `npm test`, and `npm run build:app` pass.
-
-### 2. Continue Mission Control Follow-Up Polish
+### 1. Continue Mission Control Follow-Up Polish
 
 **GOAL**
 
@@ -126,7 +86,7 @@ Keep the first Mission Control pass moving after the connected-service persisten
 - Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
 - Any AI Review launcher path preserves no-write behavior.
 
-### 3. Plan V1.1 Persistent Presence After AI Review
+### 2. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
 

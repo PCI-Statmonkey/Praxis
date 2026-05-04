@@ -1,7 +1,7 @@
 import type { NormalizedEmailMessage } from "../shared/emailModel";
 import type { SyncOutlookEmailInput, SyncOutlookEmailResult } from "../shared/outlookEmailSync";
 import { getPraxisDatabase } from "./praxisDb";
-import { readSecret, storeSecret } from "./secretRepository";
+import { isSecretReadError, readSecret, storeSecret } from "./secretRepository";
 import { importEmailMessages } from "./emailRepository";
 import { getOutlookOAuthClientConfig } from "./settingsRepository";
 import { normalizeOutlookSyncError } from "./outlookErrorHelpers";
@@ -89,7 +89,20 @@ const getOutlookConnection = (connectionId: string) => {
 };
 
 const parseTokenSecret = (connectionId: string): OutlookTokenSecret | null => {
-  const raw = readSecret("email_connection", connectionId, "oauth_token");
+  let raw: string | null;
+  try {
+    raw = readSecret("email_connection", connectionId, "oauth_token");
+  } catch (error) {
+    if (isSecretReadError(error)) {
+      throw new OutlookEmailSyncError(
+        "Saved Outlook sign-in could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this inbox.",
+        "error",
+        "error"
+      );
+    }
+    throw error;
+  }
+
   if (!raw) {
     return null;
   }

@@ -9,7 +9,7 @@ import {
 } from "../shared/calendarProviderNormalization";
 import { importCalendarEvents } from "./calendarImport";
 import { getPraxisDatabase } from "./praxisDb";
-import { readSecret, storeSecret } from "./secretRepository";
+import { isSecretReadError, readSecret, storeSecret } from "./secretRepository";
 import { getGoogleOAuthClientConfig } from "./settingsRepository";
 import { fetchJsonWithRetry, recoverableSyncMessage } from "./syncRecovery";
 
@@ -82,7 +82,20 @@ const getGoogleConnection = (connectionId: string) => {
 };
 
 const parseTokenSecret = (connectionId: string): GoogleTokenSecret | null => {
-  const raw = readSecret("calendar_connection", connectionId, "oauth_token");
+  let raw: string | null;
+  try {
+    raw = readSecret("calendar_connection", connectionId, "oauth_token");
+  } catch (error) {
+    if (isSecretReadError(error)) {
+      throw new GoogleCalendarSyncError(
+        "Saved Google Calendar sign-in could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this calendar.",
+        "error",
+        "error"
+      );
+    }
+    throw error;
+  }
+
   if (!raw) {
     return null;
   }

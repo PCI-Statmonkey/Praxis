@@ -6,6 +6,10 @@ import {
   canSyncConnection,
   connectActionLabel,
   isActivelySyncing,
+  selectCalendarConnectionsByProvider,
+  selectEmailConnectionsByProvider,
+  serviceConnectionErrorMessage,
+  shouldShowNoNewMailSuccessCopy,
   statusGuidance,
   syncLabel,
 } from "../../shared/settingsModel";
@@ -134,11 +138,13 @@ export function ConnectedServiceSettingsPanel({
   const copy = serviceCopy[service];
   const emailProvider = copy.emailProvider;
   const calendarProvider = copy.calendarProvider;
-  const emailConnections = settingsSnapshot.emailConnections.filter(
-    (connection) => connection.provider === emailProvider
+  const emailConnections = selectEmailConnectionsByProvider(
+    settingsSnapshot.emailConnections,
+    emailProvider
   );
-  const calendarConnections = settingsSnapshot.calendarConnections.filter(
-    (connection) => connection.provider === calendarProvider
+  const calendarConnections = selectCalendarConnectionsByProvider(
+    settingsSnapshot.calendarConnections,
+    calendarProvider
   );
   const primaryEmailConnection = emailConnections[0] ?? null;
   const primaryCalendarConnection = calendarConnections[0] ?? null;
@@ -174,6 +180,16 @@ export function ConnectedServiceSettingsPanel({
   const primaryCalendarGuidance = primaryCalendarConnection
     ? statusGuidance(primaryCalendarConnection, calendarOAuthReadiness)
     : null;
+  const primaryEmailError = primaryEmailConnection
+    ? serviceConnectionErrorMessage(primaryEmailConnection)
+    : null;
+  const primaryCalendarError = primaryCalendarConnection
+    ? serviceConnectionErrorMessage(primaryCalendarConnection)
+    : null;
+  const primaryEmailSyncSucceededWithNoMessages =
+    primaryEmailConnection
+      ? shouldShowNoNewMailSuccessCopy(primaryEmailConnection, serviceMessages.length)
+      : false;
 
   return (
     <>
@@ -219,9 +235,9 @@ export function ConnectedServiceSettingsPanel({
                     ? `; ${serviceSuggestions.length} pending follow-up candidates.`
                     : "."}
                 </p>
-                {primaryEmailConnection.lastSyncError ? (
+                {primaryEmailError ? (
                   <p className="setup-muted">
-                    {primaryEmailConnection.lastSyncError.includes("Gmail API has not been used") ? (
+                    {primaryEmailError.includes("Gmail API has not been used") ? (
                       <>
                         Gmail API is not enabled for this Google project. Open{" "}
                         <a href={gmailApiUrl} target="_blank" rel="noreferrer">
@@ -230,11 +246,11 @@ export function ConnectedServiceSettingsPanel({
                         , click Enable, wait a minute, then sync again.
                       </>
                     ) : (
-                      primaryEmailConnection.lastSyncError
+                      primaryEmailError
                     )}
                   </p>
                 ) : null}
-                {primaryEmailConnection.lastSyncedAt && serviceMessages.length === 0 ? (
+                {primaryEmailSyncSucceededWithNoMessages ? (
                   <p className="setup-muted">
                     Sync ran successfully, but Praxis did not find new mail summaries to store.
                   </p>
@@ -245,7 +261,11 @@ export function ConnectedServiceSettingsPanel({
                 <div className="settings-next-action-buttons">
                   <button
                     type="button"
-                    className="primary-action-button"
+                    className={
+                      primaryEmailConnection.authStatus === "ready"
+                        ? undefined
+                        : "primary-action-button"
+                    }
                     disabled={!emailOAuthReadiness.ready || isActivelySyncing(primaryEmailConnection)}
                     onClick={() => void prepareEmailOAuth(primaryEmailConnection.id)}
                   >
@@ -253,6 +273,9 @@ export function ConnectedServiceSettingsPanel({
                   </button>
                   <button
                     type="button"
+                    className={
+                      canSyncConnection(primaryEmailConnection) ? "primary-action-button" : undefined
+                    }
                     disabled={!canSyncConnection(primaryEmailConnection)}
                     onClick={() => void syncEmail(primaryEmailConnection.id)}
                   >
@@ -313,8 +336,8 @@ export function ConnectedServiceSettingsPanel({
                     ? `Last checked ${formatDateTime(primaryCalendarConnection.lastSyncedAt)}.`
                     : "This calendar has not been checked yet."}
                 </p>
-                {primaryCalendarConnection.lastSyncError ? (
-                  <p className="setup-muted">{primaryCalendarConnection.lastSyncError}</p>
+                {primaryCalendarError ? (
+                  <p className="setup-muted">{primaryCalendarError}</p>
                 ) : null}
                 {primaryCalendarGuidance ? (
                   <p className="setup-muted">{primaryCalendarGuidance}</p>
@@ -322,7 +345,11 @@ export function ConnectedServiceSettingsPanel({
                 <div className="settings-next-action-buttons">
                   <button
                     type="button"
-                    className="primary-action-button"
+                    className={
+                      primaryCalendarConnection.authStatus === "ready"
+                        ? undefined
+                        : "primary-action-button"
+                    }
                     disabled={!calendarOAuthReadiness.ready || isActivelySyncing(primaryCalendarConnection)}
                     onClick={() => void prepareCalendarOAuth(primaryCalendarConnection.id)}
                   >
@@ -330,6 +357,9 @@ export function ConnectedServiceSettingsPanel({
                   </button>
                   <button
                     type="button"
+                    className={
+                      canSyncConnection(primaryCalendarConnection) ? "primary-action-button" : undefined
+                    }
                     disabled={!canSyncConnection(primaryCalendarConnection)}
                     onClick={() => void syncCalendar(primaryCalendarConnection.id)}
                   >

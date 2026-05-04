@@ -20,6 +20,26 @@ type DbSecret = {
 const ENCRYPTION_PROVIDER = "electron_safe_storage";
 const nowIso = () => new Date().toISOString();
 
+export const SECRET_DECRYPT_FAILURE_MESSAGE =
+  "Saved sign-in data could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this source.";
+
+export class SecretReadError extends Error {
+  readonly ownerKind: SecretOwnerKind;
+  readonly ownerId: string;
+  readonly secretKind: SecretKind;
+
+  constructor(ownerKind: SecretOwnerKind, ownerId: string, secretKind: SecretKind) {
+    super(SECRET_DECRYPT_FAILURE_MESSAGE);
+    this.name = "SecretReadError";
+    this.ownerKind = ownerKind;
+    this.ownerId = ownerId;
+    this.secretKind = secretKind;
+  }
+}
+
+export const isSecretReadError = (error: unknown): error is SecretReadError =>
+  error instanceof SecretReadError;
+
 export const getSecretStorageStatus = (): SecretStorageStatus => {
   const available = safeStorage.isEncryptionAvailable();
   return {
@@ -95,7 +115,26 @@ export const readSecret = (
     return null;
   }
 
-  return safeStorage.decryptString(Buffer.from(row.encrypted_value_base64, "base64"));
+  try {
+    return safeStorage.decryptString(Buffer.from(row.encrypted_value_base64, "base64"));
+  } catch {
+    throw new SecretReadError(ownerKind, ownerId, secretKind);
+  }
+};
+
+export const readSecretOrNull = (
+  ownerKind: SecretOwnerKind,
+  ownerId: string,
+  secretKind: SecretKind
+): string | null => {
+  try {
+    return readSecret(ownerKind, ownerId, secretKind);
+  } catch (error) {
+    if (isSecretReadError(error)) {
+      return null;
+    }
+    throw error;
+  }
 };
 
 export const deleteSecretsForOwner = (ownerKind: SecretOwnerKind, ownerId: string) => {

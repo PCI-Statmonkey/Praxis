@@ -7,7 +7,10 @@ import {
   sortReviewInboxItems,
 } from "../shared/reviewInbox";
 import type { ReviewInboxItem } from "../shared/reviewInbox";
-import type { SettingsSnapshot } from "../shared/settingsModel";
+import {
+  sanitizeServiceConnectionErrorMessage,
+  type SettingsSnapshot,
+} from "../shared/settingsModel";
 import type { SlackAdapterStatus } from "../shared/slackAdapter";
 import type { StorageOverview } from "../shared/storage/hybridStorage";
 import type { AppointmentRecord, DeadlineRecord } from "../shared/workModel";
@@ -104,11 +107,14 @@ const summarizeIntegrationHealth = (
   );
 
   if (problemConnection) {
+    const sanitizedError = sanitizeServiceConnectionErrorMessage(
+      problemConnection.lastSyncError
+    );
     return {
       label,
       state: "problem",
       detail:
-        problemConnection.lastSyncError ||
+        sanitizedError ||
         `${problemConnection.label}: ${formatServiceStatus(problemConnection.syncStatus)}`,
       action: "Open Settings to reconnect or retry sync.",
     };

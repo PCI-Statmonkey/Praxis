@@ -15,10 +15,19 @@ import {
   DEFAULT_AI_SETTINGS,
   isActivelySyncing,
   normalizeAiSettings,
+  selectCalendarConnectionsByProvider,
+  selectEmailConnectionsByProvider,
+  serviceConnectionErrorMessage,
+  shouldShowNoNewMailSuccessCopy,
   statusGuidance,
   summarizeOllamaInstalledModels,
   syncLabel,
+  type SettingsSnapshot,
 } from "../shared/settingsModel";
+import {
+  selectDashboardReadiness,
+  selectServiceHealthItems,
+} from "../src/dashboardSelectors";
 import {
   isOllamaModelInstalled,
   parseOllamaModelTags,
@@ -151,7 +160,7 @@ const connectedState = {
 };
 assert.equal(authLabel(connectedState.authStatus), "Connected");
 assert.equal(syncLabel(connectedState), "Synced");
-assert.equal(connectActionLabel(connectedState), "Reconnect");
+assert.equal(connectActionLabel(connectedState), "Refresh Sign-In");
 assert.equal(canSyncConnection(connectedState), true);
 
 const needsCredentialsState = {
@@ -162,9 +171,9 @@ const needsCredentialsState = {
 };
 assert.equal(authLabel(needsCredentialsState.authStatus), "Needs sign-in");
 assert.equal(syncLabel(needsCredentialsState), "Sync blocked");
-assert.equal(connectActionLabel(needsCredentialsState), "Connect");
+assert.equal(connectActionLabel(needsCredentialsState), "Finish Setup");
 assert.equal(canSyncConnection(needsCredentialsState), false);
-assert.equal(statusGuidance(needsCredentialsState, readyReadiness), "Connect this source before syncing.");
+assert.equal(statusGuidance(needsCredentialsState, readyReadiness), "Finish setup for this source before syncing.");
 assert.equal(statusGuidance(needsCredentialsState, missingReadiness), missingReadiness.message);
 
 const activeSyncingState = {
@@ -198,16 +207,179 @@ const syncErrorState = {
   lastSyncError: "Provider temporarily unavailable.",
 };
 assert.equal(syncLabel(syncErrorState), "Sync problem");
-assert.equal(connectActionLabel(syncErrorState), "Reconnect");
+assert.equal(connectActionLabel(syncErrorState), "Refresh Sign-In");
 assert.equal(canSyncConnection(syncErrorState), true);
+assert.equal(shouldShowNoNewMailSuccessCopy(connectedState, 0), true);
+assert.equal(shouldShowNoNewMailSuccessCopy(connectedState, 1), false);
+assert.equal(shouldShowNoNewMailSuccessCopy(syncErrorState, 0), false);
 
 const authErrorState = {
   ...syncErrorState,
   authStatus: "error",
+  lastSyncError:
+    "Saved Gmail sign-in could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this inbox.",
 };
 assert.equal(authLabel(authErrorState.authStatus), "Connection problem");
 assert.equal(connectActionLabel(authErrorState), "Reconnect");
 assert.equal(canSyncConnection(authErrorState), false);
+assert.equal(shouldShowNoNewMailSuccessCopy(authErrorState, 0), false);
+assert.equal(serviceConnectionErrorMessage(authErrorState), authErrorState.lastSyncError);
+assert.equal(statusGuidance(authErrorState, readyReadiness), null);
+
+const rawSafeStorageErrorState = {
+  ...authErrorState,
+  lastSyncError: "Error while decrypting the ciphertext provided to safeStorage.decryptString.",
+};
+assert.equal(
+  serviceConnectionErrorMessage(rawSafeStorageErrorState),
+  "Saved sign-in data could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this source."
+);
+assert.equal(
+  statusGuidance({ ...authErrorState, lastSyncError: null }, readyReadiness),
+  "Saved sign-in needs attention. Reconnect or refresh sign-in for this source."
+);
+
+const opaqueAuthErrorState = {
+  ...authErrorState,
+  lastSyncError: "invalid_request",
+};
+assert.equal(
+  serviceConnectionErrorMessage(opaqueAuthErrorState),
+  "Saved sign-in needs attention. Reconnect or refresh sign-in for this source."
+);
+assert.equal(
+  serviceConnectionErrorMessage({
+    ...opaqueAuthErrorState,
+    lastSyncError: "Google OAuth failed: invalid_request.",
+  }),
+  "Saved sign-in needs attention. Reconnect or refresh sign-in for this source."
+);
+assert.equal(
+  serviceConnectionErrorMessage({
+    ...authErrorState,
+    lastSyncError: "Gmail API has not been used in project 123 before or it is disabled.",
+  }),
+  "Gmail API has not been used in project 123 before or it is disabled."
+);
+
+const savedGmailRow = {
+  id: "gmail-1",
+  provider: "gmail",
+  label: "Gmail Primary",
+  accountRef: "person@example.com",
+  enabled: true,
+  authStatus: "error",
+  syncStatus: "error",
+  lastSyncedAt: null,
+  lastSyncError: authErrorState.lastSyncError,
+  createdAt: "2026-04-24T12:00:00.000Z",
+  updatedAt: "2026-04-24T12:00:00.000Z",
+} as const;
+const savedOutlookCalendarRow = {
+  id: "outlook-calendar-1",
+  provider: "outlook",
+  label: "Outlook Primary",
+  accountRef: null,
+  enabled: true,
+  authStatus: "error",
+  syncStatus: "error",
+  lastSyncedAt: null,
+  lastSyncError:
+    "Saved Outlook sign-in could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this calendar.",
+  createdAt: "2026-04-24T12:00:00.000Z",
+  updatedAt: "2026-04-24T12:00:00.000Z",
+} as const;
+assert.deepEqual(selectEmailConnectionsByProvider([savedGmailRow], "gmail"), [savedGmailRow]);
+assert.deepEqual(selectCalendarConnectionsByProvider([savedOutlookCalendarRow], "outlook"), [
+  savedOutlookCalendarRow,
+]);
+
+const dashboardSettingsSnapshot = {
+  calendarConnections: [savedOutlookCalendarRow],
+  emailConnections: [
+    {
+      ...savedGmailRow,
+      lastSyncError: opaqueAuthErrorState.lastSyncError,
+    },
+  ],
+  calendarAutoSync: { enabled: true, intervalMinutes: 30 },
+  secretStorage: {
+    available: true,
+    provider: "electron_safe_storage",
+    reason: "OS-backed encryption is available for local secrets.",
+  },
+  googleOAuth: {
+    clientId: "google-client",
+    clientSecretConfigured: true,
+    redirectUri: null,
+    effectiveRedirectUri: "http://127.0.0.1:5174/oauth/google/callback",
+  },
+  outlookOAuth: {
+    clientId: "outlook-client",
+    clientSecretConfigured: true,
+  },
+  ai: DEFAULT_AI_SETTINGS,
+  slack: {
+    operatorChannelId: null,
+    proactiveMirroringEnabled: false,
+  },
+} satisfies SettingsSnapshot;
+const dashboardServiceHealth = selectServiceHealthItems(
+  {
+    settings: dashboardSettingsSnapshot,
+    storage: null,
+    slack: null,
+    companion: null,
+  },
+  (value) => value ?? "never"
+);
+const googleHealth = dashboardServiceHealth.find((item) => item.label === "Google");
+const outlookHealth = dashboardServiceHealth.find((item) => item.label === "Outlook");
+assert.equal(googleHealth?.state, "problem");
+assert.equal(
+  googleHealth?.detail,
+  "Saved sign-in needs attention. Reconnect or refresh sign-in for this source."
+);
+assert.doesNotMatch(googleHealth?.detail ?? "", /invalid_request/);
+assert.equal(outlookHealth?.state, "problem");
+assert.equal(
+  outlookHealth?.detail,
+  "Saved Outlook sign-in could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this calendar."
+);
+const dashboardReadiness = selectDashboardReadiness(dashboardServiceHealth);
+assert.equal(dashboardReadiness.state, "problem");
+assert.doesNotMatch(dashboardReadiness.detail, /invalid_request/);
+assert.match(dashboardReadiness.detail, /Google: Saved sign-in needs attention/);
+assert.match(dashboardReadiness.detail, /Outlook: Saved Outlook sign-in could not be decrypted/);
+
+const safeStorageDashboardServiceHealth = selectServiceHealthItems(
+  {
+    settings: {
+      ...dashboardSettingsSnapshot,
+      emailConnections: [
+        {
+          ...savedGmailRow,
+          lastSyncError: rawSafeStorageErrorState.lastSyncError,
+        },
+      ],
+      calendarConnections: [],
+    },
+    storage: null,
+    slack: null,
+    companion: null,
+  },
+  (value) => value ?? "never"
+);
+const safeStorageGoogleHealth = safeStorageDashboardServiceHealth.find(
+  (item) => item.label === "Google"
+);
+assert.equal(
+  safeStorageGoogleHealth?.detail,
+  "Saved sign-in data could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this source."
+);
+const safeStorageDashboardReadiness = selectDashboardReadiness(safeStorageDashboardServiceHealth);
+assert.doesNotMatch(dashboardReadiness.detail, /safeStorage\.decryptString/);
+assert.doesNotMatch(safeStorageDashboardReadiness.detail, /safeStorage\.decryptString/);
 
 assert.deepEqual(normalizeAiSettings(), DEFAULT_AI_SETTINGS);
 assert.deepEqual(normalizeAiSettings({ localModelName: "  gpt-oss-20b  " }), {
