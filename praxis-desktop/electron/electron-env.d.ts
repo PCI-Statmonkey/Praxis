@@ -144,6 +144,15 @@ import type {
   WorkSnapshot,
 } from "../shared/workModel";
 
+type SettingsWindowTab =
+  | "google"
+  | "outlook"
+  | "ai"
+  | "slack"
+  | "icsImport"
+  | "people"
+  | "storage";
+
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
@@ -186,6 +195,8 @@ declare global {
       };
       settings: {
         getSnapshot: () => Promise<SettingsSnapshot>;
+        openWindow: (input?: { tab?: SettingsWindowTab }) => Promise<{ ok: true }>;
+        onOpenTab: (callback: (tab: SettingsWindowTab) => void) => () => void;
         createCalendarConnection: (
           input: CreateCalendarConnectionInput
         ) => Promise<CalendarConnectionRecord>;

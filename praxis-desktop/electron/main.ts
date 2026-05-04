@@ -217,6 +217,8 @@ let settingsWindow: BrowserWindow | null
 let calendarAutoSyncInterval: NodeJS.Timeout | null = null
 let emailAutoSyncInterval: NodeJS.Timeout | null = null
 
+type SettingsWindowTab = 'google' | 'outlook' | 'ai' | 'slack' | 'icsImport' | 'people' | 'storage'
+
 const EMAIL_AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000
 const isMemoryRepairMode = process.argv.includes('--memory-repair')
 const isMemoryReindexMode = process.argv.includes('--memory-reindex')
@@ -259,9 +261,21 @@ const loadRendererWindow = (window: BrowserWindow, searchParams?: Record<string,
   })
 }
 
-const openSettingsWindow = () => {
+const isSettingsWindowTab = (value: unknown): value is SettingsWindowTab =>
+  value === 'google' ||
+  value === 'outlook' ||
+  value === 'ai' ||
+  value === 'slack' ||
+  value === 'icsImport' ||
+  value === 'people' ||
+  value === 'storage'
+
+const openSettingsWindow = (tab?: SettingsWindowTab) => {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
     settingsWindow.focus()
+    if (tab) {
+      settingsWindow.webContents.send('settings:openTab', tab)
+    }
     return
   }
 
@@ -283,7 +297,10 @@ const openSettingsWindow = () => {
     settingsWindow = null
   })
 
-  loadRendererWindow(settingsWindow, { window: 'settings' })
+  loadRendererWindow(settingsWindow, {
+    window: 'settings',
+    ...(tab ? { settingsTab: tab } : {}),
+  })
 }
 
 const buildApplicationMenu = () => {
@@ -332,20 +349,20 @@ const buildApplicationMenu = () => {
     {
       label: 'Settings',
       submenu: [
-        {
-          label: 'Open Settings',
-          accelerator: 'CommandOrControl+,',
-          click: openSettingsWindow,
-        },
+          {
+            label: 'Open Settings',
+            accelerator: 'CommandOrControl+,',
+            click: () => openSettingsWindow(),
+          },
       ],
     },
     {
       label: 'Help',
       submenu: [
-        {
-          label: 'Praxis Setup Notes',
-          click: openSettingsWindow,
-        },
+          {
+            label: 'Praxis Setup Notes',
+            click: () => openSettingsWindow(),
+          },
       ],
     },
   ]
@@ -605,6 +622,10 @@ app.whenReady().then(() => {
   ipcMain.handle('slack:sendConnectionTest', async () => sendSlackConnectionTest())
   ipcMain.handle('slack:sendTestSuggestion', async () => sendSlackTestSuggestion())
   ipcMain.handle('settings:getSnapshot', async () => getSettingsSnapshot())
+  ipcMain.handle('settings:openWindow', async (_event, input?: { tab?: unknown }) => {
+    openSettingsWindow(isSettingsWindowTab(input?.tab) ? input.tab : undefined)
+    return { ok: true }
+  })
   ipcMain.handle(
     'settings:createCalendarConnection',
     async (_event, input: CreateCalendarConnectionInput) => createCalendarConnection(input)

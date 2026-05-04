@@ -146,9 +146,59 @@ body::before {
 .service-health-strip {
   grid-column: 1 / -1;
   grid-row: 1;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.service-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  border: 1px solid rgba(185, 222, 219, 0.13);
+  border-radius: 999px;
+  background: rgba(7, 12, 12, 0.5);
+  color: var(--muted);
+  padding: 6px 10px;
+}
+
+.service-status-pill:hover {
+  border-color: rgba(85, 234, 220, 0.36);
+  background: rgba(16, 26, 27, 0.9);
+}
+
+.service-status-dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--red);
+  box-shadow: 0 0 10px rgba(231, 131, 131, 0.62);
+}
+
+.service-status-pill.is-online .service-status-dot {
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(143, 220, 154, 0.62);
+}
+
+.service-status-pill.is-attention {
+  border-color: rgba(231, 131, 131, 0.34);
+  background: rgba(231, 131, 131, 0.08);
+}
+
+.service-status-name {
+  overflow: hidden;
+  max-width: 16ch;
+  color: var(--text);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .service-health-card {
@@ -280,6 +330,16 @@ body::before {
   grid-column: 1 / -1;
   grid-row: 3;
   max-height: 230px;
+}
+
+.app-shell:not(.is-surface-command) > .panel:not(.is-active-panel) {
+  display: none;
+}
+
+.app-shell:not(.is-surface-command) > .panel.is-active-panel {
+  grid-column: 1 / -1;
+  grid-row: 2 / span 2;
+  max-height: none;
 }
 
 h1,
@@ -1832,7 +1892,7 @@ ol {
     grid-template-rows: auto auto auto auto;
     height: auto;
     min-height: 100%;
-    padding-top: 276px;
+    padding-top: 340px;
   }
 
   .top-nav {

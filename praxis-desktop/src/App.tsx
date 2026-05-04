@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type FormEvent,
+  type SetStateAction,
+} from "react";
 import "./App.css";
 import type {
   ChatImportSnapshot,
@@ -48,7 +56,10 @@ import type {
   WorkSnapshot,
 } from "../shared/workModel";
 
-type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+type FocusPanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+type PanelId = "command" | FocusPanelId;
+
+type SettingsWindowTab = "google" | "outlook" | "ai" | "slack" | "icsImport" | "people" | "storage";
 
 type ManualChatImportForm = {
   sourceSystem: ChatImportSourceSystem;
@@ -186,7 +197,14 @@ const emptyPersonForm = (): CreatePersonInput => ({
 
 export default function App() {
   const todayTimelineRef = useRef<HTMLElement | null>(null);
-  const [activePanel, setActivePanel] = useState<PanelId>("todayTimeline");
+  const [activePanel, setActivePanel] = useState<PanelId>("command");
+  const setFocusedPanel: Dispatch<SetStateAction<FocusPanelId>> = useCallback((nextPanel) => {
+    setActivePanel((currentPanel) => {
+      const currentFocusedPanel: FocusPanelId =
+        currentPanel === "command" ? "todayTimeline" : currentPanel;
+      return typeof nextPanel === "function" ? nextPanel(currentFocusedPanel) : nextPanel;
+    });
+  }, []);
   const [snapshot, setSnapshot] = useState<WorkSnapshot>(EMPTY_SNAPSHOT);
   const [dailyBrief, setDailyBrief] = useState<DailyBrief>(EMPTY_BRIEF);
   const [emailSnapshot, setEmailSnapshot] = useState<EmailSnapshot>(EMPTY_EMAIL_SNAPSHOT);
@@ -288,7 +306,7 @@ export default function App() {
     setShowFocusDetails,
     setShowBriefDetails,
     setShowStatusReport,
-    setActivePanel,
+    setActivePanel: setFocusedPanel,
     setStatus,
     loadWorkModel,
     todayTimelineRef,
@@ -350,11 +368,27 @@ export default function App() {
         event.preventDefault();
         setActivePanel("masterChecklist");
       }
+      if (event.key === "5") {
+        event.preventDefault();
+        setActivePanel("memory");
+        setShowBriefDetails(true);
+      }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [setShowBriefDetails]);
+
+  useEffect(() => {
+    if (activePanel !== "memory") {
+      return;
+    }
+
+    window.requestAnimationFrame(() => {
+      const timeline = todayTimelineRef.current;
+      timeline?.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
+    });
+  }, [activePanel]);
 
   const createMission = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -587,6 +621,31 @@ export default function App() {
   const reviewInboxItems = selectReviewInboxItems(emailSnapshot, chatSnapshot);
   const serviceHealthItems = selectServiceHealthItems(serviceSnapshot, formatDateTime);
   const dashboardReadiness = selectDashboardReadiness(serviceHealthItems);
+  const settingsTabForService = (serviceLabel: string): SettingsWindowTab | undefined => {
+    switch (serviceLabel) {
+      case "Google":
+        return "google";
+      case "Outlook":
+        return "outlook";
+      case "Slack":
+        return "slack";
+      case "Memory":
+        return "storage";
+      case "Companion":
+        return undefined;
+      default:
+        return undefined;
+    }
+  };
+  const openSettingsFromService = async (serviceLabel: string) => {
+    const tab = settingsTabForService(serviceLabel);
+    try {
+      await window.praxis.settings.openWindow(tab ? { tab } : undefined);
+      setStatus(tab ? `Opened Settings for ${serviceLabel}.` : "Opened Settings.");
+    } catch {
+      setStatus("Praxis could not open Settings.");
+    }
+  };
 
   const acceptEmailSuggestion = async (suggestionId: string, mode: "todo" | "project") => {
     const result = await window.praxis.email.acceptSuggestion({ suggestionId, mode });
@@ -664,7 +723,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell is-surface-${activePanel}`}>
       <nav className="top-nav" aria-label="Praxis navigation">
         <div className="top-nav-brand">
           <span className="top-nav-kicker">Praxis Desk</span>
@@ -673,7 +732,16 @@ export default function App() {
         <div className="top-nav-buttons">
           <button
             type="button"
+            className={activePanel === "command" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "command"}
+            onClick={() => setActivePanel("command")}
+          >
+            Command
+          </button>
+          <button
+            type="button"
             className={activePanel === "projectStack" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "projectStack"}
             onClick={() => setActivePanel("projectStack")}
           >
             Projects
@@ -681,6 +749,7 @@ export default function App() {
           <button
             type="button"
             className={activePanel === "todayTimeline" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "todayTimeline"}
             onClick={() => setActivePanel("todayTimeline")}
           >
             Today
@@ -688,6 +757,7 @@ export default function App() {
           <button
             type="button"
             className={activePanel === "morningPlan" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "morningPlan"}
             onClick={() => setActivePanel("morningPlan")}
           >
             Talk
@@ -695,6 +765,7 @@ export default function App() {
           <button
             type="button"
             className={activePanel === "masterChecklist" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "masterChecklist"}
             onClick={() => setActivePanel("masterChecklist")}
           >
             Checklist
@@ -702,6 +773,7 @@ export default function App() {
           <button
             type="button"
             className={activePanel === "memory" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "memory"}
             onClick={() => {
               setActivePanel("memory");
               setShowBriefDetails(true);
@@ -720,18 +792,22 @@ export default function App() {
       </nav>
       <section className="service-health-strip" aria-label="Service health">
         {serviceHealthItems.map((item) => (
-          <article key={item.label} className={`service-health-card is-${item.state}`}>
-            <div className="service-health-card-header">
-              <span>{item.label}</span>
-              <strong>{item.state}</strong>
-            </div>
-            <small>{item.detail}</small>
-            <em>{item.action}</em>
-          </article>
+          <button
+            key={item.label}
+            type="button"
+            className={`service-status-pill ${
+              item.state === "online" ? "is-online" : "is-attention"
+            }`}
+            title={`${item.label}: ${item.detail}. ${item.action}`}
+            onClick={() => void openSettingsFromService(item.label)}
+          >
+            <span className="service-status-dot" aria-hidden="true" />
+            <span className="service-status-name">{item.label}</span>
+          </button>
         ))}
       </section>
       <ProjectStackPanel
-        isActive={activePanel === "projectStack"}
+        isActive={activePanel === "command" || activePanel === "projectStack"}
         missions={snapshot.missions}
         projects={snapshot.projects}
         people={snapshot.people}
@@ -746,7 +822,7 @@ export default function App() {
 
       <TodayTimelinePanel
         ref={todayTimelineRef}
-        isActive={activePanel === "todayTimeline" || activePanel === "memory"}
+        isActive={activePanel === "command" || activePanel === "todayTimeline" || activePanel === "memory"}
         status={status}
         dailyBrief={dailyBrief}
         focusSelection={focusSelection}
@@ -788,7 +864,7 @@ export default function App() {
         deleteDeadline={(id) => deleteRecord("deadline", id)}
       />
       <MemoryWriterPanel
-        isActive={activePanel === "morningPlan"}
+        isActive={activePanel === "command" || activePanel === "morningPlan"}
         snapshot={snapshot}
         captureText={captureText}
         captureStatus={captureStatus}
@@ -846,7 +922,7 @@ export default function App() {
       />
 
       <MasterChecklistPanel
-        isActive={activePanel === "masterChecklist"}
+        isActive={activePanel === "command" || activePanel === "masterChecklist"}
         todos={snapshot.todos}
         projects={snapshot.projects}
         missions={snapshot.missions}

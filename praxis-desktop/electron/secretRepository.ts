@@ -1,4 +1,4 @@
-import { safeStorage } from "electron";
+import { app, safeStorage } from "electron";
 import type {
   SecretKind,
   SecretOwnerKind,
@@ -18,7 +18,13 @@ type DbSecret = {
 };
 
 const ENCRYPTION_PROVIDER = "electron_safe_storage";
+const PRAXIS_SAFE_STORAGE_APP_NAME = "praxis-desktop";
 const nowIso = () => new Date().toISOString();
+
+app.setName(PRAXIS_SAFE_STORAGE_APP_NAME);
+if (process.platform === "win32") {
+  app.setAppUserModelId(PRAXIS_SAFE_STORAGE_APP_NAME);
+}
 
 export const SECRET_DECRYPT_FAILURE_MESSAGE =
   "Saved sign-in data could not be decrypted by OS secure storage. Reconnect or refresh sign-in for this source.";

@@ -49,6 +49,12 @@ contextBridge.exposeInMainWorld('praxis', {
   },
   settings: {
     getSnapshot: () => ipcRenderer.invoke('settings:getSnapshot'),
+    openWindow: (input?: unknown) => ipcRenderer.invoke('settings:openWindow', input),
+    onOpenTab: (callback: (tab: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, tab: unknown) => callback(tab)
+      ipcRenderer.on('settings:openTab', listener)
+      return () => ipcRenderer.off('settings:openTab', listener)
+    },
     createCalendarConnection: (input: unknown) =>
       ipcRenderer.invoke('settings:createCalendarConnection', input),
     deleteCalendarConnection: (input: unknown) =>

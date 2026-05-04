@@ -48,14 +48,17 @@ import { PeopleProfilePanel } from "./components/PeopleProfilePanel";
 import { SlackSettingsPanel } from "./components/SlackSettingsPanel";
 import { WorkEditPanels } from "./components/WorkFormsPanel";
 
-type SettingsTab =
-  | "slack"
-  | "google"
-  | "outlook"
-  | "ai"
-  | "icsImport"
-  | "people"
-  | "storage";
+const SETTINGS_TABS = ["google", "outlook", "ai", "slack", "icsImport", "people", "storage"] as const;
+
+type SettingsTab = (typeof SETTINGS_TABS)[number];
+
+const isSettingsTab = (value: unknown): value is SettingsTab =>
+  typeof value === "string" && SETTINGS_TABS.includes(value as SettingsTab);
+
+const initialSettingsTab = (): SettingsTab => {
+  const tab = new URLSearchParams(window.location.search).get("settingsTab");
+  return isSettingsTab(tab) ? tab : "google";
+};
 
 const EMPTY_SNAPSHOT: WorkSnapshot = {
   missions: [],
@@ -228,7 +231,7 @@ const formatDateTime = (value: string | null) => {
 };
 
 export default function SettingsApp() {
-  const [activeTab, setActiveTab] = useState<SettingsTab>("google");
+  const [activeTab, setActiveTab] = useState<SettingsTab>(() => initialSettingsTab());
   const [snapshot, setSnapshot] = useState<WorkSnapshot>(EMPTY_SNAPSHOT);
   const [settingsSnapshot, setSettingsSnapshot] = useState<SettingsSnapshot>(EMPTY_SETTINGS);
   const [emailSnapshot, setEmailSnapshot] = useState<EmailSnapshot>(EMPTY_EMAIL_SNAPSHOT);
@@ -339,6 +342,16 @@ export default function SettingsApp() {
       setStatus("Praxis could not load settings.");
     });
   }, [loadSettingsModel]);
+
+  useEffect(() => {
+    const unsubscribe = window.praxis.settings.onOpenTab((tab) => {
+      if (isSettingsTab(tab)) {
+        setActiveTab(tab);
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const unsubscribe = window.praxis.calendar.onGoogleOAuthUpdated((update) => {

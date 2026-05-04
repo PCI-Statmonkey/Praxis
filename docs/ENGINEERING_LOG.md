@@ -1,5 +1,38 @@
 # ENGINEERING LOG
 
+## 2026-05-04 - Command Top Bar And OAuth Persistence Closure
+
+### Closed
+
+- Closed reopened Google/Outlook OAuth persistence after app restart.
+- Confirmed true Google/Outlook OAuth persistence is fixed after app restart.
+- Recorded the root cause: Electron `safeStorage` decrypt context depended on app identity, and app identity is now pinned to `praxis-desktop` before `safeStorage` use.
+- Confirmed existing current Google/Outlook token rows remained usable after restart in live QA.
+- Confirmed no reconnect was required after restart.
+- Confirmed no `secure_secrets` rows were deleted or rewritten.
+- Closed top-bar Command/service-pill polish.
+
+### Built
+
+- Top bar now has compact service pills with service name plus red/green dot.
+- Clicking service pills opens or retargets Settings to relevant tabs: Google, Outlook, Slack, and Storage for Memory.
+- Companion service pill routing currently uses generic/fallback behavior.
+- Top nav now has `Command` all-in-one mode plus focused Projects, Today, Talk, Checklist, and Memory modes.
+
+### Verification
+
+- Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`.
+- Ana live QA passed Command/focus nav.
+- Ana live QA passed service pill visual behavior and Settings routing.
+- Ana live QA passed Google/Outlook persistence sanity.
+
+### Queue
+
+- Marked reopened OAuth persistence as closed.
+- Marked top-bar Command/service-pill polish as completed.
+- Kept next active Mission Control polish focused on remaining non-blocking layout/copy issues.
+- Kept Slack/companion AI Review exposure open unless separately closed.
+
 ## 2026-05-04 - Google/Outlook Persistence Fix Closed
 
 ### Closed

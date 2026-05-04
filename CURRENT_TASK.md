@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue back to Mission Control follow-up polish now that the Google/Outlook restart persistence blocker is closed. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next dashboard layer. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue back to Mission Control follow-up polish now that the Google/Outlook restart persistence blocker and top-bar Command/service-pill polish are closed. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next dashboard layer. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -54,16 +54,20 @@ Move the immediate execution queue back to Mission Control follow-up polish now 
 - First-screen visual QA passed as an acceptable first Mission Control pass with no hard functional regression, no new overflow, Review Inbox actions reachable, Talk/AI Review still visible and read-only, and snapshot unchanged during AI Review.
 - Targeted first-screen polish is applied at checkpoint `e1d96a7 Polish Mission Control first screen`: Top Move wrapping was reduced, At Risk now leads with work pressure, Today Service Health is compact, `Review / Reset` was renamed to `Brief Review` pending a safe AI Review launcher path, and the immediate copy fixes are applied.
 - Final visual QA for the polished Mission Control first screen passed: the first screen is acceptable for this pass, Top Move scanability improved, At Risk reads as work pressure, Brief Review is honest, Review Inbox actions remain reachable, Talk/AI Review stays visible and read-only, narrow layout has no horizontal overflow, and the only remaining UI polish is non-blocking service-health duplication and later mobile ordering.
-- Google/Outlook restart persistence bug is closed.
-- Saved Google/Outlook rows remain visible in Settings after restart even when saved token secrets are unreadable.
-- Degraded Google/Outlook token state now shows friendly reconnect/refresh sign-in guidance instead of collapsing Settings to zero sources/calendars.
+- Reopened Google/Outlook OAuth restart persistence is closed with true persistence after app restart.
+- Root cause was Electron `safeStorage` decrypt context depending on app identity; app identity is now pinned to `praxis-desktop` before `safeStorage` use.
+- Existing current Google/Outlook token rows remained usable after restart in live QA, with no reconnect required after restart.
+- No `secure_secrets` rows were deleted or rewritten.
+- Degraded Google/Outlook token state still shows friendly reconnect/refresh sign-in guidance instead of collapsing Settings to zero sources/calendars.
 - Mission Control Service Health and At Risk/readiness report degraded services honestly without exposing raw `safeStorage.decryptString` or bare `invalid_request` copy.
 - Outlook ready rows show `Refresh Sign-In` as secondary copy and keep sync as the primary available action.
-- Affected users with unreadable encrypted OAuth token secrets may need a one-time reconnect/refresh sign-in.
-- `secure_secrets` was not deleted or rewritten during the fix.
+- Top-bar Command/service-pill polish is complete.
+- Top bar now has compact service pills with service name plus red/green dot.
+- Clicking service pills opens or retargets Settings to relevant tabs: Google, Outlook, Slack, and Storage for Memory; Companion currently uses generic/fallback routing.
+- Top nav now has `Command` all-in-one mode plus focused Projects, Today, Talk, Checklist, and Memory modes.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
-- Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Google Settings rows were visible with `mail sources: 1` and `calendars: 1`; Outlook Settings rows were visible and ready where tokens are readable; Mission Control and At Risk copy was sanitized.
+- Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
 
 ## NEXT STEPS
 
@@ -71,11 +75,12 @@ Move the immediate execution queue back to Mission Control follow-up polish now 
 
 **GOAL**
 
-Keep the first Mission Control pass moving after the connected-service persistence bug is fixed.
+Keep the first Mission Control pass moving after the connected-service persistence and top-bar polish closures.
 
 **DIRECTION**
 
 - The polished first Mission Control pass is acceptable for now.
+- OAuth persistence and top-bar Command/service-pill polish are closed.
 - Service-health duplication remains follow-up UI polish, not a blocker.
 - Mobile ordering remains follow-up UI polish, not a blocker.
 - A future safe AI Review launcher can replace the current `Brief Review` card when Talk/AI Review control wiring is deliberately scoped.
