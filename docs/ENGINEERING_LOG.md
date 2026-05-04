@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-04 - Service Persistence Reproduction
+
+### Investigated
+
+- Reproduced the Google/Outlook startup persistence issue after app close and reopen.
+- Confirmed saved connection rows still exist for Gmail, Google Calendar, Outlook Mail, and Outlook Calendar.
+- Confirmed those rows are degraded with `authStatus: error` and `syncStatus: error`.
+- Confirmed the shared visible error is `Error while decrypting the ciphertext provided to safeStorage.decryptString.`
+- Confirmed Settings shows mail sources 0 / calendars 0 and Add Source controls after the decrypt failure, even though saved rows exist.
+- Confirmed Dashboard/Mission Control Service Health surfaces degraded Google/Outlook state with the same safeStorage decrypt error.
+- Confirmed manual sync cannot be run from Settings in this state because saved rows are hidden by the Settings hydration failure.
+- Recorded Cristy's code investigation finding that ready connection rows can show misleading `Reconnect` copy, but that is secondary to unreadable encrypted secrets and Settings hiding rows after readiness failure.
+
+### Still Open
+
+- Harden safeStorage secret read/decrypt failure handling into structured auth degradation.
+- Keep saved rows visible in Settings even when token secrets are unreadable.
+- Clarify reconnect/refresh sign-in wording for degraded auth while avoiding `Reconnect` as the primary action for healthy ready rows.
+- Add regression coverage for saved-row visibility when token decrypt fails and for ready-row action copy.
+
+### Data Safety
+
+- Do not delete or rewrite `secure_secrets` during diagnosis.
+- Do not log, expose, or paste OAuth access tokens, refresh tokens, client secrets, or raw provider payloads.
+
 ## 2026-05-04 - Mission Control Polish QA And Service Persistence Bug
 
 ### Validated
