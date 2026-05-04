@@ -16,7 +16,7 @@ import type { WorkSnapshot, WorkStatus } from "../../shared/workModel";
 import type { CaptureDraft } from "./assistantCaptureDraft";
 import { storeProactiveSuggestionContext, storeReportContext } from "./assistantOperationalActions";
 
-type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist";
 
 export type AssistantReviewGenerationStatus =
   | "idle"

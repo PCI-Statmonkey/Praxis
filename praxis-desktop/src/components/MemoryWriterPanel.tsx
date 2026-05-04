@@ -207,8 +207,8 @@ export function MemoryWriterPanel({
         </div>
       </div>
 
-      <div className="assistant-thread">
-        {assistantReply ? (
+      {assistantReply ? (
+        <div className="assistant-thread">
           <article className="praxis-reply">
             <h4>Praxis</h4>
             <p className="assistant-reply-text">{assistantReply}</p>
@@ -224,16 +224,8 @@ export function MemoryWriterPanel({
               </div>
             ) : null}
           </article>
-        ) : (
-          <article className="praxis-reply">
-            <h4>Praxis</h4>
-            <p>I can read the brief, answer work-graph questions, or capture the next thing.</p>
-          </article>
-        )}
-        <article className="user-reply">
-          <p>What am I waiting on? What can I knock out quickly? What is slipping?</p>
-        </article>
-      </div>
+        </div>
+      ) : null}
 
       <AssistantReviewSurface
         snapshot={snapshot}

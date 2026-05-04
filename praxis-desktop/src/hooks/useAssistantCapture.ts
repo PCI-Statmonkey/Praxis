@@ -19,7 +19,7 @@ import {
 
 export { storeProactiveSuggestionContext, storeReportContext };
 
-type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+type PanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist";
 
 const EMPTY_APPOINTMENT_REPORT: AppointmentReport = {
   generatedAt: "",

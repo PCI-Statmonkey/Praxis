@@ -53,12 +53,14 @@ import type {
   CreateEmailConnectionInput,
   DeleteEmailConnectionInput,
   UpdateAiSettingsInput,
+  UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateCalendarConnectionInput,
   UpdateEmailConnectionInput,
   UpdateGoogleOAuthSettingsInput,
   UpdateOutlookOAuthSettingsInput,
   UpdateSlackSettingsInput,
+  UiSettings,
 } from '../shared/settingsModel'
 import type {
   AcceptEmailSuggestionInput,
@@ -102,6 +104,7 @@ import {
   updateCalendarConnection,
   updateEmailConnection,
   updateAiSettings,
+  updateUiSettings,
   updateGoogleOAuthSettings,
   updateCalendarAutoSyncSettings,
   updateOutlookOAuthSettings,
@@ -217,7 +220,15 @@ let settingsWindow: BrowserWindow | null
 let calendarAutoSyncInterval: NodeJS.Timeout | null = null
 let emailAutoSyncInterval: NodeJS.Timeout | null = null
 
-type SettingsWindowTab = 'google' | 'outlook' | 'ai' | 'slack' | 'icsImport' | 'people' | 'storage'
+type SettingsWindowTab =
+  | 'google'
+  | 'outlook'
+  | 'appearance'
+  | 'ai'
+  | 'slack'
+  | 'icsImport'
+  | 'people'
+  | 'storage'
 
 const EMAIL_AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000
 const isMemoryRepairMode = process.argv.includes('--memory-repair')
@@ -246,6 +257,12 @@ const broadcastEmailAutoSyncUpdate = (update: EmailAutoSyncUpdate) => {
   })
 }
 
+const broadcastUiSettingsUpdate = (settings: UiSettings) => {
+  BrowserWindow.getAllWindows().forEach((window) => {
+    window.webContents.send('settings:uiUpdated', settings)
+  })
+}
+
 const loadRendererWindow = (window: BrowserWindow, searchParams?: Record<string, string>) => {
   if (VITE_DEV_SERVER_URL) {
     const url = new URL(VITE_DEV_SERVER_URL)
@@ -264,6 +281,7 @@ const loadRendererWindow = (window: BrowserWindow, searchParams?: Record<string,
 const isSettingsWindowTab = (value: unknown): value is SettingsWindowTab =>
   value === 'google' ||
   value === 'outlook' ||
+  value === 'appearance' ||
   value === 'ai' ||
   value === 'slack' ||
   value === 'icsImport' ||
@@ -664,6 +682,11 @@ app.whenReady().then(() => {
   ipcMain.handle('settings:updateAISettings', async (_event, input: UpdateAiSettingsInput) =>
     updateAiSettings(input)
   )
+  ipcMain.handle('settings:updateUISettings', async (_event, input: UpdateUiSettingsInput) => {
+    const snapshot = updateUiSettings(input)
+    broadcastUiSettingsUpdate(snapshot.ui)
+    return snapshot
+  })
   ipcMain.handle(
     'settings:checkOllamaModelAvailability',
     async (_event, input: CheckOllamaModelAvailabilityInput) =>

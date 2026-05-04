@@ -97,12 +97,14 @@ import type {
   OllamaModelAvailabilityResult,
   SettingsSnapshot,
   UpdateAiSettingsInput,
+  UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateCalendarConnectionInput,
   UpdateEmailConnectionInput,
   UpdateGoogleOAuthSettingsInput,
   UpdateOutlookOAuthSettingsInput,
   UpdateSlackSettingsInput,
+  UiSettings,
 } from "../shared/settingsModel";
 import type {
   AssistantAIReviewGenerateRequest,
@@ -147,6 +149,7 @@ import type {
 type SettingsWindowTab =
   | "google"
   | "outlook"
+  | "appearance"
   | "ai"
   | "slack"
   | "icsImport"
@@ -197,6 +200,7 @@ declare global {
         getSnapshot: () => Promise<SettingsSnapshot>;
         openWindow: (input?: { tab?: SettingsWindowTab }) => Promise<{ ok: true }>;
         onOpenTab: (callback: (tab: SettingsWindowTab) => void) => () => void;
+        onUIUpdated: (callback: (settings: UiSettings) => void) => () => void;
         createCalendarConnection: (
           input: CreateCalendarConnectionInput
         ) => Promise<CalendarConnectionRecord>;
@@ -220,6 +224,7 @@ declare global {
           input: UpdateCalendarAutoSyncSettingsInput
         ) => Promise<SettingsSnapshot>;
         updateAISettings: (input: UpdateAiSettingsInput) => Promise<SettingsSnapshot>;
+        updateUISettings: (input: UpdateUiSettingsInput) => Promise<SettingsSnapshot>;
         checkOllamaModelAvailability: (
           input: CheckOllamaModelAvailabilityInput
         ) => Promise<OllamaModelAvailabilityResult>;

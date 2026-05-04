@@ -14,13 +14,15 @@ import type {
   OutlookOAuthSettings,
   SettingsSnapshot,
   UpdateAiSettingsInput,
+  UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   SlackSettings,
+  UiSettings,
   UpdateGoogleOAuthSettingsInput,
   UpdateOutlookOAuthSettingsInput,
   UpdateSlackSettingsInput,
 } from "../shared/settingsModel";
-import { normalizeAiSettings } from "../shared/settingsModel";
+import { normalizeAiSettings, normalizeUiSettings } from "../shared/settingsModel";
 import {
   DEFAULT_CALENDAR_AUTO_SYNC_SETTINGS,
   normalizeCalendarAutoSyncSettings,
@@ -72,6 +74,7 @@ const nowIso = () => new Date().toISOString();
 const slackSettingsKey = "slack";
 const calendarAutoSyncSettingsKey = "calendar_auto_sync";
 const aiSettingsKey = "ai_model_policy";
+const uiSettingsKey = "ui";
 const googleOAuthSettingsKey = "google_oauth";
 const googleOAuthIntegrationOwnerId = "google_calendar";
 const outlookOAuthSettingsKey = "outlook_oauth";
@@ -192,6 +195,21 @@ export const getAiSettings = (): AiSettings => {
   }
 };
 
+export const getUiSettings = (): UiSettings => {
+  const row = getPraxisDatabase()
+    .prepare("SELECT value_json FROM settings WHERE key = ?")
+    .get(uiSettingsKey) as { value_json: string } | undefined;
+  if (!row) {
+    return normalizeUiSettings();
+  }
+
+  try {
+    return normalizeUiSettings(JSON.parse(row.value_json) as Partial<UiSettings>);
+  } catch {
+    return normalizeUiSettings();
+  }
+};
+
 export const getGoogleOAuthSettings = (): GoogleOAuthSettings => {
   const row = getPraxisDatabase()
     .prepare("SELECT value_json FROM settings WHERE key = ?")
@@ -240,6 +258,7 @@ export const getSettingsSnapshot = (): SettingsSnapshot => ({
   googleOAuth: getGoogleOAuthSettings(),
   outlookOAuth: getOutlookOAuthSettings(),
   ai: getAiSettings(),
+  ui: getUiSettings(),
   slack: getSlackSettings(),
 });
 
@@ -487,6 +506,21 @@ export const updateAiSettings = (input: UpdateAiSettingsInput) => {
        ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
     )
     .run(aiSettingsKey, JSON.stringify(next), timestamp);
+
+  return getSettingsSnapshot();
+};
+
+export const updateUiSettings = (input: UpdateUiSettingsInput) => {
+  const next = normalizeUiSettings(input, getUiSettings());
+  const timestamp = nowIso();
+
+  getPraxisDatabase()
+    .prepare(
+      `INSERT INTO settings (key, value_json, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
+    )
+    .run(uiSettingsKey, JSON.stringify(next), timestamp);
 
   return getSettingsSnapshot();
 };

@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue back to Mission Control follow-up polish now that the Google/Outlook restart persistence blocker and top-bar Command/service-pill polish are closed. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next dashboard layer. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue to unified calendar and time-blocking planning now that the UI font-size and Mission Control polish slice is complete. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next planning surfaces. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -65,22 +65,51 @@ Move the immediate execution queue back to Mission Control follow-up polish now 
 - Top bar now has compact service pills with service name plus red/green dot.
 - Clicking service pills opens or retargets Settings to relevant tabs: Google, Outlook, Slack, and Storage for Memory; Companion currently uses generic/fallback routing.
 - Top nav now has `Command` all-in-one mode plus focused Projects, Today, Talk, Checklist, and Memory modes.
+- UI font-size setting is persisted as `ui.fontScalePercent`, default `100`, range `94-114`, step `2`.
+- Settings > Appearance now provides a font-size slider, live preview sample, and Reset to 100%.
+- The main app updates live from the Settings font-size broadcast.
+- UI/font polish slice is complete: button contrast/readability is fixed across top nav, Settings, Talk prompts, and common action buttons.
+- Fake Memory top-nav mode was removed; memory-backed documents remain inside Today/Command.
+- Review Inbox is collapsed by default with candidate count visible.
+- Talk example/prompt card was removed.
+- Structured AI Review work references are color-badged by type where structured data exists.
+- Ana live QA passed after fresh build: font slider/live preview/reset, 114% layout, top nav, Review Inbox, Talk, Google/Outlook still connected/syncable, and no clipping or horizontal overflow.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
 
 ## NEXT STEPS
 
-### 1. Continue Mission Control Follow-Up Polish
+### 1. Plan Unified Calendar And Time Blocking
 
 **GOAL**
 
-Keep the first Mission Control pass moving after the connected-service persistence and top-bar polish closures.
+Define the unified calendar and time-blocking planning surface so PRAXIS can turn connected calendar context, deadlines, priority stack, and operator intent into a clear plan for what happens when.
+
+**DIRECTION**
+
+- Treat Google Calendar and Outlook Calendar as connected input lanes, not separate planning experiences.
+- Preserve source identity and sync health while presenting a unified schedule.
+- Design explicit time-block creation/review paths before adding direct writes.
+- Use AI Review and priority stack context as planning inputs, not as automatic calendar mutation authority.
+- Keep conflict, pressure, travel/context, and due-date signals visible enough for Mission Control decisions.
+
+**DONE WHEN**
+
+- A safe planning surface is defined for unified calendar review and time-block proposals.
+- Calendar writes, if included later, have explicit confirmation boundaries.
+- The plan identifies required data contracts, UI surfaces, and regression coverage.
+
+### 2. Continue Mission Control Follow-Up Polish
+
+**GOAL**
+
+Keep non-blocking Mission Control layout and copy issues moving behind the unified calendar/time-blocking planning track.
 
 **DIRECTION**
 
 - The polished first Mission Control pass is acceptable for now.
-- OAuth persistence and top-bar Command/service-pill polish are closed.
+- OAuth persistence, top-bar Command/service-pill polish, and UI/font polish are closed.
 - Service-health duplication remains follow-up UI polish, not a blocker.
 - Mobile ordering remains follow-up UI polish, not a blocker.
 - A future safe AI Review launcher can replace the current `Brief Review` card when Talk/AI Review control wiring is deliberately scoped.
@@ -91,7 +120,23 @@ Keep the first Mission Control pass moving after the connected-service persisten
 - Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
 - Any AI Review launcher path preserves no-write behavior.
 
-### 2. Plan V1.1 Persistent Presence After AI Review
+### 3. Plan Checklist Grouping And Context-Memory Redesign
+
+**GOAL**
+
+Keep checklist grouping and context-memory redesign visible as follow-up work after the active calendar/time-blocking planning surface.
+
+**DIRECTION**
+
+- Group checklist items around real operating contexts, projects, and missions.
+- Revisit how memory-backed documents appear inside Today/Command without restoring a fake Memory top-nav mode.
+- Preserve explicit write boundaries and source identity.
+
+**DONE WHEN**
+
+- The redesign has a scoped plan and does not distract from the active calendar/time-blocking work.
+
+### 4. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
 
@@ -116,7 +161,7 @@ Define how PRAXIS should live as a persistent Windows assistant after the AI rev
 
 - V1.1 has a follow-on persistent-presence plan that depends on the AI review context packet rather than replacing it.
 
-### 3. Keep Future Intelligence And Capture Tracks Execution-Focused
+### 5. Keep Future Intelligence And Capture Tracks Execution-Focused
 
 **GOAL**
 

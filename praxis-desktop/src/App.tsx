@@ -15,6 +15,7 @@ import type {
 } from "../shared/chatImport";
 import type { DailyBrief, FocusReport } from "../shared/dailyBrief";
 import type { EmailSnapshot } from "../shared/emailModel";
+import { uiFontScaleCssValue } from "../shared/settingsModel";
 import {
   buildBestProactiveSuggestion,
   type ProactiveSuggestion,
@@ -56,10 +57,18 @@ import type {
   WorkSnapshot,
 } from "../shared/workModel";
 
-type FocusPanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist" | "memory";
+type FocusPanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist";
 type PanelId = "command" | FocusPanelId;
 
-type SettingsWindowTab = "google" | "outlook" | "ai" | "slack" | "icsImport" | "people" | "storage";
+type SettingsWindowTab =
+  | "google"
+  | "outlook"
+  | "appearance"
+  | "ai"
+  | "slack"
+  | "icsImport"
+  | "people"
+  | "storage";
 
 type ManualChatImportForm = {
   sourceSystem: ChatImportSourceSystem;
@@ -319,6 +328,21 @@ export default function App() {
   }, [loadWorkModel]);
 
   useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--app-font-scale",
+      uiFontScaleCssValue(serviceSnapshot.settings?.ui ?? {})
+    );
+  }, [serviceSnapshot.settings?.ui]);
+
+  useEffect(() => {
+    const unsubscribe = window.praxis.settings.onUIUpdated((settings) => {
+      document.documentElement.style.setProperty("--app-font-scale", uiFontScaleCssValue(settings));
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = window.praxis.calendar.onAutoSyncUpdated((update) => {
       void loadWorkModel()
         .then(() => {
@@ -368,27 +392,11 @@ export default function App() {
         event.preventDefault();
         setActivePanel("masterChecklist");
       }
-      if (event.key === "5") {
-        event.preventDefault();
-        setActivePanel("memory");
-        setShowBriefDetails(true);
-      }
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [setShowBriefDetails]);
-
-  useEffect(() => {
-    if (activePanel !== "memory") {
-      return;
-    }
-
-    window.requestAnimationFrame(() => {
-      const timeline = todayTimelineRef.current;
-      timeline?.scrollTo({ top: timeline.scrollHeight, behavior: "smooth" });
-    });
-  }, [activePanel]);
 
   const createMission = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -770,17 +778,6 @@ export default function App() {
           >
             Checklist
           </button>
-          <button
-            type="button"
-            className={activePanel === "memory" ? "is-nav-active" : ""}
-            aria-pressed={activePanel === "memory"}
-            onClick={() => {
-              setActivePanel("memory");
-              setShowBriefDetails(true);
-            }}
-          >
-            Memory
-          </button>
         </div>
         <div className="top-nav-node">
           <span className="node-dot" aria-hidden="true" />
@@ -822,7 +819,7 @@ export default function App() {
 
       <TodayTimelinePanel
         ref={todayTimelineRef}
-        isActive={activePanel === "command" || activePanel === "todayTimeline" || activePanel === "memory"}
+        isActive={activePanel === "command" || activePanel === "todayTimeline"}
         status={status}
         dailyBrief={dailyBrief}
         focusSelection={focusSelection}

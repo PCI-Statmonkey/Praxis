@@ -1,8 +1,21 @@
 import { useMemo, useState } from "react";
-import type { DeadlineRecord, TodoRecord, WorkPriority, WorkSnapshot } from "../../shared/workModel";
+import type {
+  DeadlineRecord,
+  MissionRecord,
+  ProjectRecord,
+  TodoRecord,
+  WorkPriority,
+  WorkSnapshot,
+} from "../../shared/workModel";
 import type { AssistantReviewUiState } from "../hooks/assistantRouteHandlers";
 
 type ReviewMode = "reset" | "wins" | "forgetting" | "risk" | "stale";
+type WorkReferenceKind = "mission" | "project" | "todo" | "deadline";
+type ReviewLine = {
+  key: string;
+  text: string;
+  kind?: WorkReferenceKind;
+};
 
 type AssistantReviewSurfaceProps = {
   snapshot: WorkSnapshot;
@@ -89,6 +102,12 @@ const describeTodo = (todo: TodoRecord) => {
 const describeDeadline = (deadline: DeadlineRecord) =>
   `${deadline.title} (${deadline.priority}, due ${formatWhen(deadline.dueAt)})`;
 
+const describeProject = (project: ProjectRecord) =>
+  `${project.title} (${staleDays(project.updatedAt)} days quiet)`;
+
+const describeMission = (mission: MissionRecord) =>
+  `${mission.title} (${staleDays(mission.updatedAt)} days quiet)`;
+
 export function AssistantReviewSurface({
   snapshot,
   setCaptureText,
@@ -130,6 +149,10 @@ export function AssistantReviewSurface({
       .filter((project) => project.status !== "completed" && staleDays(project.updatedAt) >= 14)
       .sort((a, b) => staleDays(b.updatedAt) - staleDays(a.updatedAt))
       .slice(0, 3);
+    const staleMissions = snapshot.missions
+      .filter((mission) => mission.status !== "completed" && staleDays(mission.updatedAt) >= 14)
+      .sort((a, b) => staleDays(b.updatedAt) - staleDays(a.updatedAt))
+      .slice(0, 3);
 
     return {
       activeTodos,
@@ -139,48 +162,121 @@ export function AssistantReviewSurface({
       blockedTodos,
       waitingTodos,
       staleProjects,
+      staleMissions,
     };
   }, [snapshot]);
 
-  const linesByMode: Record<ReviewMode, string[]> = {
+  const linesByMode: Record<ReviewMode, ReviewLine[]> = {
     reset: [
       review.quickWins[0]
-        ? `First win: ${describeTodo(review.quickWins[0])}.`
-        : "First win: capture one 10-minute todo and clear it.",
+        ? {
+            key: `reset-win-${review.quickWins[0].id}`,
+            kind: "todo",
+            text: `First win: ${describeTodo(review.quickWins[0])}.`,
+          }
+        : {
+            key: "reset-win-empty",
+            text: "First win: capture one 10-minute todo and clear it.",
+          },
       review.dueSoonDeadlines[0] || review.dueSoonTodos[0]
-        ? `Next risk: ${
-            review.dueSoonDeadlines[0]
-              ? describeDeadline(review.dueSoonDeadlines[0])
-              : describeTodo(review.dueSoonTodos[0])
-          }.`
-        : "Next risk: no critical due-soon work is visible.",
+        ? {
+            key: review.dueSoonDeadlines[0]
+              ? `reset-risk-deadline-${review.dueSoonDeadlines[0].id}`
+              : `reset-risk-todo-${review.dueSoonTodos[0].id}`,
+            kind: review.dueSoonDeadlines[0] ? "deadline" : "todo",
+            text: `Next risk: ${
+              review.dueSoonDeadlines[0]
+                ? describeDeadline(review.dueSoonDeadlines[0])
+                : describeTodo(review.dueSoonTodos[0])
+            }.`,
+          }
+        : {
+            key: "reset-risk-empty",
+            text: "Next risk: no critical due-soon work is visible.",
+          },
       review.waitingTodos[0] || review.blockedTodos[0]
-        ? `Do not chase: ${describeTodo(review.waitingTodos[0] ?? review.blockedTodos[0])}.`
-        : "No blocked or waiting-on todo is visible.",
+        ? {
+            key: `reset-waiting-${(review.waitingTodos[0] ?? review.blockedTodos[0]).id}`,
+            kind: "todo",
+            text: `Do not chase: ${describeTodo(review.waitingTodos[0] ?? review.blockedTodos[0])}.`,
+          }
+        : {
+            key: "reset-waiting-empty",
+            text: "No blocked or waiting-on todo is visible.",
+          },
     ],
     wins:
       review.quickWins.length > 0
-        ? review.quickWins.map((todo) => describeTodo(todo))
-        : ["No quick wins are tagged yet. Ask Praxis to capture one small next action."],
+        ? review.quickWins.map((todo) => ({
+            key: `wins-${todo.id}`,
+            kind: "todo",
+            text: describeTodo(todo),
+          }))
+        : [
+            {
+              key: "wins-empty",
+              text: "No quick wins are tagged yet. Ask Praxis to capture one small next action.",
+            },
+          ],
     forgetting: [
       ...(review.waitingTodos.length > 0
-        ? review.waitingTodos.map((todo) => `Waiting on someone: ${describeTodo(todo)}`)
-        : ["No people-linked waiting item is visible."]),
+        ? review.waitingTodos.map((todo) => ({
+            key: `waiting-${todo.id}`,
+            kind: "todo" as const,
+            text: `Waiting on someone: ${describeTodo(todo)}`,
+          }))
+        : [
+            {
+              key: "waiting-empty",
+              text: "No people-linked waiting item is visible.",
+            },
+          ]),
       ...(review.blockedTodos.length > 0
-        ? review.blockedTodos.map((todo) => `Blocked: ${describeTodo(todo)}`)
+        ? review.blockedTodos.map((todo) => ({
+            key: `blocked-${todo.id}`,
+            kind: "todo" as const,
+            text: `Blocked: ${describeTodo(todo)}`,
+          }))
         : []),
     ].slice(0, 4),
     risk: [
-      ...review.dueSoonDeadlines.map((deadline) => describeDeadline(deadline)),
-      ...review.dueSoonTodos.map((todo) => describeTodo(todo)),
+      ...review.dueSoonDeadlines.map((deadline) => ({
+        key: `risk-deadline-${deadline.id}`,
+        kind: "deadline" as const,
+        text: describeDeadline(deadline),
+      })),
+      ...review.dueSoonTodos.map((todo) => ({
+        key: `risk-todo-${todo.id}`,
+        kind: "todo" as const,
+        text: describeTodo(todo),
+      })),
     ].slice(0, 4),
     stale:
-      review.staleProjects.length > 0
-        ? review.staleProjects.map((project) => `${project.title} (${staleDays(project.updatedAt)} days quiet)`)
-        : ["No active project is stale by the 14-day dashboard rule."],
+      review.staleProjects.length > 0 || review.staleMissions.length > 0
+        ? [
+            ...review.staleProjects.map((project) => ({
+              key: `stale-project-${project.id}`,
+              kind: "project" as const,
+              text: describeProject(project),
+            })),
+            ...review.staleMissions.map((mission) => ({
+              key: `stale-mission-${mission.id}`,
+              kind: "mission" as const,
+              text: describeMission(mission),
+            })),
+          ].slice(0, 4)
+        : [
+            {
+              key: "stale-empty",
+              text: "No active project or mission is stale by the 14-day dashboard rule.",
+            },
+          ],
   };
 
-  const activeLines = linesByMode[mode].length > 0 ? linesByMode[mode] : ["No matching work is visible."];
+  const activeLines =
+    linesByMode[mode].length > 0
+      ? linesByMode[mode]
+      : [{ key: "empty", text: "No matching work is visible." }];
 
   return (
     <section className="assistant-review-surface" aria-label="AI task review">
@@ -226,7 +322,19 @@ export function AssistantReviewSurface({
           <p>{promptByMode[mode]}</p>
           <ol>
             {activeLines.map((line) => (
-              <li key={line}>{line}</li>
+              <li
+                key={line.key}
+                className={
+                  line.kind ? `work-reference-line is-${line.kind}-reference` : "work-reference-line"
+                }
+              >
+                {line.kind ? (
+                  <span className={`work-reference-badge is-${line.kind}-reference`}>
+                    {line.kind}
+                  </span>
+                ) : null}
+                <span>{line.text}</span>
+              </li>
             ))}
           </ol>
           <p className="assistant-review-guardrail">

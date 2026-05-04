@@ -1,4 +1,5 @@
 :root {
+  --app-font-scale: 1;
   --bg-0: #050707;
   --bg-1: #090d0d;
   --panel: rgba(13, 21, 21, 0.88);
@@ -14,6 +15,7 @@
   --text: #f4efe4;
   --muted: #aeb6b0;
   --dim: #76817c;
+  font-size: calc(16px * var(--app-font-scale));
 }
 
 * {
@@ -481,6 +483,36 @@ summary:focus-visible {
   outline-offset: 2px;
 }
 
+.app-shell button,
+.settings-window button {
+  border-color: rgba(185, 222, 219, 0.28);
+  background: linear-gradient(180deg, rgba(22, 36, 36, 0.96), rgba(8, 14, 14, 0.96));
+  color: var(--text);
+  font-weight: 750;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.42);
+}
+
+.app-shell button:hover,
+.settings-window button:hover {
+  border-color: rgba(85, 234, 220, 0.56);
+  background: linear-gradient(180deg, rgba(28, 46, 46, 0.98), rgba(10, 18, 18, 0.98));
+  color: #ffffff;
+}
+
+.top-nav-buttons button,
+.settings-tab-nav button,
+.assistant-review-prompts button {
+  border-color: rgba(185, 222, 219, 0.24);
+  background: rgba(10, 16, 16, 0.96);
+  color: #f7f1e8;
+  font-weight: 800;
+}
+
+.action-menu-content button {
+  background: rgba(9, 15, 15, 0.98);
+  color: #f7f1e8;
+}
+
 .primary-action-button,
 .top-nav .is-nav-active,
 .settings-tab-nav .is-nav-active {
@@ -488,6 +520,7 @@ summary:focus-visible {
   background: linear-gradient(135deg, rgba(85, 234, 220, 0.94), rgba(244, 198, 109, 0.78));
   color: #06100f;
   font-weight: 800;
+  text-shadow: none;
 }
 
 input,
@@ -1042,6 +1075,48 @@ ol {
   border-color: rgba(85, 234, 220, 0.24);
 }
 
+.review-inbox-disclosure {
+  display: grid;
+  gap: 10px;
+}
+
+.review-inbox-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(85, 234, 220, 0.18);
+  border-radius: 8px;
+  background: rgba(7, 12, 12, 0.46);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+  list-style: none;
+  padding: 12px;
+  text-transform: uppercase;
+}
+
+.review-inbox-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.review-inbox-disclosure > summary::before {
+  content: "+";
+  color: var(--cyan);
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.review-inbox-disclosure[open] > summary::before {
+  content: "-";
+}
+
+.review-inbox-disclosure .review-inbox-card {
+  margin: 0;
+}
+
 .review-inbox-list {
   display: grid;
   gap: 10px;
@@ -1208,6 +1283,68 @@ ol {
   color: var(--text);
   font-size: 0.82rem;
   overflow-wrap: anywhere;
+}
+
+.assistant-review-reply .work-reference-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-left: 3px solid rgba(185, 222, 219, 0.2);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.assistant-review-reply .work-reference-line.is-todo-reference {
+  border-left-color: rgba(85, 234, 220, 0.5);
+  background: rgba(85, 234, 220, 0.07);
+}
+
+.assistant-review-reply .work-reference-line.is-project-reference {
+  border-left-color: rgba(244, 198, 109, 0.52);
+  background: rgba(244, 198, 109, 0.08);
+}
+
+.assistant-review-reply .work-reference-line.is-mission-reference {
+  border-left-color: rgba(143, 220, 154, 0.5);
+  background: rgba(143, 220, 154, 0.07);
+}
+
+.assistant-review-reply .work-reference-line.is-deadline-reference {
+  border-left-color: rgba(231, 131, 131, 0.48);
+  background: rgba(231, 131, 131, 0.07);
+}
+
+.work-reference-badge {
+  flex: 0 0 auto;
+  border: 1px solid rgba(185, 222, 219, 0.18);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.62rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+.work-reference-badge.is-todo-reference {
+  border-color: rgba(85, 234, 220, 0.34);
+  color: var(--cyan);
+}
+
+.work-reference-badge.is-project-reference {
+  border-color: rgba(244, 198, 109, 0.36);
+  color: var(--gold);
+}
+
+.work-reference-badge.is-mission-reference {
+  border-color: rgba(143, 220, 154, 0.34);
+  color: var(--green);
+}
+
+.work-reference-badge.is-deadline-reference {
+  border-color: rgba(231, 131, 131, 0.34);
+  color: #ffb1a8;
 }
 
 .assistant-review-guardrail {
@@ -1606,6 +1743,59 @@ ol {
 .settings-next-action {
   margin: 14px 0;
   border-color: rgba(244, 198, 109, 0.24);
+}
+
+.appearance-settings-card {
+  max-width: 760px;
+}
+
+.appearance-settings-form {
+  display: grid;
+  gap: 12px;
+}
+
+.appearance-settings-form > .field-label,
+.appearance-settings-form > .appearance-scale-row,
+.appearance-settings-form > button {
+  font-size: 14px;
+}
+
+.appearance-settings-form input[type="range"] {
+  accent-color: var(--cyan);
+}
+
+.appearance-scale-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.appearance-scale-row .brief-path {
+  margin: 0;
+}
+
+.appearance-preview {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(85, 234, 220, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(140deg, rgba(85, 234, 220, 0.07), transparent 58%),
+    rgba(6, 10, 10, 0.55);
+  padding: 14px;
+}
+
+.appearance-preview strong {
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.appearance-preview p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9em;
 }
 
 .email-setup-panel {

@@ -43,8 +43,13 @@ export function ReviewInboxPanel({
       : dismissEmailSuggestion(item.sourceRecordId);
 
   return (
-    <>
-      <h3>Review Inbox</h3>
+    <details className="review-inbox-disclosure">
+      <summary>
+        <span>Review Inbox</span>
+        <span className="badge">
+          {items.length} candidate{items.length === 1 ? "" : "s"}
+        </span>
+      </summary>
       <article className="brief-card review-inbox-card">
         {items.length > 0 ? (
           <ol className="review-inbox-list">
@@ -132,6 +137,6 @@ export function ReviewInboxPanel({
           />
         )}
       </article>
-    </>
+    </details>
   );
 }

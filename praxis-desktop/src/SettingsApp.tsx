@@ -17,13 +17,21 @@ import {
 } from "../shared/personContactSuggestion";
 import type { SlackAdapterStatus } from "../shared/slackAdapter";
 import type { StorageOverview } from "../shared/storage/hybridStorage";
-import { DEFAULT_AI_SETTINGS } from "../shared/settingsModel";
+import {
+  DEFAULT_AI_SETTINGS,
+  DEFAULT_UI_SETTINGS,
+  UI_FONT_SCALE_MAX_PERCENT,
+  UI_FONT_SCALE_MIN_PERCENT,
+  UI_FONT_SCALE_STEP_PERCENT,
+  uiFontScaleCssValue,
+} from "../shared/settingsModel";
 import type {
   CalendarProvider,
   CreateCalendarConnectionInput,
   OllamaModelAvailabilityResult,
   SettingsSnapshot,
   UpdateAiSettingsInput,
+  UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateGoogleOAuthSettingsInput,
   UpdateOutlookOAuthSettingsInput,
@@ -48,7 +56,16 @@ import { PeopleProfilePanel } from "./components/PeopleProfilePanel";
 import { SlackSettingsPanel } from "./components/SlackSettingsPanel";
 import { WorkEditPanels } from "./components/WorkFormsPanel";
 
-const SETTINGS_TABS = ["google", "outlook", "ai", "slack", "icsImport", "people", "storage"] as const;
+const SETTINGS_TABS = [
+  "google",
+  "outlook",
+  "appearance",
+  "ai",
+  "slack",
+  "icsImport",
+  "people",
+  "storage",
+] as const;
 
 type SettingsTab = (typeof SETTINGS_TABS)[number];
 
@@ -94,6 +111,7 @@ const EMPTY_SETTINGS: SettingsSnapshot = {
     clientSecretConfigured: false,
   },
   ai: DEFAULT_AI_SETTINGS,
+  ui: DEFAULT_UI_SETTINGS,
   slack: {
     operatorChannelId: null,
     proactiveMirroringEnabled: false,
@@ -263,6 +281,8 @@ export default function SettingsApp() {
     }));
   const [aiSettingsForm, setAiSettingsForm] =
     useState<UpdateAiSettingsInput>(() => DEFAULT_AI_SETTINGS);
+  const [uiSettingsForm, setUiSettingsForm] =
+    useState<UpdateUiSettingsInput>(() => DEFAULT_UI_SETTINGS);
   const [ollamaProbeResult, setOllamaProbeResult] =
     useState<OllamaModelAvailabilityResult | null>(null);
   const [ollamaProbeChecking, setOllamaProbeChecking] = useState(false);
@@ -323,6 +343,7 @@ export default function SettingsApp() {
     });
     setCalendarAutoSyncForm(nextSettings.calendarAutoSync);
     setAiSettingsForm(nextSettings.ai);
+    setUiSettingsForm(nextSettings.ui);
     setGoogleOAuthForm({
       clientId: nextSettings.googleOAuth.clientId ?? "",
       clientSecret: "",
@@ -336,6 +357,13 @@ export default function SettingsApp() {
     });
     setStatus("Settings loaded.");
   }, []);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty(
+      "--app-font-scale",
+      uiFontScaleCssValue(settingsSnapshot.ui)
+    );
+  }, [settingsSnapshot.ui]);
 
   useEffect(() => {
     void loadSettingsModel().catch(() => {
@@ -812,6 +840,14 @@ export default function SettingsApp() {
     );
   };
 
+  const updateUiSettings = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextSettings = await window.praxis.settings.updateUISettings(uiSettingsForm);
+    setSettingsSnapshot(nextSettings);
+    setUiSettingsForm(nextSettings.ui);
+    setStatus(`Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale.`);
+  };
+
   const checkOllamaModelAvailability = async () => {
     const modelName = settingsSnapshot.ai.localModelName;
 
@@ -944,12 +980,15 @@ export default function SettingsApp() {
   const settingsTabs: Array<{ id: SettingsTab; label: string }> = [
     { id: "google", label: "Google" },
     { id: "outlook", label: "Outlook" },
+    { id: "appearance", label: "Appearance" },
     { id: "ai", label: "AI" },
     { id: "slack", label: "Slack" },
     { id: "icsImport", label: "Import With ICS" },
     { id: "people", label: "People" },
     { id: "storage", label: "Storage" },
   ];
+  const currentFontScalePercent =
+    uiSettingsForm.fontScalePercent ?? DEFAULT_UI_SETTINGS.fontScalePercent;
   const allPersonContactSuggestions = buildPersonContactSuggestions(snapshot.people, emailSnapshot.messages);
   const activePersonContactSuggestions: PersonContactSuggestion[] = [];
   const dismissedPersonContactSuggestions: Array<
@@ -1100,6 +1139,57 @@ export default function SettingsApp() {
             ollamaProbeChecking={ollamaProbeChecking}
             checkOllamaModelAvailability={checkOllamaModelAvailability}
           />
+        ) : null}
+
+        {activeTab === "appearance" ? (
+          <article className="brief-card appearance-settings-card">
+            <h3>Appearance</h3>
+            <form className="appearance-settings-form" onSubmit={(event) => void updateUiSettings(event)}>
+              <label className="field-label">
+                <span>App font size</span>
+                <input
+                  type="range"
+                  min={UI_FONT_SCALE_MIN_PERCENT}
+                  max={UI_FONT_SCALE_MAX_PERCENT}
+                  step={UI_FONT_SCALE_STEP_PERCENT}
+                  value={currentFontScalePercent}
+                  onChange={(event) =>
+                    setUiSettingsForm({
+                      ...uiSettingsForm,
+                      fontScalePercent: Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+              <div className="appearance-scale-row">
+                <p className="brief-path">{currentFontScalePercent}% scale</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setUiSettingsForm({
+                      ...uiSettingsForm,
+                      fontScalePercent: DEFAULT_UI_SETTINGS.fontScalePercent,
+                    })
+                  }
+                >
+                  Reset to 100%
+                </button>
+              </div>
+              <div
+                className="appearance-preview"
+                style={{ fontSize: `${16 * (currentFontScalePercent / 100)}px` }}
+                aria-label="App font size preview"
+              >
+                <span className="recommended-label">Preview</span>
+                <strong>Praxis keeps priority, context, and next actions readable.</strong>
+                <p>
+                  This sample shows the selected scale without resizing the slider controls while
+                  you adjust them.
+                </p>
+              </div>
+              <button type="submit">Save Appearance</button>
+            </form>
+          </article>
         ) : null}
 
         {activeTab === "google" ? (

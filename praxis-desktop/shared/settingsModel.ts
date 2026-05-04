@@ -218,9 +218,17 @@ export type AiSettings = {
   reliancePolicy: AiReliancePolicy;
 };
 
+export type UiSettings = {
+  fontScalePercent: number;
+};
+
 export type UpdateAiSettingsInput = {
   localModelName?: string | null;
   reliancePolicy?: AiReliancePolicy;
+};
+
+export type UpdateUiSettingsInput = {
+  fontScalePercent?: number;
 };
 
 export type CheckOllamaModelAvailabilityInput = {
@@ -273,6 +281,36 @@ export const DEFAULT_AI_SETTINGS: AiSettings = {
   reliancePolicy: "prefer_local",
 };
 
+export const UI_FONT_SCALE_MIN_PERCENT = 94;
+export const UI_FONT_SCALE_MAX_PERCENT = 114;
+export const UI_FONT_SCALE_STEP_PERCENT = 2;
+
+export const DEFAULT_UI_SETTINGS: UiSettings = {
+  fontScalePercent: 100,
+};
+
+export const normalizeUiSettings = (
+  input: Partial<UiSettings | UpdateUiSettingsInput> = {},
+  fallback: UiSettings = DEFAULT_UI_SETTINGS
+): UiSettings => {
+  const rawScale =
+    typeof input.fontScalePercent === "number" && Number.isFinite(input.fontScalePercent)
+      ? input.fontScalePercent
+      : fallback.fontScalePercent;
+  const roundedScale = Math.round(rawScale);
+  const fontScalePercent = Math.min(
+    UI_FONT_SCALE_MAX_PERCENT,
+    Math.max(UI_FONT_SCALE_MIN_PERCENT, roundedScale)
+  );
+
+  return {
+    fontScalePercent,
+  };
+};
+
+export const uiFontScaleCssValue = (settings: Partial<UiSettings | UpdateUiSettingsInput>) =>
+  `${normalizeUiSettings(settings).fontScalePercent / 100}`;
+
 const aiReliancePolicies = new Set<AiReliancePolicy>([
   "local_only",
   "prefer_local",
@@ -322,6 +360,7 @@ export type SettingsSnapshot = {
   googleOAuth: GoogleOAuthSettings;
   outlookOAuth: OutlookOAuthSettings;
   ai: AiSettings;
+  ui: UiSettings;
   slack: SlackSettings;
 };
 

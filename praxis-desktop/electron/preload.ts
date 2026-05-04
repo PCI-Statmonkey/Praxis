@@ -55,6 +55,11 @@ contextBridge.exposeInMainWorld('praxis', {
       ipcRenderer.on('settings:openTab', listener)
       return () => ipcRenderer.off('settings:openTab', listener)
     },
+    onUIUpdated: (callback: (settings: unknown) => void) => {
+      const listener = (_event: Electron.IpcRendererEvent, settings: unknown) => callback(settings)
+      ipcRenderer.on('settings:uiUpdated', listener)
+      return () => ipcRenderer.off('settings:uiUpdated', listener)
+    },
     createCalendarConnection: (input: unknown) =>
       ipcRenderer.invoke('settings:createCalendarConnection', input),
     deleteCalendarConnection: (input: unknown) =>
@@ -71,6 +76,7 @@ contextBridge.exposeInMainWorld('praxis', {
     updateCalendarAutoSync: (input: unknown) =>
       ipcRenderer.invoke('settings:updateCalendarAutoSync', input),
     updateAISettings: (input: unknown) => ipcRenderer.invoke('settings:updateAISettings', input),
+    updateUISettings: (input: unknown) => ipcRenderer.invoke('settings:updateUISettings', input),
     checkOllamaModelAvailability: (input: unknown) =>
       ipcRenderer.invoke('settings:checkOllamaModelAvailability', input),
     updateGoogleOAuth: (input: unknown) => ipcRenderer.invoke('settings:updateGoogleOAuth', input),

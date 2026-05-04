@@ -1,5 +1,33 @@
 # ENGINEERING LOG
 
+## 2026-05-04 - UI Font And Mission Control Polish Slice
+
+### Closed
+
+- Completed the current UI/font polish slice.
+- Added persisted app font-size setting `ui.fontScalePercent` with default `100`, range `94-114`, and step `2`.
+- Added Settings > Appearance font-size slider, live preview sample, Reset to 100%, and live main-app updates from the Settings broadcast.
+- Completed button contrast/readability fixes across top nav, Settings, Talk prompts, and common action buttons.
+- Removed the fake Memory top-nav mode while keeping memory-backed documents inside Today/Command.
+- Collapsed Review Inbox by default with candidate count visible.
+- Removed the Talk example/prompt card.
+- Color-badged structured AI Review work references by type where structured data exists.
+
+### Verification
+
+- Ana QA passed after fresh build.
+- Verified font slider, live preview, reset, and 114% layout.
+- Verified top nav, Review Inbox, and Talk.
+- Verified Google/Outlook still connected and syncable.
+- Verified no clipping or horizontal overflow.
+
+### Queue
+
+- Marked current UI/font polish slice complete.
+- Moved the next active track to unified calendar/time-blocking planning surface.
+- Kept Slack/companion AI Review exposure open.
+- Kept checklist grouping/context-memory redesign as a later follow-up.
+
 ## 2026-05-04 - Command Top Bar And OAuth Persistence Closure
 
 ### Closed

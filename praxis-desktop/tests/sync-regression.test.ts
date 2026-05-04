@@ -13,8 +13,10 @@ import {
   canSyncConnection,
   connectActionLabel,
   DEFAULT_AI_SETTINGS,
+  DEFAULT_UI_SETTINGS,
   isActivelySyncing,
   normalizeAiSettings,
+  normalizeUiSettings,
   selectCalendarConnectionsByProvider,
   selectEmailConnectionsByProvider,
   serviceConnectionErrorMessage,
@@ -23,6 +25,7 @@ import {
   summarizeOllamaInstalledModels,
   syncLabel,
   type SettingsSnapshot,
+  uiFontScaleCssValue,
 } from "../shared/settingsModel";
 import {
   selectDashboardReadiness,
@@ -319,6 +322,7 @@ const dashboardSettingsSnapshot = {
     clientSecretConfigured: true,
   },
   ai: DEFAULT_AI_SETTINGS,
+  ui: DEFAULT_UI_SETTINGS,
   slack: {
     operatorChannelId: null,
     proactiveMirroringEnabled: false,
@@ -404,6 +408,12 @@ assert.deepEqual(
     reliancePolicy: "local_only",
   }
 );
+
+assert.deepEqual(normalizeUiSettings(), DEFAULT_UI_SETTINGS);
+assert.deepEqual(normalizeUiSettings({ fontScalePercent: 108 }), { fontScalePercent: 108 });
+assert.deepEqual(normalizeUiSettings({ fontScalePercent: 200 }), { fontScalePercent: 114 });
+assert.deepEqual(normalizeUiSettings({ fontScalePercent: 50 }), { fontScalePercent: 94 });
+assert.equal(uiFontScaleCssValue({ fontScalePercent: 106 }), "1.06");
 
 assert.deepEqual(
   parseOllamaModelTags({
