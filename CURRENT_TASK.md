@@ -53,60 +53,73 @@ Move the immediate execution queue to the Mission Control dashboard redesign. AI
 - Full focus controls, reports/details, appointment/deadline lists, and memory-backed documents remain below the first-screen composition.
 - First-screen visual QA passed as an acceptable first Mission Control pass with no hard functional regression, no new overflow, Review Inbox actions reachable, Talk/AI Review still visible and read-only, and snapshot unchanged during AI Review.
 - Targeted first-screen polish is applied at checkpoint `e1d96a7 Polish Mission Control first screen`: Top Move wrapping was reduced, At Risk now leads with work pressure, Today Service Health is compact, `Review / Reset` was renamed to `Brief Review` pending a safe AI Review launcher path, and the immediate copy fixes are applied.
-- Final visual QA for the polished Mission Control first screen remains open.
+- Final visual QA for the polished Mission Control first screen passed: the first screen is acceptable for this pass, Top Move scanability improved, At Risk reads as work pressure, Brief Review is honest, Review Inbox actions remain reachable, Talk/AI Review stays visible and read-only, narrow layout has no horizontal overflow, and the only remaining UI polish is non-blocking service-health duplication and later mobile ordering.
+- Startup connected-service persistence is now the next active bug: on app start, Google and Outlook appear to require reconnect and sync again instead of preserving usable auth/sync state.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Latest integration verification passed: `npx tsc --noEmit`, `npm run lint`, `npm test`, `npm run build:app`, and `npm run storage:check`.
 
 ## NEXT STEPS
 
-### 1. Implement Mission Control Dashboard Redesign
+### 1. Fix Google/Outlook Reconnect And Sync Persistence
 
 **GOAL**
 
-Turn the current dashboard into Mission Control: a dense, calm, directive command center that tells the operator what needs attention now, why it matters, and what to do next.
+Ensure Google and Outlook service connections persist across app restarts so the operator does not have to reconnect and manually sync every time PRAXIS starts.
 
 **DIRECTION**
 
-- Use `docs/MISSION_CONTROL_UI_PLAN.md` as the product and information-architecture source.
-- Use `docs/MISSION_CONTROL_TECH_PLAN.md` as the implementation map and safe slicing guide.
-- Lead the first screen with the operator's top move, time pressure, risks, waiting-on items, and service blind spots.
-- Treat AI Review as an analysis/reset mode attached to the primary decision surface, not the whole dashboard.
-- Keep Talk visible as the command channel without letting it dominate the dashboard.
-- Preserve Review Inbox write-confirmation paths and assistant no-write boundaries.
-- Dashboard selector extraction / data shaping is complete.
-- Today lane component split is complete.
-- Isolated Mission Control layout CSS hooks are complete.
-- First-screen JSX composition using existing data and split components is complete.
-- Next move through final visual QA of the polished Mission Control first screen.
-- Avoid mixing dashboard visual work with assistant routing, capture forms, Settings, or sync behavior.
+- Reproduce the startup behavior for Google and Outlook after a clean app close/reopen.
+- Determine whether saved connection rows, OAuth credentials, encrypted tokens, refresh tokens, auth status, sync status, or UI readiness mapping are being reset or misread.
+- Check both Google Mail/Calendar and Outlook Mail/Calendar because the symptom spans providers.
+- Preserve local user data and do not delete connections as part of diagnosis.
+- Do not expose provider secrets or raw tokens in logs, docs, screenshots, or worker reports.
+- If the bug is only stale status display, fix state/readiness refresh without forcing reconnect.
+- If the bug is token persistence or refresh failure, fix the repository/OAuth/sync path and add regression coverage.
+- Keep Mission Control service-health display honest while the bug is open.
 
 **FILES**
 
-- `docs/MISSION_CONTROL_UI_PLAN.md`
-- `docs/MISSION_CONTROL_TECH_PLAN.md`
-- `docs/MISSION_CONTROL_COPY_GUIDE.md`
-- `src/App.tsx`
-- `src/dashboardSelectors.ts`
-- `src/components/TodayTimelinePanel.tsx`
-- `src/components/mission-control/`
-- `src/components/MemoryWriterPanel.tsx`
-- `src/components/AssistantReviewSurface.tsx`
-- `src/App.css`
+- `praxis-desktop/electron/settingsRepository.ts`
+- `praxis-desktop/electron/googleOAuthShared.ts`
+- `praxis-desktop/electron/outlookEmailOAuth.ts`
+- `praxis-desktop/electron/outlookCalendarOAuth.ts`
+- `praxis-desktop/electron/gmailEmailSync.ts`
+- `praxis-desktop/electron/googleCalendarSync.ts`
+- `praxis-desktop/electron/outlookEmailSync.ts`
+- `praxis-desktop/electron/outlookCalendarSync.ts`
+- `praxis-desktop/src/components/ConnectedServiceSettingsPanel.tsx`
+- `praxis-desktop/src/dashboardSelectors.ts`
+- tests covering sync/recovery/settings behavior
 
 **DONE WHEN**
 
-- Dashboard selectors/data shaping remain extracted and behavior-equivalent.
-- Today lane components remain split without changing existing behavior.
-- Mission Control layout hooks remain isolated and do not disrupt existing Talk, Settings, forms, or write-action CSS.
-- First-screen composition keeps full detail lanes available below the primary Mission Control surface.
-- Final visual QA confirms the accepted polish findings are resolved without changing assistant routing, capture forms, Review Inbox write actions, Settings, or sync behavior.
-- The dashboard first screen answers: what is the top move, what time pressure exists, what is at risk, who is waiting, what PRAXIS cannot currently see, and whether the operator should work, triage, reset, or prepare.
-- Mission Control uses the accepted UI hierarchy: command header, primary decision surface, calendar pressure, daily rhythm, Review Inbox, service health, and Talk.
-- Implementation follows the technical map without changing assistant routing semantics, data semantics, or write-confirmation boundaries by accident.
-- Desktop and narrow layouts remain usable.
-- AI Review model/output behavior remains intact and read-only.
+- Restarting the app preserves saved Google and Outlook connection/auth state.
+- Previously connected Google and Outlook services do not ask for reconnect unless tokens are actually invalid or revoked.
+- Sync can run after restart without re-authorizing.
+- Service Health reports the true state after restart.
+- Regression coverage protects the fixed persistence/refresh behavior.
+- `npx tsc --noEmit`, `npm run lint`, `npm test`, and `npm run build:app` pass.
 
-### 2. Plan V1.1 Persistent Presence After AI Review
+### 2. Continue Mission Control Follow-Up Polish
+
+**GOAL**
+
+Keep the first Mission Control pass moving after the connected-service persistence bug is fixed.
+
+**DIRECTION**
+
+- The polished first Mission Control pass is acceptable for now.
+- Service-health duplication remains follow-up UI polish, not a blocker.
+- Mobile ordering remains follow-up UI polish, not a blocker.
+- A future safe AI Review launcher can replace the current `Brief Review` card when Talk/AI Review control wiring is deliberately scoped.
+
+**DONE WHEN**
+
+- Service Health duplication is reduced without hiding broken-service visibility.
+- Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
+- Any AI Review launcher path preserves no-write behavior.
+
+### 3. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
 

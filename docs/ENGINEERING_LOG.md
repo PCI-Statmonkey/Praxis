@@ -1,5 +1,28 @@
 # ENGINEERING LOG
 
+## 2026-05-04 - Mission Control Polish QA And Service Persistence Bug
+
+### Validated
+
+- Ran final live Electron visual QA against checkpoint `b7d09ec Record Mission Control first-screen polish`.
+- Confirmed Top Move scanability is materially improved.
+- Confirmed the `Command` header, status line, service problem count, date, and operational load scan clearly.
+- Confirmed `At Risk` now reads as work pressure first, with service blind spots secondary.
+- Confirmed `Brief Review` is honest because it opens brief/status rather than implying direct AI Review.
+- Confirmed Review Inbox actions are reachable through the action menu.
+- Confirmed Talk / AI Review remains visible, AI Review stayed read-only, `No work has been changed.` remained visible, and the work snapshot before and after matched.
+- Confirmed narrow layout has no horizontal overflow or broken controls.
+
+### Still Open
+
+- Service Health duplication remains follow-up UI polish when services are degraded.
+- Narrow/mobile ordering is usable but still long and should be reprioritized later.
+- New active bug: Google and Outlook appear to require reconnect and sync again after every app start. This supersedes non-blocking Mission Control polish until the persistence issue is understood and fixed.
+
+### Verification
+
+- `npm run build:app` passes.
+
 ## 2026-05-01 - Mission Control First-Screen Polish
 
 ### Built
@@ -14,7 +37,7 @@
 
 ### Still Open
 
-- Final visual QA should confirm Top Move scanability, At Risk hierarchy, Service Health compact/degraded states, Brief Review honesty, narrow/mobile overflow, Review Inbox actions, and AI Review no-write behavior.
+- Final visual QA passed in the Mission Control Polish QA And Service Persistence Bug entry. Remaining Mission Control issues are follow-up polish, not blockers.
 
 ### Verification
 
