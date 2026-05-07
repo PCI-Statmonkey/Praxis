@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue to the actual AI draft-plan caller/UI or pause for user review now that the deterministic Schedule Review engine and UI slice is complete. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue to choosing the next Command/Plan follow-up now that Command dashboard and focused Plan layout polish are complete. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -99,33 +99,45 @@ Move the immediate execution queue to the actual AI draft-plan caller/UI or paus
 - No AI caller is wired yet.
 - No auto-create, provider write-back, sync behavior change, or external calendar publishing was added in the Schedule Review slice.
 - Ana QA passed: focused Plan review visible/readable, recommendations prefill form only, blocked/waiting items non-executable, no provider write-back controls, and Google/Outlook remain ready/syncable.
+- Command dashboard layout polish passed.
+- Left Missions/Checklist rail and right Talk/AI Review rail are narrower and compact.
+- Center Mission Control still leads but is less oversized.
+- Bottom Day Plan/Checklist band has more usable vertical space.
+- Focused Plan layout now uses compact toolbar/date controls.
+- Place Work is a compact chip row.
+- Timeline starts near the top.
+- Schedule appears above Schedule Review.
+- Details/advanced scheduling remains available but is not dominant.
+- Local-only/no-write-back boundary remains intact.
+- Actual duration prompt exists but duration is not persisted yet.
+- Tags are separate from freeform notes.
+- Ana QA passed desktop/narrow layout, local-only form behavior, Google/Outlook sanity, and no secret exposure.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
 
 ## NEXT STEPS
 
-### 1. Wire AI Draft-Plan Caller And UI
+### 1. Choose Next Command/Plan Follow-Up
 
 **GOAL**
 
-Wire the actual AI draft-plan caller/UI using the completed pure no-write `buildAiDraftPlan` contract, or pause for user review before adding AI execution.
+Pick the next follow-up after Command/Plan layout polish and keep the local-only/no-write-back boundary intact.
 
 **DIRECTION**
 
-- Keep Google Calendar and Outlook Calendar as connected input lanes, not write targets.
-- Use persisted local time blocks as PRAXIS-owned planning records.
-- Use Schedule Review as the source of truth for draft-plan prompts/proposals.
-- Treat AI draft plans as proposals that require operator review before creating or changing local blocks.
-- Preserve deterministic fallback and make source recommendations/open gaps traceable in the UI.
-- Preserve source identity, read-only provider event state, and sync health in the unified Plan view.
-- If the user wants review before AI wiring, pause here and collect feedback on the deterministic Schedule Review surface first.
+- Persist actual duration and tags.
+- Add true drag/drop visual scheduling.
+- Move context-memory redesign forward.
+- Add checklist grouping.
+- Keep provider write-back explicitly later.
+- Keep Slack/companion AI Review exposure open unless separately closed.
 
 **DONE WHEN**
 
-- AI draft-plan caller/UI is wired through the no-write contract, or the queue is explicitly paused for user review.
-- AI output cannot auto-create blocks, publish externally, or change provider sync behavior.
-- Regression coverage protects deterministic fallback, proposal citation, and user-confirmed local-block boundaries.
+- The next slice is selected and scoped.
+- Any chosen Plan work preserves local-only behavior unless provider write-back is explicitly selected later.
+- Any chosen context/checklist work preserves source identity and explicit write boundaries.
 
 ### 2. Plan Provider Calendar Write-Back
 

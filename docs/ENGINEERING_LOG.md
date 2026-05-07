@@ -1,5 +1,36 @@
 # ENGINEERING LOG
 
+## 2026-05-07 - Command And Plan Layout Polish
+
+### Closed
+
+- Command dashboard layout polish passed.
+- Left Missions/Checklist rail and right Talk/AI Review rail are narrower and compact.
+- Center Mission Control still leads but is less oversized.
+- Bottom Day Plan/Checklist band has more usable vertical space.
+- Focused Plan layout now uses compact toolbar/date controls.
+- Place Work is a compact chip row.
+- Timeline starts near the top.
+- Schedule appears above Schedule Review.
+- Details/advanced scheduling remains available but is not dominant.
+- Local-only/no-write-back boundary remains intact.
+- Actual duration prompt exists but duration is not persisted yet.
+- Tags are separate from freeform notes.
+
+### Verification
+
+- Ana QA passed desktop/narrow layout.
+- Ana QA passed local-only form behavior.
+- Ana QA passed Google/Outlook sanity.
+- Ana QA confirmed no secret exposure.
+
+### Queue
+
+- Marked Command/Plan layout polish complete.
+- Next follow-up options: persist actual duration and tags, true drag/drop visual scheduling, context-memory redesign, checklist grouping, provider write-back later, or Slack/companion AI Review exposure.
+- Kept provider write-back explicitly later unless selected.
+- Kept Slack/companion AI Review exposure open.
+
 ## 2026-05-07 - Schedule Review Planning Slice
 
 ### Closed

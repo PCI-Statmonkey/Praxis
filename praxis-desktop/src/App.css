@@ -334,6 +334,69 @@ body::before {
   max-height: 230px;
 }
 
+.app-shell.is-surface-command {
+  grid-template-columns: minmax(190px, 0.52fr) minmax(520px, 2.15fr) minmax(230px, 0.62fr);
+  grid-template-rows: auto minmax(0, 1fr) 186px;
+}
+
+.app-shell.is-surface-command .left,
+.app-shell.is-surface-command .right {
+  margin-top: 24px;
+  max-height: calc(100% - 24px);
+  padding: 10px;
+}
+
+.app-shell.is-surface-command .center {
+  margin-top: 10px;
+  max-height: calc(100% - 10px);
+  padding: 12px;
+}
+
+.app-shell.is-surface-command .bottom {
+  grid-column: 1;
+  grid-row: 3;
+  max-height: 186px;
+  padding: 8px 10px;
+}
+
+.app-shell.is-surface-command .bottom .checklist-strip {
+  gap: 8px;
+}
+
+.app-shell.is-surface-command .bottom .checklist-strip .item {
+  min-width: 210px;
+  padding: 8px;
+}
+
+.app-shell.is-surface-command .bottom .checklist-strip .item p,
+.app-shell.is-surface-command .bottom .filter-actions,
+.app-shell.is-surface-command .bottom .item-meta {
+  display: none;
+}
+
+.app-shell.is-surface-command .left,
+.app-shell.is-surface-command .center,
+.app-shell.is-surface-command .right,
+.app-shell.is-surface-command .bottom,
+.app-shell.is-surface-command .plan-surface-panel.is-plan-compact {
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  overflow-y: hidden;
+}
+
+.app-shell.is-surface-command .surface-grid {
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.app-shell.is-surface-command .surface-tile {
+  gap: 4px;
+  padding: 8px;
+}
+
+.app-shell.is-surface-command .surface-tile strong {
+  font-size: 1.18rem;
+}
+
 .app-shell:not(.is-surface-command) > .panel:not(.is-active-panel) {
   display: none;
 }
@@ -1679,31 +1742,66 @@ ol {
 
 .plan-surface-panel {
   min-width: 0;
-  padding: 14px;
+  padding: 10px 12px 12px;
 }
 
 .plan-surface-panel:not(.is-plan-compact) {
   grid-column: 1 / -1;
   grid-row: 2 / span 2;
+  display: flex;
+  flex-direction: column;
 }
 
 .plan-surface-panel.is-plan-compact {
-  grid-column: 1 / -1;
-  grid-row: 4;
-  max-height: 225px;
+  grid-column: 2 / 4;
+  grid-row: 3;
+  max-height: 186px;
   overflow: auto;
 }
 
+.app-shell.is-surface-command .plan-surface-panel.is-plan-compact {
+  padding: 8px 10px;
+}
+
 .plan-surface-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: minmax(150px, 0.5fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .plan-surface-header h2 {
-  margin-bottom: 4px;
+  margin: 0 0 2px;
+  font-size: 0.86rem;
+}
+
+.plan-surface-header .brief-path {
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+.plan-date-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.plan-date-controls label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-date-controls input {
+  min-width: 132px;
 }
 
 .plan-surface-mode,
@@ -1717,7 +1815,11 @@ ol {
 }
 
 .plan-surface-mode {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   justify-items: end;
+  gap: 8px;
 }
 
 .plan-compact-grid {
@@ -1754,6 +1856,45 @@ ol {
   margin: 0;
   color: var(--dim);
   font-size: 0.78rem;
+}
+
+.app-shell.is-surface-command .plan-surface-panel.is-plan-compact .plan-surface-header {
+  margin-bottom: 8px;
+}
+
+.app-shell.is-surface-command .plan-surface-panel.is-plan-compact h2,
+.app-shell.is-surface-command .bottom h2 {
+  font-size: 0.72rem;
+}
+
+.app-shell.is-surface-command .plan-compact-grid {
+  gap: 6px;
+}
+
+.app-shell.is-surface-command .plan-compact-tile {
+  padding: 6px 8px;
+}
+
+.app-shell.is-surface-command .plan-compact-tile strong {
+  font-size: 0.96rem;
+}
+
+.app-shell.is-surface-command .plan-compact-tile p {
+  display: none;
+}
+
+.app-shell.is-surface-command .plan-review-compact {
+  margin-top: 7px;
+  font-size: 0.78rem;
+}
+
+.app-shell.is-surface-command .plan-compact-list {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.app-shell.is-surface-command .plan-compact-list > li {
+  padding: 6px 8px;
 }
 
 .plan-compact-list {
@@ -1800,6 +1941,7 @@ ol {
 }
 
 .plan-review-section {
+  order: 3;
   display: grid;
   gap: 12px;
   margin-bottom: 14px;
@@ -1922,9 +2064,10 @@ ol {
 }
 
 .plan-surface-grid {
+  order: 2;
   display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 0.82fr);
+  gap: 10px;
   min-width: 0;
 }
 
@@ -1936,7 +2079,7 @@ ol {
   background:
     linear-gradient(150deg, rgba(255, 255, 255, 0.032), transparent 52%),
     rgba(7, 12, 12, 0.5);
-  padding: 12px;
+  padding: 10px;
 }
 
 .plan-lane-header {
@@ -1947,6 +2090,164 @@ ol {
 
 .plan-lane-header h3 {
   margin: 0;
+}
+
+.plan-placement-panel,
+.plan-missed-strip,
+.plan-visual-timeline,
+.plan-completion-prompt {
+  border: 1px solid rgba(185, 222, 219, 0.12);
+  border-radius: 8px;
+  background: rgba(6, 10, 10, 0.48);
+}
+
+.plan-placement-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 8px;
+}
+
+.plan-placement-panel strong,
+.plan-completion-prompt strong,
+.plan-timeline-empty strong {
+  color: var(--text);
+}
+
+.plan-placement-panel p,
+.plan-timeline-empty p,
+.plan-completion-prompt p {
+  margin: 0;
+  color: var(--dim);
+}
+
+.plan-placement-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-content: start;
+}
+
+.plan-placement-actions button {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 7px 9px;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-missed-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  border-color: rgba(231, 131, 131, 0.28);
+  padding: 9px;
+}
+
+.plan-missed-strip strong {
+  color: #ffc2bb;
+  font-size: 0.82rem;
+}
+
+.plan-visual-timeline {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  min-height: 340px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.plan-timeline-hours {
+  display: grid;
+  align-content: stretch;
+  border-right: 1px solid rgba(185, 222, 219, 0.12);
+  background: rgba(4, 7, 7, 0.34);
+}
+
+.plan-timeline-hours span {
+  min-height: 24px;
+  padding: 7px 8px 0;
+  border-bottom: 1px solid rgba(185, 222, 219, 0.08);
+  color: var(--dim);
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.plan-timeline-lane {
+  position: relative;
+  min-height: 340px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(185, 222, 219, 0.05) 0,
+      rgba(185, 222, 219, 0.05) 1px,
+      transparent 1px,
+      transparent 25px
+    ),
+    rgba(6, 10, 10, 0.36);
+}
+
+.plan-timeline-item {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+  overflow: hidden;
+  border: 1px solid rgba(85, 234, 220, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(85, 234, 220, 0.1), transparent 48%),
+    rgba(8, 15, 15, 0.94);
+  padding: 8px 10px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
+}
+
+.plan-timeline-item.is-local {
+  left: 28px;
+  border-color: rgba(244, 198, 109, 0.34);
+  background:
+    linear-gradient(90deg, rgba(244, 198, 109, 0.13), transparent 52%),
+    rgba(9, 12, 10, 0.94);
+}
+
+.plan-timeline-item.is-completed {
+  border-color: rgba(143, 220, 154, 0.38);
+}
+
+.plan-timeline-item span,
+.plan-timeline-item em {
+  color: var(--dim);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-timeline-item strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-timeline-empty {
+  display: grid;
+  gap: 6px;
+  height: 100%;
+  padding: 22px;
+  place-content: center;
+  text-align: center;
 }
 
 .plan-time-block,
@@ -2037,6 +2338,7 @@ ol {
 }
 
 .plan-block-drawer {
+  order: 1;
   display: grid;
   gap: 12px;
   margin-bottom: 14px;
@@ -2084,6 +2386,83 @@ ol {
   width: 100%;
   min-width: 0;
   resize: vertical;
+}
+
+.plan-block-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(185, 222, 219, 0.1);
+  border-radius: 8px;
+  background: rgba(6, 10, 10, 0.42);
+  padding: 8px;
+}
+
+.plan-block-tags > span:first-child {
+  color: var(--dim);
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.plan-block-tags p {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.76rem;
+}
+
+.plan-tag-chip {
+  border: 1px solid rgba(85, 234, 220, 0.22);
+  border-radius: 999px;
+  background: rgba(85, 234, 220, 0.08);
+  color: var(--text);
+  padding: 4px 8px;
+  font-size: 0.74rem;
+}
+
+.plan-advanced-drawer {
+  border: 1px solid rgba(185, 222, 219, 0.1);
+  border-radius: 8px;
+  background: rgba(6, 10, 10, 0.38);
+  padding: 10px;
+}
+
+.plan-advanced-drawer summary {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.plan-advanced-drawer > div,
+.plan-advanced-drawer > label {
+  margin-top: 10px;
+}
+
+.plan-completion-prompt {
+  order: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 0.24fr);
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+  border-color: rgba(143, 220, 154, 0.28);
+  padding: 12px;
+}
+
+.plan-completion-prompt label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .plan-block-form-actions {
@@ -2610,14 +2989,29 @@ ol {
     max-height: none;
   }
 
+  .app-shell.is-surface-command .left,
+  .app-shell.is-surface-command .right {
+    margin-top: 0;
+    max-height: none;
+  }
+
+  .app-shell.is-surface-command .bottom,
+  .plan-surface-panel.is-plan-compact {
+    grid-column: 1;
+    grid-row: auto;
+    max-height: none;
+  }
+
   .operator-main-grid,
   .rhythm-grid,
   .surface-grid,
   .plan-surface-grid,
+  .plan-placement-panel,
   .plan-context-grid,
   .plan-compact-grid,
   .plan-block-form-grid,
   .plan-review-grid,
+  .plan-completion-prompt,
   .mission-control-first-screen,
   .mission-control-lane-grid,
   .service-health-strip,
@@ -2637,6 +3031,15 @@ ol {
   .plan-surface-header,
   .plan-time-block {
     grid-template-columns: 1fr;
+  }
+
+  .plan-visual-timeline {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .plan-timeline-item {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .plan-surface-header {

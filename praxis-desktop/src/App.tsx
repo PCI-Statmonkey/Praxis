@@ -281,6 +281,7 @@ export default function App() {
   const [editingAppointment, setEditingAppointment] = useState<AppointmentRecord | null>(null);
   const [editingPerson, setEditingPerson] = useState<PersonRecord | null>(null);
   const [timeBlocks, setTimeBlocks] = useState<TimeBlockRecord[]>([]);
+  const [planningDateOverride, setPlanningDateOverride] = useState<string | null>(null);
   const [missionForm, setMissionForm] = useState<CreateMissionInput>(() => emptyMissionForm());
   const [projectForm, setProjectForm] = useState<CreateProjectInput>(() => emptyProjectForm());
   const [todoForm, setTodoForm] = useState<CreateTodoInput>(() => emptyTodoForm());
@@ -376,11 +377,11 @@ export default function App() {
   }, [loadWorkModel]);
 
   useEffect(() => {
-    const targetDate = dailyBrief.localDate || formatLocalDate(new Date());
+    const targetDate = planningDateOverride ?? (dailyBrief.localDate || formatLocalDate(new Date()));
     void loadTimeBlocksForDate(targetDate).catch(() => {
       setStatus("Praxis could not load local time blocks.");
     });
-  }, [dailyBrief.localDate, loadTimeBlocksForDate]);
+  }, [dailyBrief.localDate, loadTimeBlocksForDate, planningDateOverride]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -706,7 +707,8 @@ export default function App() {
   const reviewInboxItems = selectReviewInboxItems(emailSnapshot, chatSnapshot);
   const serviceHealthItems = selectServiceHealthItems(serviceSnapshot, formatDateTime);
   const dashboardReadiness = selectDashboardReadiness(serviceHealthItems);
-  const planningTargetDate = dailyBrief.localDate || formatLocalDate(new Date());
+  const basePlanningDate = dailyBrief.localDate || formatLocalDate(new Date());
+  const planningTargetDate = planningDateOverride ?? basePlanningDate;
   const planningDay = buildPlanningDayView({
     targetDate: planningTargetDate,
     appointments: snapshot.appointments,
@@ -919,12 +921,15 @@ export default function App() {
         planningDay={planningDay}
         scheduleReview={scheduleReview}
         selectedDateLabel={planningDateLabel}
+        basePlanningDate={basePlanningDate}
         formatDateTime={formatDateTime}
         activeProjects={activePlanningProjects}
         activeMissions={activePlanningMissions}
         createTimeBlock={createTimeBlock}
         updateTimeBlock={updateTimeBlock}
         deleteTimeBlock={deleteTimeBlock}
+        onPlanningDateChange={setPlanningDateOverride}
+        onResetPlanningDate={() => setPlanningDateOverride(null)}
         variant={activePanel === "command" ? "compact" : "full"}
       />
       <ProjectStackPanel
