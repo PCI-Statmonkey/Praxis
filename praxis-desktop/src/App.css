@@ -1821,7 +1821,7 @@ ol {
 
 .plan-time-block {
   display: grid;
-  grid-template-columns: minmax(120px, 0.34fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(120px, 0.34fr) minmax(0, 1fr) auto auto auto;
   gap: 9px;
   align-items: center;
 }
@@ -1830,6 +1830,13 @@ ol {
   border-color: rgba(85, 234, 220, 0.26);
   background:
     linear-gradient(90deg, rgba(85, 234, 220, 0.08), transparent 48%),
+    rgba(6, 10, 10, 0.62);
+}
+
+.plan-time-block.is-local {
+  border-color: rgba(244, 198, 109, 0.3);
+  background:
+    linear-gradient(90deg, rgba(244, 198, 109, 0.08), transparent 52%),
     rgba(6, 10, 10, 0.62);
 }
 
@@ -1863,6 +1870,101 @@ ol {
   margin: 0;
   color: var(--dim);
   font-size: 0.78rem;
+}
+
+.plan-marker-item button {
+  margin-left: auto;
+}
+
+.plan-block-actions,
+.plan-block-form-actions,
+.plan-duration-buttons,
+.plan-context-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.plan-block-actions {
+  justify-content: flex-end;
+}
+
+.plan-block-actions button,
+.plan-duration-buttons button,
+.plan-context-actions button {
+  min-width: 0;
+  padding: 7px 9px;
+  font-size: 0.78rem;
+}
+
+.plan-block-drawer {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(244, 198, 109, 0.26);
+  border-radius: 8px;
+  background:
+    linear-gradient(140deg, rgba(244, 198, 109, 0.08), transparent 58%),
+    rgba(7, 12, 12, 0.72);
+  padding: 14px;
+}
+
+.plan-block-drawer > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.plan-block-drawer > div:first-child strong {
+  color: var(--text);
+}
+
+.plan-block-drawer > div:first-child p,
+.plan-conflict-copy {
+  margin: 0;
+  color: var(--dim);
+}
+
+.plan-block-form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.plan-block-drawer label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-block-drawer input,
+.plan-block-drawer textarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+}
+
+.plan-block-form-actions {
+  justify-content: flex-start;
+}
+
+.danger-button {
+  border-color: rgba(231, 131, 131, 0.42) !important;
+  color: #ffc2bb !important;
+}
+
+.plan-context-actions {
+  margin-top: 10px;
+}
+
+.plan-context-actions button {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .plan-local-placeholder {
@@ -2374,6 +2476,8 @@ ol {
   .surface-grid,
   .plan-surface-grid,
   .plan-context-grid,
+  .plan-compact-grid,
+  .plan-block-form-grid,
   .mission-control-first-screen,
   .mission-control-lane-grid,
   .service-health-strip,
@@ -2397,6 +2501,15 @@ ol {
 
   .plan-surface-header {
     display: grid;
+  }
+
+  .plan-compact-list > li,
+  .plan-time-block {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-block-actions {
+    justify-content: flex-start;
   }
 
   .plan-surface-mode {

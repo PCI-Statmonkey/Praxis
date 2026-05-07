@@ -47,6 +47,12 @@ import type {
   UpdateWorkStatusInput,
 } from '../shared/workModel'
 import type {
+  CreateTimeBlockInput,
+  DeleteTimeBlockInput,
+  ListTimeBlocksInput,
+  UpdateTimeBlockInput,
+} from '../shared/timeBlocking'
+import type {
   CheckOllamaModelAvailabilityInput,
   CreateCalendarConnectionInput,
   DeleteCalendarConnectionInput,
@@ -91,6 +97,12 @@ import {
   loadChecklistState,
   writeChecklistSnapshot,
 } from './checklistEventLog'
+import {
+  createTimeBlock,
+  deleteTimeBlock,
+  getTimeBlockSnapshot,
+  updateTimeBlock,
+} from './timeBlockRepository'
 import { generateDailyBrief, generateFocusReport } from './dailyBrief'
 import { generateAppointmentReport } from './appointmentReport'
 import { importCalendarEvents } from './calendarImport'
@@ -850,5 +862,17 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('work:deletePersonWorkLink', async (_event, input: DeletePersonWorkLinkInput) =>
     deletePersonWorkLink(input)
+  )
+  ipcMain.handle('timeBlocks:list', async (_event, input?: ListTimeBlocksInput) =>
+    getTimeBlockSnapshot(input)
+  )
+  ipcMain.handle('timeBlocks:create', async (_event, input: CreateTimeBlockInput) =>
+    createTimeBlock(input)
+  )
+  ipcMain.handle('timeBlocks:update', async (_event, input: UpdateTimeBlockInput) =>
+    updateTimeBlock(input)
+  )
+  ipcMain.handle('timeBlocks:delete', async (_event, input: DeleteTimeBlockInput) =>
+    deleteTimeBlock(input)
   )
 })

@@ -14,7 +14,7 @@ const BetterSqlite3 = require("better-sqlite3") as typeof import("better-sqlite3
 type DatabaseHandle = import("better-sqlite3").Database;
 
 const DATABASE_FILENAME = "praxis.sqlite";
-const SCHEMA_VERSION = 10;
+const SCHEMA_VERSION = 11;
 
 let database: DatabaseHandle | null = null;
 
@@ -338,6 +338,20 @@ const migrateSchema = (db: DatabaseHandle) => {
       PRIMARY KEY(owner_kind, owner_id, secret_kind)
     );
 
+    CREATE TABLE IF NOT EXISTS time_blocks (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      starts_at TEXT NOT NULL,
+      ends_at TEXT NOT NULL,
+      entity_kind TEXT NOT NULL,
+      entity_id TEXT,
+      status TEXT NOT NULL,
+      source TEXT NOT NULL DEFAULT 'local',
+      notes TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS projects_mission_idx ON projects(mission_id);
     CREATE INDEX IF NOT EXISTS todos_project_idx ON todos(project_id);
     CREATE INDEX IF NOT EXISTS todos_due_idx ON todos(due_at);
@@ -359,6 +373,9 @@ const migrateSchema = (db: DatabaseHandle) => {
     CREATE INDEX IF NOT EXISTS person_work_links_person_idx ON person_work_links(person_id);
     CREATE INDEX IF NOT EXISTS person_work_links_entity_idx ON person_work_links(entity_kind, entity_id);
     CREATE INDEX IF NOT EXISTS person_aliases_person_idx ON person_aliases(person_id);
+    CREATE INDEX IF NOT EXISTS time_blocks_start_idx ON time_blocks(starts_at);
+    CREATE INDEX IF NOT EXISTS time_blocks_entity_idx ON time_blocks(entity_kind, entity_id);
+    CREATE INDEX IF NOT EXISTS time_blocks_status_idx ON time_blocks(status);
   `);
 
   const todoColumns = db.pragma("table_info(todos)") as Array<{ name: string }>;

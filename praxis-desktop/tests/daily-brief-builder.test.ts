@@ -1,6 +1,6 @@
 import { strict as assert } from "node:assert";
 import { buildDailyBriefFromSnapshot } from "../shared/dailyBriefBuilder";
-import { buildPlanningDayView } from "../shared/timeBlocking";
+import { buildPlanningDayView, validateTimeBlockRange, type TimeBlockRecord } from "../shared/timeBlocking";
 import type {
   AppointmentRecord,
   DeadlineRecord,
@@ -110,6 +110,21 @@ const appointment = (overrides: Partial<AppointmentRecord> = {}): AppointmentRec
   startsAt: "2026-04-24T12:30:00.000Z",
   endsAt: "2026-04-24T13:00:00.000Z",
   allDay: false,
+  notes: null,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  ...overrides,
+});
+
+const timeBlock = (overrides: Partial<TimeBlockRecord> = {}): TimeBlockRecord => ({
+  id: "time-block-1",
+  title: "Work block",
+  startsAt: "2026-04-24T09:15:00",
+  endsAt: "2026-04-24T10:00:00",
+  entityKind: "todo",
+  entityId: "todo-due",
+  status: "planned",
+  source: "local",
   notes: null,
   createdAt: timestamp,
   updatedAt: timestamp,
@@ -325,5 +340,59 @@ assert.equal(planningDayView.unscheduledWork[1].projectTitle, "Site Project");
 assert.equal(planningDayView.unscheduledWork[1].missionTitle, "Launch Mission");
 assert.deepEqual(planningDayView.timeBlocks, []);
 assert.deepEqual(planningDayView.conflicts, []);
+
+const planningDayWithLocalBlock = buildPlanningDayView({
+  targetDate: "2026-04-24",
+  appointments: [
+    appointment({
+      id: "appointment-conflict",
+      title: "Existing calendar hold",
+      startsAt: "2026-04-24T09:00:00",
+      endsAt: "2026-04-24T09:30:00",
+    }),
+  ],
+  deadlines: [],
+  todos: [
+    todo({
+      id: "todo-due",
+      title: "Prep launch checklist",
+      projectId: "project-1",
+      dueAt: "2026-04-24T15:00:00",
+    }),
+    todo({
+      id: "todo-open",
+      title: "Unblocked work",
+      dueAt: "2026-04-24T16:00:00",
+    }),
+  ],
+  projects: [project()],
+  missions: [mission()],
+  timeBlocks: [timeBlock()],
+});
+
+assert.deepEqual(
+  planningDayWithLocalBlock.timeBlocks.map((block) => [
+    block.title,
+    block.entityKind,
+    block.entityId,
+    block.status,
+    block.source,
+  ]),
+  [["Work block", "todo", "todo-due", "planned", "local"]]
+);
+assert.deepEqual(
+  planningDayWithLocalBlock.unscheduledWork.map((item) => item.id),
+  ["todo-open"]
+);
+assert.equal(planningDayWithLocalBlock.conflicts.length, 1);
+assert.deepEqual(planningDayWithLocalBlock.conflicts[0].itemIds, [
+  "appointment:appointment-conflict",
+  "time_block:time-block-1",
+]);
+assert.equal(validateTimeBlockRange("2026-04-24T09:00:00", "2026-04-24T09:30:00"), null);
+assert.match(
+  validateTimeBlockRange("2026-04-24T09:30:00", "2026-04-24T09:00:00") ?? "",
+  /end must be after the start/
+);
 
 console.log("daily brief builder tests passed");

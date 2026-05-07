@@ -16,7 +16,12 @@ import type {
 import type { DailyBrief, FocusReport } from "../shared/dailyBrief";
 import type { EmailSnapshot } from "../shared/emailModel";
 import { uiFontScaleCssValue } from "../shared/settingsModel";
-import { buildPlanningDayView } from "../shared/timeBlocking";
+import {
+  buildPlanningDayView,
+  type CreateTimeBlockInput,
+  type TimeBlockRecord,
+  type UpdateTimeBlockInput,
+} from "../shared/timeBlocking";
 import {
   buildBestProactiveSuggestion,
   type ProactiveSuggestion,
@@ -173,6 +178,21 @@ const formatPlanDateLabel = (value: string) => {
   });
 };
 
+const addDaysToLocalDate = (value: string, days: number) => {
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!parts) {
+    return value;
+  }
+
+  const date = new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]) + days);
+  return formatLocalDate(date);
+};
+
+const planningDateRange = (targetDate: string) => ({
+  startsAt: `${targetDate}T00:00:00`,
+  endsAt: `${addDaysToLocalDate(targetDate, 1)}T00:00:00`,
+});
+
 const emptyMissionForm = (): CreateMissionInput => ({
   title: "",
   summary: "",
@@ -259,6 +279,7 @@ export default function App() {
   const [editingTodo, setEditingTodo] = useState<TodoRecord | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<AppointmentRecord | null>(null);
   const [editingPerson, setEditingPerson] = useState<PersonRecord | null>(null);
+  const [timeBlocks, setTimeBlocks] = useState<TimeBlockRecord[]>([]);
   const [missionForm, setMissionForm] = useState<CreateMissionInput>(() => emptyMissionForm());
   const [projectForm, setProjectForm] = useState<CreateProjectInput>(() => emptyProjectForm());
   const [todoForm, setTodoForm] = useState<CreateTodoInput>(() => emptyTodoForm());
@@ -307,6 +328,11 @@ export default function App() {
     );
   }, []);
 
+  const loadTimeBlocksForDate = useCallback(async (targetDate: string) => {
+    const nextSnapshot = await window.praxis.timeBlocks.list(planningDateRange(targetDate));
+    setTimeBlocks(nextSnapshot.timeBlocks);
+  }, []);
+
   const {
     appointmentReport,
     showAppointmentReport,
@@ -347,6 +373,13 @@ export default function App() {
       setStatus("Praxis could not load the storage-backed work model.");
     });
   }, [loadWorkModel]);
+
+  useEffect(() => {
+    const targetDate = dailyBrief.localDate || formatLocalDate(new Date());
+    void loadTimeBlocksForDate(targetDate).catch(() => {
+      setStatus("Praxis could not load local time blocks.");
+    });
+  }, [dailyBrief.localDate, loadTimeBlocksForDate]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -649,6 +682,24 @@ export default function App() {
     </ActionMenu>
   );
 
+  const createTimeBlock = async (input: CreateTimeBlockInput) => {
+    const nextSnapshot = await window.praxis.timeBlocks.create(input);
+    setTimeBlocks(nextSnapshot.timeBlocks);
+    setStatus("Created a local Praxis time block. Google and Outlook were not updated.");
+  };
+
+  const updateTimeBlock = async (input: UpdateTimeBlockInput) => {
+    const nextSnapshot = await window.praxis.timeBlocks.update(input);
+    setTimeBlocks(nextSnapshot.timeBlocks);
+    setStatus("Updated local Praxis time block. Google and Outlook were not updated.");
+  };
+
+  const deleteTimeBlock = async (id: string) => {
+    const nextSnapshot = await window.praxis.timeBlocks.delete({ id });
+    setTimeBlocks(nextSnapshot.timeBlocks);
+    setStatus("Deleted local Praxis time block. Google and Outlook were not updated.");
+  };
+
   const upcomingDeadlines = selectUpcomingDeadlines(snapshot.deadlines);
   const upcomingAppointments = selectUpcomingAppointments(snapshot.appointments);
   const reviewInboxItems = selectReviewInboxItems(emailSnapshot, chatSnapshot);
@@ -662,15 +713,15 @@ export default function App() {
     todos: snapshot.todos,
     projects: snapshot.projects,
     missions: snapshot.missions,
-    timeBlocks: [],
+    timeBlocks,
   });
   const planningDateLabel = formatPlanDateLabel(planningDay.targetDate);
-  const activePlanningProjectCount = snapshot.projects.filter(
+  const activePlanningProjects = snapshot.projects.filter(
     (project) => project.status !== "completed"
-  ).length;
-  const activePlanningMissionCount = snapshot.missions.filter(
+  );
+  const activePlanningMissions = snapshot.missions.filter(
     (mission) => mission.status !== "completed"
-  ).length;
+  );
   const settingsTabForService = (serviceLabel: string): SettingsWindowTab | undefined => {
     switch (serviceLabel) {
       case "Google":
@@ -858,8 +909,11 @@ export default function App() {
         planningDay={planningDay}
         selectedDateLabel={planningDateLabel}
         formatDateTime={formatDateTime}
-        activeProjectCount={activePlanningProjectCount}
-        activeMissionCount={activePlanningMissionCount}
+        activeProjects={activePlanningProjects}
+        activeMissions={activePlanningMissions}
+        createTimeBlock={createTimeBlock}
+        updateTimeBlock={updateTimeBlock}
+        deleteTimeBlock={deleteTimeBlock}
         variant={activePanel === "command" ? "compact" : "full"}
       />
       <ProjectStackPanel

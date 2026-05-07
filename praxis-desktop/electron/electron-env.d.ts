@@ -145,6 +145,13 @@ import type {
   UpdateWorkStatusInput,
   WorkSnapshot,
 } from "../shared/workModel";
+import type {
+  CreateTimeBlockInput,
+  DeleteTimeBlockInput,
+  ListTimeBlocksInput,
+  TimeBlockSnapshot,
+  UpdateTimeBlockInput,
+} from "../shared/timeBlocking";
 
 type SettingsWindowTab =
   | "google"
@@ -338,6 +345,12 @@ declare global {
         updateRecord: (input: UpdateWorkRecordInput) => Promise<WorkSnapshot>;
         deleteRecord: (input: DeleteWorkRecordInput) => Promise<WorkSnapshot>;
         deletePersonWorkLink: (input: DeletePersonWorkLinkInput) => Promise<WorkSnapshot>;
+      };
+      timeBlocks: {
+        list: (input?: ListTimeBlocksInput) => Promise<TimeBlockSnapshot>;
+        create: (input: CreateTimeBlockInput) => Promise<TimeBlockSnapshot>;
+        update: (input: UpdateTimeBlockInput) => Promise<TimeBlockSnapshot>;
+        delete: (input: DeleteTimeBlockInput) => Promise<TimeBlockSnapshot>;
       };
     };
   }

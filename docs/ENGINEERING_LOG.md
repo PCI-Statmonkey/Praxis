@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-05-07 - Local Time Blocks Slice
+
+### Closed
+
+- Completed local-only time block persistence and click-to-schedule Plan UI.
+- Added `time_blocks` schema at DB version 11.
+- Added local time block repository/API exposed through `window.praxis.timeBlocks`.
+- Plan UI can create local blocks from unscheduled work, create manual blocks, edit, complete, cancel, delete, and show overlap warnings.
+- Command compact Plan lane shows local block count/items without editing UI.
+- Blocks are `source=local`.
+- No Google/Outlook write-back, publish controls, sync behavior changes, or provider writes were added.
+
+### Verification
+
+- Ana live QA passed create from unscheduled work, manual block, edit, complete, cancel, delete, and overlap warning.
+- Ana live QA passed restart persistence and cleanup of Ana QA blocks.
+- Ana live QA confirmed Google/Outlook remained ready and syncable.
+- Ana live QA confirmed no tokens, secrets, or provider payloads were visible.
+
+### Queue
+
+- Marked local time-block persistence/click-to-schedule slice complete.
+- Set the next time-blocking slice to AI draft plan or better schedule review/optimization unless the user wants checklist/context-memory first.
+- Kept provider write-back explicitly later.
+- Kept Slack/companion AI Review exposure and context-memory redesign open.
+
 ## 2026-05-07 - Read-Only Plan Surface Slice
 
 ### Closed

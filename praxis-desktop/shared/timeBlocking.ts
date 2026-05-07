@@ -8,24 +8,57 @@ import type {
   WorkStatus,
 } from "./workModel";
 
-export type TimeBlockStatus = "draft" | "planned" | "completed" | "cancelled";
+export type TimeBlockStatus = "planned" | "completed" | "canceled";
 
-export type TimeBlockSource = "manual" | "ai_draft";
+export type TimeBlockSource = "local";
 
-export type TimeBlockLinkKind = "mission" | "project" | "todo" | "deadline" | "appointment";
+export type TimeBlockEntityKind = "todo" | "project" | "mission" | "manual";
 
 export type TimeBlockRecord = {
   id: string;
   title: string;
   startsAt: string;
   endsAt: string;
+  entityKind: TimeBlockEntityKind;
+  entityId: string | null;
   status: TimeBlockStatus;
   source: TimeBlockSource;
-  linkedEntityKind: TimeBlockLinkKind | null;
-  linkedEntityId: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type ListTimeBlocksInput = {
+  startsAt?: string | null;
+  endsAt?: string | null;
+};
+
+export type CreateTimeBlockInput = {
+  title: string;
+  startsAt: string;
+  endsAt: string;
+  entityKind: TimeBlockEntityKind;
+  entityId?: string | null;
+  notes?: string | null;
+};
+
+export type UpdateTimeBlockInput = {
+  id: string;
+  title?: string;
+  startsAt?: string;
+  endsAt?: string;
+  entityKind?: TimeBlockEntityKind;
+  entityId?: string | null;
+  status?: TimeBlockStatus;
+  notes?: string | null;
+};
+
+export type DeleteTimeBlockInput = {
+  id: string;
+};
+
+export type TimeBlockSnapshot = {
+  timeBlocks: TimeBlockRecord[];
 };
 
 export type PlanningDayViewInput = {
@@ -82,8 +115,8 @@ export type PlanningTimeBlockItem = {
   endsAt: string;
   status: TimeBlockStatus;
   source: TimeBlockSource;
-  linkedEntityKind: TimeBlockLinkKind | null;
-  linkedEntityId: string | null;
+  entityKind: TimeBlockEntityKind;
+  entityId: string | null;
   notes: string | null;
 };
 
@@ -106,6 +139,15 @@ export type PlanningDayView = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+export const TIME_BLOCK_STATUSES: TimeBlockStatus[] = ["planned", "completed", "canceled"];
+
+export const TIME_BLOCK_ENTITY_KINDS: TimeBlockEntityKind[] = [
+  "todo",
+  "project",
+  "mission",
+  "manual",
+];
 
 const normalizeLocalDate = (value: string) => {
   const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
@@ -133,6 +175,24 @@ const parseDateTime = (value: string | null) => {
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+export const isTimeBlockStatus = (value: unknown): value is TimeBlockStatus =>
+  typeof value === "string" && TIME_BLOCK_STATUSES.includes(value as TimeBlockStatus);
+
+export const isTimeBlockEntityKind = (value: unknown): value is TimeBlockEntityKind =>
+  typeof value === "string" && TIME_BLOCK_ENTITY_KINDS.includes(value as TimeBlockEntityKind);
+
+export const validateTimeBlockRange = (startsAt: string, endsAt: string): string | null => {
+  const parsedStart = parseDateTime(startsAt);
+  const parsedEnd = parseDateTime(endsAt);
+  if (!parsedStart || !parsedEnd) {
+    return "Time block start and end must be valid timestamps.";
+  }
+  if (parsedEnd.getTime() <= parsedStart.getTime()) {
+    return "Time block end must be after the start.";
+  }
+  return null;
 };
 
 const isOnTargetDate = (value: string | null, targetDate: string) => {
@@ -195,8 +255,8 @@ const toTimeBlockItem = (timeBlock: TimeBlockRecord): PlanningTimeBlockItem => (
   endsAt: timeBlock.endsAt,
   status: timeBlock.status,
   source: timeBlock.source,
-  linkedEntityKind: timeBlock.linkedEntityKind,
-  linkedEntityId: timeBlock.linkedEntityId,
+  entityKind: timeBlock.entityKind,
+  entityId: timeBlock.entityId,
   notes: timeBlock.notes,
 });
 
@@ -306,14 +366,14 @@ export const buildPlanningDayView = (input: PlanningDayViewInput): PlanningDayVi
     .map(toDeadlineMarker)
     .sort(compareByDue);
   const timeBlocks = input.timeBlocks
-    .filter((timeBlock) => timeBlock.status !== "cancelled")
+    .filter((timeBlock) => timeBlock.status !== "canceled")
     .filter((timeBlock) => isOnTargetDate(timeBlock.startsAt, targetDate))
     .map(toTimeBlockItem)
     .sort(compareByStart);
   const blockedTodoIds = new Set(
     timeBlocks
-      .filter((timeBlock) => timeBlock.linkedEntityKind === "todo" && timeBlock.linkedEntityId)
-      .map((timeBlock) => timeBlock.linkedEntityId)
+      .filter((timeBlock) => timeBlock.entityKind === "todo" && timeBlock.entityId)
+      .map((timeBlock) => timeBlock.entityId)
   );
   const unscheduledWork = input.todos
     .filter((todo) => todo.status !== "completed")

@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue to local time-block persistence and click-to-schedule planning interaction now that unified calendar/time-blocking Slice 1 is complete as a read-only Plan surface. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next planning surfaces. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue to the next time-blocking slice now that local-only time block persistence and click-to-schedule Plan UI are complete. The next slice should focus on AI draft planning or better schedule review/optimization unless the user wants checklist/context-memory first. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -81,31 +81,40 @@ Move the immediate execution queue to local time-block persistence and click-to-
 - Command mode includes a compact Plan lane to avoid overcrowding.
 - No persistence, time-block creation UI, sync behavior changes, external calendar write-back, or provider writes were added in the read-only Plan slice.
 - Ana QA passed for Plan nav/wiring, no overflow at 100% or 114%, read-only surface behavior, no save/create/publish/sync/write-back controls, and Google/Outlook remaining ready/syncable without reconnect.
+- Local-only time block persistence and click-to-schedule Plan UI are complete.
+- `time_blocks` schema was added at DB version 11.
+- Local time block repository/API is exposed through `window.praxis.timeBlocks`.
+- Plan UI can create local blocks from unscheduled work, create manual blocks, edit, complete, cancel, delete, and show overlap warnings.
+- Command compact Plan lane shows local block count/items without editing UI.
+- Time blocks are `source=local`.
+- No Google/Outlook write-back, publish controls, sync behavior changes, or provider writes were added in the local time-block slice.
+- Ana live QA passed for create from unscheduled work, manual block, edit, complete, cancel, delete, overlap warning, restart persistence, cleanup of Ana QA blocks, Google/Outlook remaining ready/syncable, and no tokens/secrets/provider payloads visible.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
 
 ## NEXT STEPS
 
-### 1. Add Local Time Block Persistence And Click-To-Schedule Planning
+### 1. Plan AI Draft Schedule Or Schedule Review Optimization
 
 **GOAL**
 
-Add local-only time block persistence and a click-to-schedule planning interaction on top of the completed read-only Plan surface.
+Define the next time-blocking slice: AI draft plan generation or a stronger schedule review/optimization surface on top of local time blocks.
 
 **DIRECTION**
 
 - Keep Google Calendar and Outlook Calendar as connected input lanes, not write targets.
-- Store new PRAXIS time blocks locally first.
-- Let the operator schedule unscheduled work/todos into local blocks through explicit planning interactions.
+- Use persisted local time blocks as PRAXIS-owned planning records.
+- Treat AI draft plans as proposals that require operator review before creating or changing local blocks.
+- Improve conflict, overlap, unscheduled work, deadline pressure, and schedule-health review without provider writes.
 - Preserve source identity, read-only provider event state, and sync health in the unified Plan view.
-- Keep provider write-back explicitly later and separate from this local planning slice.
+- If the user wants checklist/context-memory first, pause this time-blocking slice and move that redesign forward.
 
 **DONE WHEN**
 
-- Local time blocks persist across app restart.
-- Click-to-schedule planning can create/review local blocks without writing to Google or Outlook.
-- Regression coverage protects local persistence, read-only provider behavior, and Plan view mapping.
+- The next schedule-planning UX is scoped with explicit no-provider-write boundaries.
+- AI or optimization output is reviewable before any local block mutation.
+- Required selector, storage, UI, and regression-test changes are identified.
 
 ### 2. Plan Provider Calendar Write-Back
 

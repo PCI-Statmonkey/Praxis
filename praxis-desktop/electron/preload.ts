@@ -178,4 +178,10 @@ contextBridge.exposeInMainWorld('praxis', {
     deleteRecord: (input: unknown) => ipcRenderer.invoke('work:deleteRecord', input),
     deletePersonWorkLink: (input: unknown) => ipcRenderer.invoke('work:deletePersonWorkLink', input),
   },
+  timeBlocks: {
+    list: (input?: unknown) => ipcRenderer.invoke('timeBlocks:list', input),
+    create: (input: unknown) => ipcRenderer.invoke('timeBlocks:create', input),
+    update: (input: unknown) => ipcRenderer.invoke('timeBlocks:update', input),
+    delete: (input: unknown) => ipcRenderer.invoke('timeBlocks:delete', input),
+  },
 })
