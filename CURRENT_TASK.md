@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue to the next time-blocking slice now that local-only time block persistence and click-to-schedule Plan UI are complete. The next slice should focus on AI draft planning or better schedule review/optimization unless the user wants checklist/context-memory first. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue to the actual AI draft-plan caller/UI or pause for user review now that the deterministic Schedule Review engine and UI slice is complete. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -89,32 +89,43 @@ Move the immediate execution queue to the next time-blocking slice now that loca
 - Time blocks are `source=local`.
 - No Google/Outlook write-back, publish controls, sync behavior changes, or provider writes were added in the local time-block slice.
 - Ana live QA passed for create from unscheduled work, manual block, edit, complete, cancel, delete, overlap warning, restart persistence, cleanup of Ana QA blocks, Google/Outlook remaining ready/syncable, and no tokens/secrets/provider payloads visible.
+- Deterministic Schedule Review engine is complete.
+- `buildScheduleReview` identifies load state, risks, conflicts, open gaps, blocked/waiting items, and recommended local blocks with reason text.
+- Schedule Review reduces manual prioritization by using existing signals: due/overdue, priority, quickAction, estimated minutes, waiting/blocking state, current appointments/time blocks, and project/mission context.
+- Plan UI now shows Schedule Review in focused Plan mode.
+- `Schedule this` pre-fills the local block form without auto-creating.
+- Command mode has compact Plan review summary.
+- `buildAiDraftPlan` contract is complete as a pure, no-write contract: it uses Schedule Review as source of truth, proposals cite deterministic recommendations/open gaps, deterministic fallback exists, and the write boundary requires user confirmation.
+- No AI caller is wired yet.
+- No auto-create, provider write-back, sync behavior change, or external calendar publishing was added in the Schedule Review slice.
+- Ana QA passed: focused Plan review visible/readable, recommendations prefill form only, blocked/waiting items non-executable, no provider write-back controls, and Google/Outlook remain ready/syncable.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
 
 ## NEXT STEPS
 
-### 1. Plan AI Draft Schedule Or Schedule Review Optimization
+### 1. Wire AI Draft-Plan Caller And UI
 
 **GOAL**
 
-Define the next time-blocking slice: AI draft plan generation or a stronger schedule review/optimization surface on top of local time blocks.
+Wire the actual AI draft-plan caller/UI using the completed pure no-write `buildAiDraftPlan` contract, or pause for user review before adding AI execution.
 
 **DIRECTION**
 
 - Keep Google Calendar and Outlook Calendar as connected input lanes, not write targets.
 - Use persisted local time blocks as PRAXIS-owned planning records.
+- Use Schedule Review as the source of truth for draft-plan prompts/proposals.
 - Treat AI draft plans as proposals that require operator review before creating or changing local blocks.
-- Improve conflict, overlap, unscheduled work, deadline pressure, and schedule-health review without provider writes.
+- Preserve deterministic fallback and make source recommendations/open gaps traceable in the UI.
 - Preserve source identity, read-only provider event state, and sync health in the unified Plan view.
-- If the user wants checklist/context-memory first, pause this time-blocking slice and move that redesign forward.
+- If the user wants review before AI wiring, pause here and collect feedback on the deterministic Schedule Review surface first.
 
 **DONE WHEN**
 
-- The next schedule-planning UX is scoped with explicit no-provider-write boundaries.
-- AI or optimization output is reviewable before any local block mutation.
-- Required selector, storage, UI, and regression-test changes are identified.
+- AI draft-plan caller/UI is wired through the no-write contract, or the queue is explicitly paused for user review.
+- AI output cannot auto-create blocks, publish externally, or change provider sync behavior.
+- Regression coverage protects deterministic fallback, proposal citation, and user-confirmed local-block boundaries.
 
 ### 2. Plan Provider Calendar Write-Back
 

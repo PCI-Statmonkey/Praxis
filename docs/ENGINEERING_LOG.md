@@ -1,5 +1,34 @@
 # ENGINEERING LOG
 
+## 2026-05-07 - Schedule Review Planning Slice
+
+### Closed
+
+- Completed the deterministic Schedule Review engine.
+- `buildScheduleReview` identifies load state, risks, conflicts, open gaps, blocked/waiting items, and recommended local blocks with reason text.
+- Schedule Review reduces manual prioritization using existing signals: due/overdue, priority, quickAction, estimated minutes, waiting/blocking state, current appointments/time blocks, and project/mission context.
+- Plan UI now shows Schedule Review in focused Plan mode.
+- `Schedule this` pre-fills the local block form without auto-creating.
+- Command mode has compact Plan review summary.
+- `buildAiDraftPlan` contract is complete as a pure, no-write contract: Schedule Review is source of truth, proposals cite deterministic recommendations/open gaps, deterministic fallback exists, and the write boundary requires user confirmation.
+- No AI caller is wired yet.
+- No auto-create, provider write-back, sync behavior change, or external calendar publishing was added.
+
+### Verification
+
+- Ana QA passed focused Plan review visibility/readability.
+- Ana QA confirmed recommendations prefill the form only.
+- Ana QA confirmed blocked/waiting items are non-executable.
+- Ana QA confirmed no provider write-back controls.
+- Ana QA confirmed Google/Outlook remain ready and syncable.
+
+### Queue
+
+- Marked Schedule Review planning engine/UI slice complete.
+- Set next active slice to wire the actual AI draft-plan caller/UI using the no-write contract, or pause for user review.
+- Kept provider write-back later.
+- Kept Slack/companion AI Review exposure and context-memory redesign open.
+
 ## 2026-05-07 - Local Time Blocks Slice
 
 ### Closed

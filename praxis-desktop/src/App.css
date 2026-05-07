@@ -1782,6 +1782,145 @@ ol {
   white-space: nowrap;
 }
 
+.plan-review-compact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  margin-top: 10px;
+  color: var(--dim);
+}
+
+.plan-review-compact p {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.plan-review-section {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  border: 1px solid rgba(85, 234, 220, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(145deg, rgba(85, 234, 220, 0.06), transparent 56%),
+    rgba(7, 12, 12, 0.58);
+  padding: 14px;
+}
+
+.plan-review-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+}
+
+.plan-review-header h3,
+.plan-review-header p,
+.plan-review-load strong,
+.plan-review-load span {
+  margin: 0;
+}
+
+.plan-review-header h3 {
+  color: var(--text);
+}
+
+.plan-review-header p,
+.plan-review-load span {
+  color: var(--dim);
+}
+
+.plan-review-load {
+  display: grid;
+  gap: 5px;
+  justify-items: end;
+  text-align: right;
+}
+
+.plan-review-load strong {
+  color: var(--text);
+}
+
+.plan-load-clear {
+  border-color: rgba(89, 213, 141, 0.34);
+  color: #afe9bf;
+}
+
+.plan-load-watch {
+  border-color: rgba(244, 198, 109, 0.42);
+  color: #f6d38a;
+}
+
+.plan-load-overloaded {
+  border-color: rgba(231, 131, 131, 0.44);
+  color: #ffc2bb;
+}
+
+.plan-review-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.plan-review-grid > section {
+  min-width: 0;
+  border: 1px solid rgba(185, 222, 219, 0.1);
+  border-radius: 8px;
+  background: rgba(6, 10, 10, 0.42);
+  padding: 10px;
+}
+
+.plan-review-grid h4 {
+  margin: 0;
+}
+
+.plan-review-list {
+  display: grid;
+  gap: 8px;
+}
+
+.plan-review-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(185, 222, 219, 0.1);
+  border-radius: 8px;
+  background: rgba(6, 10, 10, 0.48);
+  padding: 9px;
+}
+
+.plan-review-item.is-warning {
+  border-color: rgba(244, 198, 109, 0.28);
+}
+
+.plan-review-item.is-critical {
+  border-color: rgba(231, 131, 131, 0.34);
+}
+
+.plan-review-item strong,
+.plan-review-item p {
+  flex-basis: 100%;
+}
+
+.plan-review-item strong {
+  color: var(--text);
+}
+
+.plan-review-item p {
+  margin: 0;
+  color: var(--dim);
+  font-size: 0.78rem;
+}
+
+.plan-review-item button {
+  margin-left: auto;
+}
+
 .plan-surface-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.7fr) minmax(320px, 0.9fr);
@@ -2478,6 +2617,7 @@ ol {
   .plan-context-grid,
   .plan-compact-grid,
   .plan-block-form-grid,
+  .plan-review-grid,
   .mission-control-first-screen,
   .mission-control-lane-grid,
   .service-health-strip,
@@ -2501,6 +2641,15 @@ ol {
 
   .plan-surface-header {
     display: grid;
+  }
+
+  .plan-review-header {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-review-load {
+    justify-items: start;
+    text-align: left;
   }
 
   .plan-compact-list > li,

@@ -18,6 +18,7 @@ import type { EmailSnapshot } from "../shared/emailModel";
 import { uiFontScaleCssValue } from "../shared/settingsModel";
 import {
   buildPlanningDayView,
+  buildScheduleReview,
   type CreateTimeBlockInput,
   type TimeBlockRecord,
   type UpdateTimeBlockInput,
@@ -715,6 +716,15 @@ export default function App() {
     missions: snapshot.missions,
     timeBlocks,
   });
+  const scheduleReview = buildScheduleReview({
+    targetDate: planningTargetDate,
+    appointments: snapshot.appointments,
+    deadlines: snapshot.deadlines,
+    todos: snapshot.todos,
+    projects: snapshot.projects,
+    missions: snapshot.missions,
+    timeBlocks,
+  });
   const planningDateLabel = formatPlanDateLabel(planningDay.targetDate);
   const activePlanningProjects = snapshot.projects.filter(
     (project) => project.status !== "completed"
@@ -907,6 +917,7 @@ export default function App() {
       <PlanSurfacePanel
         isActive={activePanel === "command" || activePanel === "plan"}
         planningDay={planningDay}
+        scheduleReview={scheduleReview}
         selectedDateLabel={planningDateLabel}
         formatDateTime={formatDateTime}
         activeProjects={activePlanningProjects}

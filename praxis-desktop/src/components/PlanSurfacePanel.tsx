@@ -4,6 +4,8 @@ import type {
   PlanningDayView,
   PlanningTimeBlockItem,
   PlanningWorkCandidate,
+  ScheduleRecommendedBlock,
+  ScheduleReview,
   TimeBlockEntityKind,
   UpdateTimeBlockInput,
 } from "../../shared/timeBlocking";
@@ -13,6 +15,7 @@ import { EmptyState } from "./EmptyState";
 type PlanSurfacePanelProps = {
   isActive: boolean;
   planningDay: PlanningDayView;
+  scheduleReview: ScheduleReview;
   selectedDateLabel: string;
   formatDateTime: (value: string | null) => string;
   activeProjects: ProjectRecord[];
@@ -37,6 +40,7 @@ type TimeBlockFormState = {
 
 const visibleWorkLimit = 6;
 const compactItemLimit = 2;
+const reviewItemLimit = 4;
 const durationOptions = [15, 30, 45, 60, 90];
 
 const reasonLabel = (reason: PlanningDayView["unscheduledWork"][number]["reason"]) => {
@@ -111,9 +115,31 @@ const formFromBlock = (block: PlanningTimeBlockItem): TimeBlockFormState => ({
   notes: block.notes ?? "",
 });
 
+const formFromRecommendation = (
+  recommendation: ScheduleRecommendedBlock,
+  targetDate: string
+): TimeBlockFormState => ({
+  id: null,
+  title: recommendation.title,
+  date: formatDateInput(recommendation.suggestedStartsAt || targetDate),
+  startTime: formatTimeInput(recommendation.suggestedStartsAt),
+  endTime: formatTimeInput(recommendation.suggestedEndsAt),
+  durationMinutes: recommendation.estimatedMinutes,
+  entityKind: recommendation.entityKind,
+  entityId: recommendation.entityId,
+  notes: [
+    recommendation.reason,
+    recommendation.projectTitle ? `Project: ${recommendation.projectTitle}` : null,
+    recommendation.missionTitle ? `Mission: ${recommendation.missionTitle}` : null,
+  ]
+    .filter((line): line is string => Boolean(line))
+    .join("\n"),
+});
+
 export function PlanSurfacePanel({
   isActive,
   planningDay,
+  scheduleReview,
   selectedDateLabel,
   formatDateTime,
   activeProjects,
@@ -129,6 +155,14 @@ export function PlanSurfacePanel({
   const unscheduledWork = planningDay.unscheduledWork.slice(0, visibleWorkLimit);
   const localBlocks = planningDay.timeBlocks.slice(0, visibleWorkLimit);
   const conflicts = planningDay.conflicts.slice(0, visibleWorkLimit);
+  const topRisks = scheduleReview.risks
+    .filter((risk) => risk.kind !== "waiting_on" && risk.kind !== "blocked")
+    .slice(0, reviewItemLimit);
+  const waitingOrBlockedRisks = scheduleReview.risks
+    .filter((risk) => risk.kind === "waiting_on" || risk.kind === "blocked")
+    .slice(0, reviewItemLimit);
+  const recommendedBlocks = scheduleReview.recommendedBlocks.slice(0, reviewItemLimit);
+  const openGaps = scheduleReview.openGaps.slice(0, reviewItemLimit);
   const [timeBlockForm, setTimeBlockForm] = useState<TimeBlockFormState | null>(null);
   const [formError, setFormError] = useState("");
 
@@ -176,6 +210,11 @@ export function PlanSurfacePanel({
   const openEditBlock = (block: PlanningTimeBlockItem) => {
     setFormError("");
     setTimeBlockForm(formFromBlock(block));
+  };
+
+  const openRecommendationBlock = (recommendation: ScheduleRecommendedBlock) => {
+    setFormError("");
+    setTimeBlockForm(formFromRecommendation(recommendation, planningDay.targetDate));
   };
 
   const setDuration = (minutes: number) => {
@@ -282,10 +321,17 @@ export function PlanSurfacePanel({
             <p>work candidates</p>
           </span>
           <span className="plan-compact-tile">
-            <span>Conflicts</span>
-            <strong>{planningDay.conflicts.length}</strong>
-            <p>overlap warnings</p>
+            <span>Review</span>
+            <strong>{scheduleReview.summary.state}</strong>
+            <p>{scheduleReview.summary.recommendedBlockCount} next blocks</p>
           </span>
+        </div>
+
+        <div className="plan-review-compact" aria-label="Schedule review summary">
+          <span className={`badge plan-load-${scheduleReview.summary.state}`}>
+            {scheduleReview.summary.state}
+          </span>
+          <p>{scheduleReview.summary.message}</p>
         </div>
 
         <ol className="plan-compact-list" aria-label="Next plan items">
@@ -427,6 +473,110 @@ export function PlanSurfacePanel({
           </div>
         </form>
       ) : null}
+
+      <section className="plan-review-section" aria-label="Schedule review">
+        <div className="plan-review-header">
+          <div>
+            <span className="recommended-label">Schedule Review</span>
+            <h3>What needs attention</h3>
+            <p>{scheduleReview.summary.message}</p>
+          </div>
+          <div className="plan-review-load">
+            <span className={`badge plan-load-${scheduleReview.summary.state}`}>
+              {scheduleReview.summary.state}
+            </span>
+            <strong>{scheduleReview.summary.scheduledMinutes} min scheduled</strong>
+            <span>{scheduleReview.summary.openMinutes} min open</span>
+          </div>
+        </div>
+
+        <div className="plan-review-grid">
+          <section>
+            <div className="plan-lane-header">
+              <h4>Top Risks</h4>
+              <span className="badge">{topRisks.length}</span>
+            </div>
+            {topRisks.length > 0 ? (
+              <ol className="plan-review-list">
+                {topRisks.map((risk) => (
+                  <li key={risk.id} className={`plan-review-item is-${risk.severity}`}>
+                    <strong>{risk.title}</strong>
+                    <span className="badge">{risk.kind.replace(/_/g, " ")}</span>
+                    <p>{risk.detail}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-path">No top schedule risks detected.</p>
+            )}
+          </section>
+
+          <section>
+            <div className="plan-lane-header">
+              <h4>Recommended Next Blocks</h4>
+              <span className="badge">{recommendedBlocks.length}</span>
+            </div>
+            {recommendedBlocks.length > 0 ? (
+              <ol className="plan-review-list">
+                {recommendedBlocks.map((recommendation) => (
+                  <li key={recommendation.id} className="plan-review-item">
+                    <strong>{recommendation.title}</strong>
+                    <span className="badge">{recommendation.estimatedMinutes} min</span>
+                    <p>{recommendation.reason}</p>
+                    {recommendation.projectTitle ? <p>{recommendation.projectTitle}</p> : null}
+                    <button type="button" onClick={() => openRecommendationBlock(recommendation)}>
+                      Schedule this
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-path">No recommended blocks fit the current open gaps.</p>
+            )}
+          </section>
+
+          <section>
+            <div className="plan-lane-header">
+              <h4>Open Gaps</h4>
+              <span className="badge">{openGaps.length}</span>
+            </div>
+            {openGaps.length > 0 ? (
+              <ol className="plan-review-list">
+                {openGaps.map((gap) => (
+                  <li key={gap.id} className="plan-review-item">
+                    <strong>{gap.minutes} minutes open</strong>
+                    <p>
+                      {formatDateTime(gap.startsAt)} - {formatTimeInput(gap.endsAt)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-path">No open planning gaps detected in the workday.</p>
+            )}
+          </section>
+
+          <section>
+            <div className="plan-lane-header">
+              <h4>Blocked / Waiting</h4>
+              <span className="badge">{scheduleReview.summary.waitingOrBlockedCount}</span>
+            </div>
+            {waitingOrBlockedRisks.length > 0 ? (
+              <ol className="plan-review-list">
+                {waitingOrBlockedRisks.map((risk) => (
+                  <li key={risk.id} className="plan-review-item">
+                    <strong>{risk.title}</strong>
+                    <span className="badge">{risk.kind.replace(/_/g, " ")}</span>
+                    <p>{risk.detail}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-path">No blocked or waiting-on work in the review.</p>
+            )}
+          </section>
+        </div>
+      </section>
 
       <div className="plan-surface-grid">
         <section className="plan-day-column" aria-label="Unified day schedule">
