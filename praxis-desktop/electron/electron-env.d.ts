@@ -148,6 +148,8 @@ import type {
 import type {
   CreateTimeBlockInput,
   DeleteTimeBlockInput,
+  GenerateDraftPlanRequest,
+  GenerateDraftPlanResult,
   ListTimeBlocksInput,
   TimeBlockSnapshot,
   UpdateTimeBlockInput,
@@ -351,6 +353,9 @@ declare global {
         create: (input: CreateTimeBlockInput) => Promise<TimeBlockSnapshot>;
         update: (input: UpdateTimeBlockInput) => Promise<TimeBlockSnapshot>;
         delete: (input: DeleteTimeBlockInput) => Promise<TimeBlockSnapshot>;
+      };
+      plan: {
+        generateDraft: (input: GenerateDraftPlanRequest) => Promise<GenerateDraftPlanResult>;
       };
     };
   }

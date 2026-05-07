@@ -49,6 +49,7 @@ import type {
 import type {
   CreateTimeBlockInput,
   DeleteTimeBlockInput,
+  GenerateDraftPlanRequest,
   ListTimeBlocksInput,
   UpdateTimeBlockInput,
 } from '../shared/timeBlocking'
@@ -103,6 +104,7 @@ import {
   getTimeBlockSnapshot,
   updateTimeBlock,
 } from './timeBlockRepository'
+import { generateLocalPlanDraft } from './planDraftService'
 import { generateDailyBrief, generateFocusReport } from './dailyBrief'
 import { generateAppointmentReport } from './appointmentReport'
 import { importCalendarEvents } from './calendarImport'
@@ -874,5 +876,8 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('timeBlocks:delete', async (_event, input: DeleteTimeBlockInput) =>
     deleteTimeBlock(input)
+  )
+  ipcMain.handle('plan:generateDraft', async (_event, input: GenerateDraftPlanRequest) =>
+    generateLocalPlanDraft(input)
   )
 })

@@ -253,6 +253,21 @@ export type BuildDraftPlanInput = {
   maxBlocks?: number;
 };
 
+export type DraftPlanSummarySource = "ollama" | "deterministic_fallback";
+
+export type GenerateDraftPlanRequest = {
+  scheduleReview: ScheduleReview;
+  maxBlocks?: number;
+};
+
+export type GenerateDraftPlanResult = {
+  ok: true;
+  draftPlan: DraftPlan;
+  summarySource: DraftPlanSummarySource;
+  fallbackReason: string | null;
+  writeBoundary: DraftPlan["writeBoundary"];
+};
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
 

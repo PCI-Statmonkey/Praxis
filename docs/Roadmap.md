@@ -32,6 +32,8 @@
 - [x] Add person profile/detail view with related projects, missions, and waiting-on todos
 - [x] Add explicit person-to-project/mission relationship management
 - [x] Extract people profile/detail UI into a focused component
+- [ ] Redesign Context/Memory surfaces now that the old Memory top-nav behavior proved confusing
+- [ ] Add checklist grouping around projects, missions, operating contexts, or schedule windows
 - [ ] Expand natural-language capture for missions, deeper relationships, and updates
 - [ ] Build fact extraction that stores structured context instead of raw source dumps
 
@@ -88,6 +90,11 @@
 - [x] Appointment-first briefing metadata for future calendar-focused UI cards
 - [x] Extract calendar settings/import UI into a focused component
 - [x] Add Google/Outlook calendar setup documentation and Settings guidance
+- [x] Add read-only unified Plan surface combining appointments, deadlines, unscheduled work, and local time-block placeholders
+- [x] Add local-only time block persistence and click-to-schedule Plan UI
+- [x] Add deterministic Schedule Review for load state, risks, conflicts, open gaps, blocked/waiting items, and recommended local blocks
+- [ ] Add AI draft plan surface with no-write confirmation boundary
+- [ ] Add explicit provider calendar write-back later, after local planning and confirmation UX are proven
 - [ ] Email fact extraction for due dates, waiting-on, and next actions
 - [ ] Bill.com awareness for invoices, approvals, and overdue money tasks
 

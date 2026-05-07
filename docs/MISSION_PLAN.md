@@ -223,6 +223,20 @@ Examples of stored facts:
 - appointment time
 - project status
 
+## Time Blocking And Schedule Planning
+
+Time blocking is now an active planning track.
+
+The first planning slices are complete:
+
+- a read-only unified Plan surface that combines current appointments, deadlines, unscheduled work, todos, and local time-block placeholders
+- local-only time block persistence and click-to-schedule planning interactions
+- deterministic Schedule Review for load state, risks, conflicts, open gaps, blocked/waiting items, and recommended local blocks
+
+The next planned slice is an AI draft plan surface. It should use deterministic Schedule Review as the source of truth and keep the same no-write boundary: draft plans may propose local blocks, but local block creation or changes require operator confirmation.
+
+Provider calendar write-back remains later and explicit only. Praxis may read Google and Outlook calendar context today, but external calendar publishing should wait until local planning behavior, confirmation UX, and auditability are proven.
+
 ## Memory Strategy
 
 Praxis should create and maintain markdown files as long-term memory.
@@ -234,6 +248,8 @@ This is necessary because:
 - the context volume will grow too large for ad hoc prompting
 
 The markdown memory layer should include an index so Praxis can quickly find the right records without loading everything.
+
+The Context/Memory surface needs redesign because the old Memory top-nav behavior was confusing. Memory-backed documents should remain available from the operating context where they help, but should not look like a fake primary mode. Checklist grouping is also a future follow-up, likely around projects, missions, operating contexts, or schedule windows.
 
 ## Trust and Safety Rules
 
@@ -306,9 +322,10 @@ Initial remote access design should assume access from anywhere, not only same-h
 
 ## Immediate Development Priorities
 
-1. Build AI Task Review / ADHD Reset Mode around a factual local context packet
-2. Add local-first model routing through Ollama with configurable local model selection and optional API provider settings
-3. Preserve deterministic ranking as the fallback and safety net for all AI reviews
+1. Wire AI draft planning through the deterministic Schedule Review source with a no-write confirmation boundary
+2. Keep provider calendar write-back explicit and later, after local planning behavior is proven
+3. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
 4. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
-5. Plan persistent presence and Rainmeter after AI Task Review can explain priority and risk
-6. Add voice wake and spoken output after the review and briefing logic are trustworthy
+5. Redesign Context/Memory and checklist grouping after the current planning slice or when the operator asks to prioritize it
+6. Plan persistent presence and Rainmeter after PRAXIS can explain priority and risk
+7. Add voice wake and spoken output after the review and briefing logic are trustworthy

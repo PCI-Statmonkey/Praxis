@@ -184,4 +184,7 @@ contextBridge.exposeInMainWorld('praxis', {
     update: (input: unknown) => ipcRenderer.invoke('timeBlocks:update', input),
     delete: (input: unknown) => ipcRenderer.invoke('timeBlocks:delete', input),
   },
+  plan: {
+    generateDraft: (input: unknown) => ipcRenderer.invoke('plan:generateDraft', input),
+  },
 })

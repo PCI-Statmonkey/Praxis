@@ -1,4 +1,5 @@
 import { strict as assert } from "node:assert";
+import { buildPlanDraftResponseWithOllama } from "../electron/planDraftService";
 import { buildDailyBriefFromSnapshot } from "../shared/dailyBriefBuilder";
 import {
   buildAiDraftPlan,
@@ -632,5 +633,76 @@ const invalidAiDraftPlan = buildAiDraftPlan({
 assert.equal(invalidAiDraftPlan.source, "deterministic_fallback");
 assert.match(invalidAiDraftPlan.rejectedProposalReasons[0], /unknown recommendation/);
 assert.equal(invalidAiDraftPlan.proposedBlocks.length > 0, true);
+
+const planDraftServiceFallback = await buildPlanDraftResponseWithOllama({
+  scheduleReview: aiDraftReview,
+  settings: {
+    localModelName: null,
+  },
+});
+
+assert.equal(planDraftServiceFallback.ok, true);
+assert.equal(planDraftServiceFallback.summarySource, "deterministic_fallback");
+assert.equal(planDraftServiceFallback.draftPlan.writeBoundary, "requires_user_confirmation");
+assert.match(planDraftServiceFallback.fallbackReason ?? "", /No saved Ollama model/);
+assert.deepEqual(
+  planDraftServiceFallback.draftPlan.proposedBlocks.map((block) => block.entityId),
+  ["todo-ai-first", "todo-ai-second"]
+);
+
+const planDraftServiceAiProposal = await buildPlanDraftResponseWithOllama({
+  scheduleReview: aiDraftReview,
+  settings: {
+    localModelName: "local-plan-model",
+  },
+  generateCandidate: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "local-plan-model",
+    candidate: {
+      explanation: "Use the deterministic quick win citation first.",
+      blocks: [
+        {
+          recommendationId: secondAiRecommendation.id,
+          openGapId: aiDraftReview.openGaps[0].id,
+          explanation: "Fits in the cited open gap and lowers load.",
+        },
+      ],
+    },
+  }),
+});
+
+assert.equal(planDraftServiceAiProposal.summarySource, "ollama");
+assert.equal(planDraftServiceAiProposal.fallbackReason, null);
+assert.equal(planDraftServiceAiProposal.draftPlan.source, "ai_proposal");
+assert.equal(planDraftServiceAiProposal.draftPlan.writeBoundary, "requires_user_confirmation");
+assert.deepEqual(
+  planDraftServiceAiProposal.draftPlan.proposedBlocks[0].citations.map((citation) => citation.kind),
+  ["recommendation", "work_item", "open_gap"]
+);
+
+const planDraftServiceInvalidProposal = await buildPlanDraftResponseWithOllama({
+  scheduleReview: aiDraftReview,
+  settings: {
+    localModelName: "local-plan-model",
+  },
+  generateCandidate: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "local-plan-model",
+    candidate: {
+      blocks: [
+        {
+          recommendationId: "not-in-review",
+          openGapId: "also-not-in-review",
+        },
+      ],
+    },
+  }),
+});
+
+assert.equal(planDraftServiceInvalidProposal.summarySource, "deterministic_fallback");
+assert.match(planDraftServiceInvalidProposal.fallbackReason ?? "", /unknown recommendation/);
+assert.equal(planDraftServiceInvalidProposal.draftPlan.writeBoundary, "requires_user_confirmation");
 
 console.log("daily brief builder tests passed");
