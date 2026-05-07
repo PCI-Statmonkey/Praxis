@@ -23,6 +23,7 @@ import {
   UI_FONT_SCALE_MAX_PERCENT,
   UI_FONT_SCALE_MIN_PERCENT,
   UI_FONT_SCALE_STEP_PERCENT,
+  formatPraxisTime,
   uiFontScaleCssValue,
 } from "../shared/settingsModel";
 import type {
@@ -845,7 +846,9 @@ export default function SettingsApp() {
     const nextSettings = await window.praxis.settings.updateUISettings(uiSettingsForm);
     setSettingsSnapshot(nextSettings);
     setUiSettingsForm(nextSettings.ui);
-    setStatus(`Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale.`);
+    setStatus(
+      `Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale, ${nextSettings.ui.timeFormat} time.`
+    );
   };
 
   const checkOllamaModelAvailability = async () => {
@@ -989,6 +992,7 @@ export default function SettingsApp() {
   ];
   const currentFontScalePercent =
     uiSettingsForm.fontScalePercent ?? DEFAULT_UI_SETTINGS.fontScalePercent;
+  const currentTimeFormat = uiSettingsForm.timeFormat ?? DEFAULT_UI_SETTINGS.timeFormat;
   const allPersonContactSuggestions = buildPersonContactSuggestions(snapshot.people, emailSnapshot.messages);
   const activePersonContactSuggestions: PersonContactSuggestion[] = [];
   const dismissedPersonContactSuggestions: Array<
@@ -1161,6 +1165,21 @@ export default function SettingsApp() {
                   }
                 />
               </label>
+              <label className="field-label">
+                <span>Time format</span>
+                <select
+                  value={currentTimeFormat}
+                  onChange={(event) =>
+                    setUiSettingsForm({
+                      ...uiSettingsForm,
+                      timeFormat: event.target.value === "military" ? "military" : "standard",
+                    })
+                  }
+                >
+                  <option value="standard">Standard (2:30 PM)</option>
+                  <option value="military">Military (14:30)</option>
+                </select>
+              </label>
               <div className="appearance-scale-row">
                 <p className="brief-path">{currentFontScalePercent}% scale</p>
                 <button
@@ -1186,6 +1205,7 @@ export default function SettingsApp() {
                   This sample shows the selected scale without resizing the slider controls while
                   you adjust them.
                 </p>
+                <p>Time preview: {formatPraxisTime("2026-04-24T14:30:00", currentTimeFormat)}</p>
               </div>
               <button type="submit">Save Appearance</button>
             </form>

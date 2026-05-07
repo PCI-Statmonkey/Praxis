@@ -14,6 +14,7 @@ import {
   connectActionLabel,
   DEFAULT_AI_SETTINGS,
   DEFAULT_UI_SETTINGS,
+  formatPraxisTime,
   isActivelySyncing,
   normalizeAiSettings,
   normalizeUiSettings,
@@ -410,10 +411,26 @@ assert.deepEqual(
 );
 
 assert.deepEqual(normalizeUiSettings(), DEFAULT_UI_SETTINGS);
-assert.deepEqual(normalizeUiSettings({ fontScalePercent: 108 }), { fontScalePercent: 108 });
-assert.deepEqual(normalizeUiSettings({ fontScalePercent: 200 }), { fontScalePercent: 114 });
-assert.deepEqual(normalizeUiSettings({ fontScalePercent: 50 }), { fontScalePercent: 94 });
+assert.deepEqual(normalizeUiSettings({ fontScalePercent: 108 }), {
+  fontScalePercent: 108,
+  timeFormat: "standard",
+});
+assert.deepEqual(normalizeUiSettings({ fontScalePercent: 200, timeFormat: "military" }), {
+  fontScalePercent: 114,
+  timeFormat: "military",
+});
+assert.deepEqual(
+  normalizeUiSettings({ fontScalePercent: 50, timeFormat: "unknown" } as unknown as Partial<
+    typeof DEFAULT_UI_SETTINGS
+  >),
+  {
+    fontScalePercent: 94,
+    timeFormat: "standard",
+  }
+);
 assert.equal(uiFontScaleCssValue({ fontScalePercent: 106 }), "1.06");
+assert.equal(formatPraxisTime("2026-04-24T14:30:00", "standard"), "2:30 PM");
+assert.equal(formatPraxisTime("2026-04-24T14:30:00", "military"), "14:30");
 
 assert.deepEqual(
   parseOllamaModelTags({

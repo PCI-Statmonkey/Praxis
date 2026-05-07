@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-05-07 - Command Settings Plan Time Format Slice
+
+### Closed
+
+- Fixed Command page side rail alignment.
+- Changed Command TODO, MONEY, WAITING, and PROJECTS stats into readable 2x2 cards.
+- Hid the default/local AI Review example reply only on Command while preserving real assistant replies.
+- Added Settings > Appearance `ui.timeFormat` with `standard` and `military` options, defaulting to `standard`.
+- Added the Plan toolbar current `Now` time display.
+- Updated Plan timeline hour and item labels to respect the standard/military time format setting.
+- Google and Outlook remained visibly connected and syncable after restart.
+- No provider calendar write-back controls were found.
+
+### Verification
+
+- Ana QA: `npm run test:sync` passed.
+- Ana QA: `npm test` passed.
+- Ana QA: `npm run build:app` passed with existing Vite chunk warnings.
+- Ana manual/code QA passed with caveats: minute tick was not observed across a minute boundary, and Settings select/save code/test behavior was verified but not fully clicked visually due foreground capture reliability.
+
+### Queue
+
+- Follow up only if a full visual Settings click-through or minute-boundary tick observation is required.
+
 ## 2026-05-07 - Command And Plan Layout Polish
 
 ### Closed

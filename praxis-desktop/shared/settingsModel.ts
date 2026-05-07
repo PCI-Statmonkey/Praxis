@@ -218,8 +218,11 @@ export type AiSettings = {
   reliancePolicy: AiReliancePolicy;
 };
 
+export type UiTimeFormat = "standard" | "military";
+
 export type UiSettings = {
   fontScalePercent: number;
+  timeFormat: UiTimeFormat;
 };
 
 export type UpdateAiSettingsInput = {
@@ -229,6 +232,7 @@ export type UpdateAiSettingsInput = {
 
 export type UpdateUiSettingsInput = {
   fontScalePercent?: number;
+  timeFormat?: UiTimeFormat;
 };
 
 export type CheckOllamaModelAvailabilityInput = {
@@ -287,7 +291,13 @@ export const UI_FONT_SCALE_STEP_PERCENT = 2;
 
 export const DEFAULT_UI_SETTINGS: UiSettings = {
   fontScalePercent: 100,
+  timeFormat: "standard",
 };
+
+const uiTimeFormats = new Set<UiTimeFormat>(["standard", "military"]);
+
+export const isUiTimeFormat = (value: unknown): value is UiTimeFormat =>
+  typeof value === "string" && uiTimeFormats.has(value as UiTimeFormat);
 
 export const normalizeUiSettings = (
   input: Partial<UiSettings | UpdateUiSettingsInput> = {},
@@ -305,11 +315,36 @@ export const normalizeUiSettings = (
 
   return {
     fontScalePercent,
+    timeFormat: isUiTimeFormat(input.timeFormat) ? input.timeFormat : fallback.timeFormat,
   };
 };
 
 export const uiFontScaleCssValue = (settings: Partial<UiSettings | UpdateUiSettingsInput>) =>
   `${normalizeUiSettings(settings).fontScalePercent / 100}`;
+
+export const formatPraxisTime = (
+  value: Date | string | number,
+  timeFormat: UiTimeFormat = DEFAULT_UI_SETTINGS.timeFormat
+) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  if (timeFormat === "military") {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+};
 
 const aiReliancePolicies = new Set<AiReliancePolicy>([
   "local_only",

@@ -341,14 +341,14 @@ body::before {
 
 .app-shell.is-surface-command .left,
 .app-shell.is-surface-command .right {
-  margin-top: 24px;
-  max-height: calc(100% - 24px);
+  margin-top: 0;
+  max-height: 100%;
   padding: 10px;
 }
 
 .app-shell.is-surface-command .center {
-  margin-top: 10px;
-  max-height: calc(100% - 10px);
+  margin-top: 0;
+  max-height: 100%;
   padding: 12px;
 }
 
@@ -384,17 +384,35 @@ body::before {
 }
 
 .app-shell.is-surface-command .surface-grid {
-  gap: 8px;
-  margin-bottom: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 12px;
 }
 
 .app-shell.is-surface-command .surface-tile {
-  gap: 4px;
-  padding: 8px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 5px 8px;
+  padding: 9px 10px;
 }
 
 .app-shell.is-surface-command .surface-tile strong {
-  font-size: 1.18rem;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  font-size: 1.28rem;
+  line-height: 1;
+}
+
+.app-shell.is-surface-command .surface-tile span,
+.app-shell.is-surface-command .surface-tile p {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell.is-surface-command .assistant-review-reply {
+  display: none;
 }
 
 .app-shell:not(.is-surface-command) > .panel:not(.is-active-panel) {
@@ -1779,6 +1797,18 @@ ol {
 .plan-surface-header .brief-path {
   margin: 0;
   font-size: 0.78rem;
+}
+
+.plan-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-current-time {
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .plan-date-controls {

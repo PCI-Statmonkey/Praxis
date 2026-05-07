@@ -15,7 +15,12 @@ import type {
 } from "../shared/chatImport";
 import type { DailyBrief, FocusReport } from "../shared/dailyBrief";
 import type { EmailSnapshot } from "../shared/emailModel";
-import { uiFontScaleCssValue } from "../shared/settingsModel";
+import {
+  DEFAULT_UI_SETTINGS,
+  formatPraxisTime,
+  uiFontScaleCssValue,
+  type UiTimeFormat,
+} from "../shared/settingsModel";
 import {
   buildPlanningDayView,
   buildScheduleReview,
@@ -266,6 +271,10 @@ export default function App() {
   const [chatImportStatus, setChatImportStatus] = useState("");
   const [serviceSnapshot, setServiceSnapshot] =
     useState<DashboardServiceSnapshot>(EMPTY_SERVICE_SNAPSHOT);
+  const [uiTimeFormat, setUiTimeFormat] = useState<UiTimeFormat>(
+    DEFAULT_UI_SETTINGS.timeFormat
+  );
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [proactiveSuggestion, setProactiveSuggestion] = useState<ProactiveSuggestion | null>(null);
   const [focusSelection, setFocusSelection] = useState("");
   const [focusReport, setFocusReport] = useState<FocusReport | null>(null);
@@ -321,6 +330,7 @@ export default function App() {
       slack: nextSlack,
       companion: nextCompanion,
     });
+    setUiTimeFormat(nextSettings.ui.timeFormat);
     await storeReportContext("daily_report", nextSnapshot, "Daily Brief", nextBrief.priorityItems);
     const nextSuggestion = buildBestProactiveSuggestion(nextSnapshot, nextBrief.priorityItems);
     setProactiveSuggestion(nextSuggestion);
@@ -388,14 +398,24 @@ export default function App() {
       "--app-font-scale",
       uiFontScaleCssValue(serviceSnapshot.settings?.ui ?? {})
     );
+    setUiTimeFormat(serviceSnapshot.settings?.ui.timeFormat ?? DEFAULT_UI_SETTINGS.timeFormat);
   }, [serviceSnapshot.settings?.ui]);
 
   useEffect(() => {
     const unsubscribe = window.praxis.settings.onUIUpdated((settings) => {
       document.documentElement.style.setProperty("--app-font-scale", uiFontScaleCssValue(settings));
+      setUiTimeFormat(settings.timeFormat);
     });
 
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const refreshCurrentTime = () => setCurrentTime(new Date());
+    refreshCurrentTime();
+    const intervalId = window.setInterval(refreshCurrentTime, 60_000);
+
+    return () => window.clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -921,6 +941,8 @@ export default function App() {
         planningDay={planningDay}
         scheduleReview={scheduleReview}
         selectedDateLabel={planningDateLabel}
+        currentTimeLabel={formatPraxisTime(currentTime, uiTimeFormat)}
+        timeFormat={uiTimeFormat}
         basePlanningDate={basePlanningDate}
         formatDateTime={formatDateTime}
         activeProjects={activePlanningProjects}

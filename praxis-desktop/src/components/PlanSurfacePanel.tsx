@@ -9,6 +9,7 @@ import type {
   TimeBlockEntityKind,
   UpdateTimeBlockInput,
 } from "../../shared/timeBlocking";
+import { formatPraxisTime, type UiTimeFormat } from "../../shared/settingsModel";
 import type { MissionRecord, ProjectRecord } from "../../shared/workModel";
 import { EmptyState } from "./EmptyState";
 
@@ -17,6 +18,8 @@ type PlanSurfacePanelProps = {
   planningDay: PlanningDayView;
   scheduleReview: ScheduleReview;
   selectedDateLabel: string;
+  currentTimeLabel: string;
+  timeFormat: UiTimeFormat;
   basePlanningDate: string;
   formatDateTime: (value: string | null) => string;
   activeProjects: ProjectRecord[];
@@ -155,8 +158,19 @@ const tagList = (items: Array<string | null | undefined>) =>
     )
   ).slice(0, 5);
 
-const blockRangeLabel = (block: PlanningTimeBlockItem, formatDateTime: (value: string) => string) =>
-  `${formatDateTime(block.startsAt)} - ${formatTimeInput(block.endsAt)}`;
+const formatPlanTime = (value: string | Date, timeFormat: UiTimeFormat) => {
+  const formatted = formatPraxisTime(value, timeFormat);
+  return formatted || formatTimeInput(String(value));
+};
+
+const formatTimelineHour = (hour: number, timeFormat: UiTimeFormat) =>
+  formatPraxisTime(new Date(2000, 0, 1, hour, 0), timeFormat);
+
+const blockRangeLabel = (
+  block: PlanningTimeBlockItem,
+  formatDateTime: (value: string) => string,
+  timeFormat: UiTimeFormat
+) => `${formatDateTime(block.startsAt)} - ${formatPlanTime(block.endsAt, timeFormat)}`;
 
 const emptyBlockForm = (targetDate: string): TimeBlockFormState => ({
   id: null,
@@ -209,6 +223,8 @@ export function PlanSurfacePanel({
   planningDay,
   scheduleReview,
   selectedDateLabel,
+  currentTimeLabel,
+  timeFormat,
   basePlanningDate,
   formatDateTime,
   activeProjects,
@@ -446,7 +462,10 @@ export function PlanSurfacePanel({
       >
         <div className="plan-surface-header">
           <div>
-            <span className="recommended-label">Plan</span>
+            <div className="plan-title-row">
+              <span className="recommended-label">Plan</span>
+              <span className="badge plan-current-time">Now {currentTimeLabel}</span>
+            </div>
             <h2>Day Plan</h2>
             <p className="brief-path">{selectedDateLabel}</p>
           </div>
@@ -517,7 +536,10 @@ export function PlanSurfacePanel({
     <section className={`panel plan-surface-panel${isActive ? " is-active-panel" : ""}`}>
       <div className="plan-surface-header">
         <div>
-          <span className="recommended-label">Plan</span>
+          <div className="plan-title-row">
+            <span className="recommended-label">Plan</span>
+            <span className="badge plan-current-time">Now {currentTimeLabel}</span>
+          </div>
           <h2>Day Plan</h2>
           <p className="brief-path">{selectedDateLabel}</p>
         </div>
@@ -787,7 +809,7 @@ export function PlanSurfacePanel({
                   <li key={gap.id} className="plan-review-item">
                     <strong>{gap.minutes} minutes open</strong>
                     <p>
-                      {formatDateTime(gap.startsAt)} - {formatTimeInput(gap.endsAt)}
+                      {formatDateTime(gap.startsAt)} - {formatPlanTime(gap.endsAt, timeFormat)}
                     </p>
                   </li>
                 ))}
@@ -855,7 +877,7 @@ export function PlanSurfacePanel({
           <div className="plan-visual-timeline" aria-label="Visual day timeline">
             <div className="plan-timeline-hours" aria-hidden="true">
               {hourMarkers.map((hour) => (
-                <span key={hour}>{hour}:00</span>
+                <span key={hour}>{formatTimelineHour(hour, timeFormat)}</span>
               ))}
             </div>
             <div className="plan-timeline-lane">
@@ -868,7 +890,7 @@ export function PlanSurfacePanel({
                     }`}
                     style={timelinePosition(item.startsAt, item.endsAt)}
                   >
-                    <span>{formatTimeInput(item.startsAt)}</span>
+                    <span>{formatPlanTime(item.startsAt, timeFormat)}</span>
                     <strong>{item.title}</strong>
                     <em>{item.source === "external" ? "locked" : item.meta}</em>
                   </div>
@@ -910,7 +932,9 @@ export function PlanSurfacePanel({
             <ol className="plan-time-list">
               {visibleLocalBlockCards.map((timeBlock) => (
                 <li key={timeBlock.id} className="plan-time-block is-local">
-                  <span className="plan-time-range">{blockRangeLabel(timeBlock, formatDateTime)}</span>
+                  <span className="plan-time-range">
+                    {blockRangeLabel(timeBlock, formatDateTime, timeFormat)}
+                  </span>
                   <strong>{timeBlock.title}</strong>
                   <span className="badge">{timeBlock.status}</span>
                   <span className="badge">{timeBlock.entityKind}</span>
