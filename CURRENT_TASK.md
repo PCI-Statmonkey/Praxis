@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue to unified calendar and time-blocking planning now that the UI font-size and Mission Control polish slice is complete. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next planning surfaces. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+Move the immediate execution queue to local time-block persistence and click-to-schedule planning interaction now that unified calendar/time-blocking Slice 1 is complete as a read-only Plan surface. AI Task Review / ADHD Reset Mode remains core PRAXIS work and its model/output slice is complete enough to support the next planning surfaces. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
 
 ## CURRENT STATE
 
@@ -74,33 +74,56 @@ Move the immediate execution queue to unified calendar and time-blocking plannin
 - Talk example/prompt card was removed.
 - Structured AI Review work references are color-badged by type where structured data exists.
 - Ana live QA passed after fresh build: font slider/live preview/reset, 114% layout, top nav, Review Inbox, Talk, Google/Outlook still connected/syncable, and no clipping or horizontal overflow.
+- Unified calendar/time-blocking Slice 1 is complete as a read-only Plan surface.
+- Shared `timeBlocking` selector contract and `TimeBlockRecord` type are in place for future local time blocks.
+- Plan surface combines current appointments, deadlines, unscheduled work/todos, and a local-only time-block placeholder.
+- Plan is wired into top nav.
+- Command mode includes a compact Plan lane to avoid overcrowding.
+- No persistence, time-block creation UI, sync behavior changes, external calendar write-back, or provider writes were added in the read-only Plan slice.
+- Ana QA passed for Plan nav/wiring, no overflow at 100% or 114%, read-only surface behavior, no save/create/publish/sync/write-back controls, and Google/Outlook remaining ready/syncable without reconnect.
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
 
 ## NEXT STEPS
 
-### 1. Plan Unified Calendar And Time Blocking
+### 1. Add Local Time Block Persistence And Click-To-Schedule Planning
 
 **GOAL**
 
-Define the unified calendar and time-blocking planning surface so PRAXIS can turn connected calendar context, deadlines, priority stack, and operator intent into a clear plan for what happens when.
+Add local-only time block persistence and a click-to-schedule planning interaction on top of the completed read-only Plan surface.
 
 **DIRECTION**
 
-- Treat Google Calendar and Outlook Calendar as connected input lanes, not separate planning experiences.
-- Preserve source identity and sync health while presenting a unified schedule.
-- Design explicit time-block creation/review paths before adding direct writes.
-- Use AI Review and priority stack context as planning inputs, not as automatic calendar mutation authority.
-- Keep conflict, pressure, travel/context, and due-date signals visible enough for Mission Control decisions.
+- Keep Google Calendar and Outlook Calendar as connected input lanes, not write targets.
+- Store new PRAXIS time blocks locally first.
+- Let the operator schedule unscheduled work/todos into local blocks through explicit planning interactions.
+- Preserve source identity, read-only provider event state, and sync health in the unified Plan view.
+- Keep provider write-back explicitly later and separate from this local planning slice.
 
 **DONE WHEN**
 
-- A safe planning surface is defined for unified calendar review and time-block proposals.
-- Calendar writes, if included later, have explicit confirmation boundaries.
-- The plan identifies required data contracts, UI surfaces, and regression coverage.
+- Local time blocks persist across app restart.
+- Click-to-schedule planning can create/review local blocks without writing to Google or Outlook.
+- Regression coverage protects local persistence, read-only provider behavior, and Plan view mapping.
 
-### 2. Continue Mission Control Follow-Up Polish
+### 2. Plan Provider Calendar Write-Back
+
+**GOAL**
+
+Keep external calendar write-back as an explicit later track after local planning behavior is proven.
+
+**DIRECTION**
+
+- Do not add Google or Outlook writes until local time blocks and confirmation UX are stable.
+- Require explicit operator confirmation before any future provider write-back.
+- Preserve auditability of source provider events versus PRAXIS-created local blocks.
+
+**DONE WHEN**
+
+- Provider write-back has a separate technical plan, confirmation model, and test strategy.
+
+### 3. Continue Mission Control Follow-Up Polish
 
 **GOAL**
 
@@ -120,7 +143,7 @@ Keep non-blocking Mission Control layout and copy issues moving behind the unifi
 - Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
 - Any AI Review launcher path preserves no-write behavior.
 
-### 3. Plan Checklist Grouping And Context-Memory Redesign
+### 4. Plan Checklist Grouping And Context-Memory Redesign
 
 **GOAL**
 
@@ -136,7 +159,7 @@ Keep checklist grouping and context-memory redesign visible as follow-up work af
 
 - The redesign has a scoped plan and does not distract from the active calendar/time-blocking work.
 
-### 4. Plan V1.1 Persistent Presence After AI Review
+### 5. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
 
@@ -161,7 +184,7 @@ Define how PRAXIS should live as a persistent Windows assistant after the AI rev
 
 - V1.1 has a follow-on persistent-presence plan that depends on the AI review context packet rather than replacing it.
 
-### 5. Keep Future Intelligence And Capture Tracks Execution-Focused
+### 6. Keep Future Intelligence And Capture Tracks Execution-Focused
 
 **GOAL**
 

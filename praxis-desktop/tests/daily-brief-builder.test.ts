@@ -1,9 +1,12 @@
 import { strict as assert } from "node:assert";
 import { buildDailyBriefFromSnapshot } from "../shared/dailyBriefBuilder";
+import { buildPlanningDayView } from "../shared/timeBlocking";
 import type {
   AppointmentRecord,
   DeadlineRecord,
+  MissionRecord,
   PersonRecord,
+  ProjectRecord,
   TodoRecord,
   WorkSnapshot,
 } from "../shared/workModel";
@@ -32,6 +35,33 @@ const person = (overrides: Partial<PersonRecord> = {}): PersonRecord => ({
   phone: null,
   billingAddress: null,
   notes: null,
+  markdownPath: null,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  ...overrides,
+});
+
+const mission = (overrides: Partial<MissionRecord> = {}): MissionRecord => ({
+  id: "mission-1",
+  slug: "launch",
+  title: "Launch Mission",
+  summary: null,
+  status: "active",
+  dueAt: null,
+  markdownPath: null,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+  ...overrides,
+});
+
+const project = (overrides: Partial<ProjectRecord> = {}): ProjectRecord => ({
+  id: "project-1",
+  missionId: "mission-1",
+  slug: "site",
+  title: "Site Project",
+  summary: null,
+  status: "active",
+  dueAt: null,
   markdownPath: null,
   createdAt: timestamp,
   updatedAt: timestamp,
@@ -206,5 +236,94 @@ const thereIsMoreBrief = buildDailyBriefFromSnapshot(
 assert.equal(thereIsMoreBrief.todos.length, 8);
 assert.equal(thereIsMoreBrief.thereIsMore, true);
 assert.deepEqual(thereIsMoreBrief.followUpTopics, ["additional todos"]);
+
+const planningDayView = buildPlanningDayView({
+  targetDate: "2026-04-24",
+  timeZone: "local",
+  appointments: [
+    appointment({
+      id: "appointment-late",
+      title: "Late review",
+      startsAt: "2026-04-24T16:00:00",
+      endsAt: "2026-04-24T16:30:00",
+      sourceSystem: "manual",
+    }),
+    appointment({
+      id: "appointment-early",
+      title: "Morning call",
+      startsAt: "2026-04-24T09:00:00",
+      endsAt: "2026-04-24T09:30:00",
+      sourceSystem: "google",
+    }),
+    appointment({
+      id: "appointment-other-day",
+      title: "Tomorrow call",
+      startsAt: "2026-04-25T09:00:00",
+    }),
+  ],
+  deadlines: [
+    deadline({
+      id: "deadline-today",
+      title: "Submit packet",
+      dueAt: "2026-04-24T17:00:00",
+    }),
+    deadline({
+      id: "deadline-complete",
+      title: "Already closed",
+      dueAt: "2026-04-24T13:00:00",
+      status: "completed",
+    }),
+    deadline({
+      id: "deadline-future",
+      title: "Future deadline",
+      dueAt: "2026-04-26T17:00:00",
+    }),
+  ],
+  todos: [
+    todo({
+      id: "todo-due",
+      title: "Prep launch checklist",
+      projectId: "project-1",
+      dueAt: "2026-04-24T15:00:00",
+    }),
+    todo({
+      id: "todo-overdue",
+      title: "Send overdue note",
+      dueAt: "2026-04-23T15:00:00",
+    }),
+    todo({
+      id: "todo-completed-planning",
+      title: "Completed planning task",
+      status: "completed",
+      dueAt: "2026-04-24T15:00:00",
+    }),
+  ],
+  projects: [project()],
+  missions: [mission()],
+  timeBlocks: [],
+});
+
+assert.equal(planningDayView.targetDate, "2026-04-24");
+assert.equal(planningDayView.timeZone, "local");
+assert.deepEqual(
+  planningDayView.scheduledAppointments.map((item) => item.title),
+  ["Morning call", "Late review"]
+);
+assert.equal(planningDayView.scheduledAppointments[0].sourceSystem, "google");
+assert.deepEqual(
+  planningDayView.deadlineMarkers.map((item) => item.title),
+  ["Submit packet"]
+);
+assert.deepEqual(
+  planningDayView.unscheduledWork.map((item) => [item.title, item.reason]),
+  [
+    ["Send overdue note", "overdue"],
+    ["Prep launch checklist", "due_today"],
+  ]
+);
+assert.equal(planningDayView.unscheduledWork[1].projectTitle, "Site Project");
+assert.equal(planningDayView.unscheduledWork[1].missionTitle, "Launch Mission");
+assert.deepEqual(planningDayView.timeBlocks, []);
+assert.deepEqual(planningDayView.conflicts, []);
 
 console.log("daily brief builder tests passed");

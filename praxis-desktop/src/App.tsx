@@ -16,6 +16,7 @@ import type {
 import type { DailyBrief, FocusReport } from "../shared/dailyBrief";
 import type { EmailSnapshot } from "../shared/emailModel";
 import { uiFontScaleCssValue } from "../shared/settingsModel";
+import { buildPlanningDayView } from "../shared/timeBlocking";
 import {
   buildBestProactiveSuggestion,
   type ProactiveSuggestion,
@@ -32,6 +33,7 @@ import {
 import { ActionMenu } from "./components/ActionMenu";
 import { MasterChecklistPanel } from "./components/MasterChecklistPanel";
 import { MemoryWriterPanel } from "./components/MemoryWriterPanel";
+import { PlanSurfacePanel } from "./components/PlanSurfacePanel";
 import { ProjectStackPanel } from "./components/ProjectStackPanel";
 import { TodayTimelinePanel } from "./components/TodayTimelinePanel";
 import {
@@ -58,7 +60,7 @@ import type {
 } from "../shared/workModel";
 
 type FocusPanelId = "projectStack" | "todayTimeline" | "morningPlan" | "masterChecklist";
-type PanelId = "command" | FocusPanelId;
+type PanelId = "command" | "plan" | FocusPanelId;
 
 type SettingsWindowTab =
   | "google"
@@ -152,6 +154,25 @@ const formatDateTime = (value: string | null) => {
   return date.toLocaleString();
 };
 
+const formatLocalDate = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(
+    date.getDate()
+  ).padStart(2, "0")}`;
+
+const formatPlanDateLabel = (value: string) => {
+  const date = new Date(`${value}T12:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 const emptyMissionForm = (): CreateMissionInput => ({
   title: "",
   summary: "",
@@ -210,7 +231,7 @@ export default function App() {
   const setFocusedPanel: Dispatch<SetStateAction<FocusPanelId>> = useCallback((nextPanel) => {
     setActivePanel((currentPanel) => {
       const currentFocusedPanel: FocusPanelId =
-        currentPanel === "command" ? "todayTimeline" : currentPanel;
+        currentPanel === "command" || currentPanel === "plan" ? "todayTimeline" : currentPanel;
       return typeof nextPanel === "function" ? nextPanel(currentFocusedPanel) : nextPanel;
     });
   }, []);
@@ -391,6 +412,10 @@ export default function App() {
       if (event.key === "4") {
         event.preventDefault();
         setActivePanel("masterChecklist");
+      }
+      if (event.key === "5") {
+        event.preventDefault();
+        setActivePanel("plan");
       }
     };
 
@@ -629,6 +654,23 @@ export default function App() {
   const reviewInboxItems = selectReviewInboxItems(emailSnapshot, chatSnapshot);
   const serviceHealthItems = selectServiceHealthItems(serviceSnapshot, formatDateTime);
   const dashboardReadiness = selectDashboardReadiness(serviceHealthItems);
+  const planningTargetDate = dailyBrief.localDate || formatLocalDate(new Date());
+  const planningDay = buildPlanningDayView({
+    targetDate: planningTargetDate,
+    appointments: snapshot.appointments,
+    deadlines: snapshot.deadlines,
+    todos: snapshot.todos,
+    projects: snapshot.projects,
+    missions: snapshot.missions,
+    timeBlocks: [],
+  });
+  const planningDateLabel = formatPlanDateLabel(planningDay.targetDate);
+  const activePlanningProjectCount = snapshot.projects.filter(
+    (project) => project.status !== "completed"
+  ).length;
+  const activePlanningMissionCount = snapshot.missions.filter(
+    (mission) => mission.status !== "completed"
+  ).length;
   const settingsTabForService = (serviceLabel: string): SettingsWindowTab | undefined => {
     switch (serviceLabel) {
       case "Google":
@@ -748,6 +790,14 @@ export default function App() {
           </button>
           <button
             type="button"
+            className={activePanel === "plan" ? "is-nav-active" : ""}
+            aria-pressed={activePanel === "plan"}
+            onClick={() => setActivePanel("plan")}
+          >
+            Plan
+          </button>
+          <button
+            type="button"
             className={activePanel === "projectStack" ? "is-nav-active" : ""}
             aria-pressed={activePanel === "projectStack"}
             onClick={() => setActivePanel("projectStack")}
@@ -803,6 +853,15 @@ export default function App() {
           </button>
         ))}
       </section>
+      <PlanSurfacePanel
+        isActive={activePanel === "command" || activePanel === "plan"}
+        planningDay={planningDay}
+        selectedDateLabel={planningDateLabel}
+        formatDateTime={formatDateTime}
+        activeProjectCount={activePlanningProjectCount}
+        activeMissionCount={activePlanningMissionCount}
+        variant={activePanel === "command" ? "compact" : "full"}
+      />
       <ProjectStackPanel
         isActive={activePanel === "command" || activePanel === "projectStack"}
         missions={snapshot.missions}

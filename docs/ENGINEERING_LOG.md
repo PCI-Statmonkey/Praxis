@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-05-07 - Read-Only Plan Surface Slice
+
+### Closed
+
+- Completed unified calendar/time-blocking Slice 1 as a read-only Plan surface.
+- Added shared `timeBlocking` selector contract and `TimeBlockRecord` type for future local time blocks.
+- Plan surface combines current appointments, deadlines, unscheduled work/todos, and a local-only time-block placeholder.
+- Plan is wired into top nav.
+- Command mode includes a compact Plan lane to avoid overcrowding.
+- No persistence, time-block creation UI, sync behavior changes, external calendar write-back, or provider writes were added.
+
+### Verification
+
+- Ana QA passed Plan nav/wiring.
+- Ana QA confirmed no overflow at 100% or 114%.
+- Ana QA verified the surface is read-only.
+- Ana QA confirmed there are no save, create, publish, sync, or write-back controls.
+- Ana QA confirmed Google/Outlook remained ready and syncable without reconnect.
+
+### Queue
+
+- Marked read-only unified Plan surface complete.
+- Set the next active time-blocking slice to local time block persistence and click-to-schedule planning interaction unless the user wants more UI polish first.
+- Kept provider write-back explicitly later.
+- Kept Slack/companion AI Review exposure and context-memory redesign open.
+
 ## 2026-05-04 - UI Font And Mission Control Polish Slice
 
 ### Closed
