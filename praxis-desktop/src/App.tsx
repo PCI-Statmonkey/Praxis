@@ -210,6 +210,7 @@ const emptyProjectForm = (): CreateProjectInput => ({
   summary: "",
   missionId: "",
   dueAt: "",
+  taskTemplateId: "none",
 });
 
 const emptyTodoForm = (): CreateTodoInput => ({

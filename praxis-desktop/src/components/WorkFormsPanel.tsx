@@ -1,4 +1,5 @@
 import type { FormEvent, ReactNode } from "react";
+import { PROJECT_TASK_TEMPLATE_OPTIONS } from "../../shared/workModel";
 import type {
   AppointmentRecord,
   CreateAppointmentInput,
@@ -10,6 +11,7 @@ import type {
   DeadlineRecord,
   MissionRecord,
   PersonRecord,
+  ProjectTaskTemplateSelection,
   ProjectRecord,
   TodoRecord,
   WorkPriority,
@@ -514,6 +516,21 @@ export function WorkCreationPanel({
           onChange={(event) => setProjectForm({ ...projectForm, summary: event.target.value })}
           placeholder="Project summary"
         />
+        <select
+          value={projectForm.taskTemplateId ?? "none"}
+          onChange={(event) =>
+            setProjectForm({
+              ...projectForm,
+              taskTemplateId: event.target.value as ProjectTaskTemplateSelection,
+            })
+          }
+        >
+          {PROJECT_TASK_TEMPLATE_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <input
           type="datetime-local"
           value={projectForm.dueAt}

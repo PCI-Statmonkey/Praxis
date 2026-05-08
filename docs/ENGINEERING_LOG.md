@@ -1,5 +1,38 @@
 # ENGINEERING LOG
 
+## 2026-05-08 - Command Plan Polish And Project Template Slice
+
+### Closed
+
+- Command/top-nav polish restored one-row desktop nav.
+- Ana partial native QA confirmed all six tabs visible at about 1360px.
+- Service pills remain below nav.
+- Plan polish made the Plan `Now` display larger and more readable.
+- Compact single-line standard/military timeline label work was implemented.
+- Provider calendar write-back remains absent.
+- Final Plan visual smoke was blocked by desktop focus, not by app crash.
+- Engineering Project template is markdown-backed at `memory/templates/project-task-templates/engineering-project.md`.
+- Project creation can seed 10 normal project-linked todos.
+- Generated todos preserve `sourceKind=project_template` and stable `sourceRef`.
+- Templates are creation-time seeds; existing projects do not auto-mutate.
+- AI template proposal/edit remains future explicit-confirmation work.
+
+### Verification
+
+- `npx tsc --noEmit` passed where reported.
+- `npm run lint` passed where reported.
+- `npm run test:assistant` passed where reported.
+- `git diff --check` passed where reported.
+- Top-nav native QA passed enough to accept the 1360px fit.
+- Direct Electron stayed alive.
+- Final Plan/template manual smoke was blocked because PRAXIS opened behind other apps and foreground automation was prohibited.
+
+### Queue
+
+- Do not treat the blocked final Plan/template manual smoke as a passed manual check.
+- Keep provider write-back later and explicit.
+- Keep AI template proposal/edit behind future explicit confirmation.
+
 ## 2026-05-07 - Command Settings Plan Time Format Slice
 
 ### Closed

@@ -1,4 +1,11 @@
 import crypto from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import {
+  buildProjectTaskTemplateTodos,
+  getProjectTaskTemplateSeed,
+  parseProjectTaskTemplateMarkdown,
+} from "../shared/workModel";
 import type {
   AppointmentRecord,
   CreateAppointmentInput,
@@ -27,6 +34,7 @@ import type {
 import {
   getPraxisDatabase,
   refreshMemoryDocumentIndex,
+  resolveMemoryRoot,
 } from "./praxisDb";
 import {
   missionMarkdownPath,
@@ -443,6 +451,21 @@ const syncSummaryMarkdown = () => {
   refreshMemoryDocumentIndex();
 };
 
+const loadProjectTaskTemplateForCreation = (templateId: CreateProjectInput["taskTemplateId"]) => {
+  const seed = getProjectTaskTemplateSeed(templateId);
+  if (!seed) {
+    return null;
+  }
+
+  const absolutePath = path.join(resolveMemoryRoot(), seed.markdownPath);
+  if (!existsSync(absolutePath)) {
+    mkdirSync(path.dirname(absolutePath), { recursive: true });
+    writeFileSync(absolutePath, seed.markdown, "utf8");
+  }
+
+  return parseProjectTaskTemplateMarkdown(readFileSync(absolutePath, "utf8"), seed.markdownPath);
+};
+
 const upsertPersonWorkLink = (
   personId: string | null,
   entityKind: "mission" | "project",
@@ -760,8 +783,11 @@ export const createProject = (input: CreateProjectInput) => {
   const db = getPraxisDatabase();
   const timestamp = nowIso();
   const slug = uniqueSlug("projects", input.title);
+  const projectId = createId("project");
+  const taskTemplate = loadProjectTaskTemplateForCreation(input.taskTemplateId);
+  const templateTodos = buildProjectTaskTemplateTodos(projectId, taskTemplate);
   const project: ProjectRecord = {
-    id: createId("project"),
+    id: projectId,
     missionId: normalizeOptional(input.missionId),
     slug,
     title: input.title.trim(),
@@ -810,6 +836,48 @@ export const createProject = (input: CreateProjectInput) => {
         "project",
         project.id
       );
+    }
+
+    if (templateTodos.length > 0) {
+      const insertTemplateTodo = db.prepare(`
+        INSERT INTO todos (
+          id,
+          project_id,
+          title,
+          status,
+          priority,
+          due_at,
+          money_related,
+          quick_action,
+          estimated_minutes,
+          waiting_on_person_id,
+          source_kind,
+          source_ref,
+          notes,
+          created_at,
+          updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const task of templateTodos) {
+        insertTemplateTodo.run(
+          createId("todo"),
+          task.projectId,
+          task.title,
+          "active",
+          task.priority ?? "normal",
+          null,
+          task.moneyRelated ? 1 : 0,
+          task.quickAction ? 1 : 0,
+          task.estimatedMinutes ?? null,
+          null,
+          task.sourceKind,
+          task.sourceRef,
+          task.notes ?? null,
+          timestamp,
+          timestamp
+        );
+      }
     }
   })();
 

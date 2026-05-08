@@ -1,11 +1,82 @@
 import { strict as assert } from "node:assert";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
 import type { AssistantContextAction } from "../shared/assistantContext";
 import { resolveAssistantContextActions } from "../shared/assistantContextResolver";
 import { buildWorkItemActions, buildWorkLookupActions } from "../shared/workLookupContext";
 import type { WorkLookupResult } from "../shared/workLookup";
-import type { WorkSnapshot } from "../shared/workModel";
+import {
+  ENGINEERING_PROJECT_TEMPLATE,
+  ENGINEERING_PROJECT_TEMPLATE_ID,
+  ENGINEERING_PROJECT_TEMPLATE_MARKDOWN_PATH,
+  PROJECT_TASK_TEMPLATE_SOURCE_KIND,
+  buildProjectTaskTemplateTodos,
+  getProjectTaskTemplateSeed,
+  parseProjectTaskTemplateMarkdown,
+  type WorkSnapshot,
+} from "../shared/workModel";
 
 const timestamp = "2026-04-25T12:00:00.000Z";
+const engineeringTemplatePath = path.resolve(
+  process.cwd(),
+  "..",
+  "memory",
+  ENGINEERING_PROJECT_TEMPLATE_MARKDOWN_PATH
+);
+assert.equal(existsSync(engineeringTemplatePath), true);
+const engineeringTemplateFromMarkdown = parseProjectTaskTemplateMarkdown(
+  readFileSync(engineeringTemplatePath, "utf8"),
+  ENGINEERING_PROJECT_TEMPLATE_MARKDOWN_PATH
+);
+
+const engineeringTemplateTodos = buildProjectTaskTemplateTodos(
+  "project-engineering",
+  engineeringTemplateFromMarkdown
+);
+
+assert.equal(ENGINEERING_PROJECT_TEMPLATE.source, "built_in");
+assert.equal(ENGINEERING_PROJECT_TEMPLATE.markdownPath, ENGINEERING_PROJECT_TEMPLATE_MARKDOWN_PATH);
+assert.equal(ENGINEERING_PROJECT_TEMPLATE.slug, ENGINEERING_PROJECT_TEMPLATE_ID);
+assert.deepEqual(getProjectTaskTemplateSeed("none"), null);
+assert.equal(
+  getProjectTaskTemplateSeed(ENGINEERING_PROJECT_TEMPLATE_ID)?.markdownPath,
+  ENGINEERING_PROJECT_TEMPLATE_MARKDOWN_PATH
+);
+assert.deepEqual(
+  parseProjectTaskTemplateMarkdown(
+    getProjectTaskTemplateSeed(ENGINEERING_PROJECT_TEMPLATE_ID)?.markdown ?? "",
+    ENGINEERING_PROJECT_TEMPLATE_MARKDOWN_PATH
+  ).items.map((item) => item.title),
+  engineeringTemplateFromMarkdown.items.map((item) => item.title)
+);
+assert.deepEqual(
+  engineeringTemplateTodos.map((todo) => todo.title),
+  [
+    "Contract",
+    "Billing initial payment",
+    "Electrical",
+    "Mechanical",
+    "Plumbing",
+    "Grease separator",
+    "Sign and seal",
+    "Sent to client",
+    "Billing final payment",
+    "Under building department review",
+  ]
+);
+assert.equal(
+  engineeringTemplateTodos.every(
+    (todo) =>
+      todo.projectId === "project-engineering" &&
+      todo.sourceKind === PROJECT_TASK_TEMPLATE_SOURCE_KIND &&
+      todo.sourceRef?.startsWith(`${ENGINEERING_PROJECT_TEMPLATE_ID}:v1:`)
+  ),
+  true
+);
+assert.equal(engineeringTemplateTodos[0].sourceRef, "engineering-project:v1:01-contract");
+assert.equal(engineeringTemplateTodos[9].sourceRef, "engineering-project:v1:10-under-building-department-review");
+assert.deepEqual(buildProjectTaskTemplateTodos("project-engineering", null), []);
+assert.deepEqual(buildProjectTaskTemplateTodos("project-engineering", { ...engineeringTemplateFromMarkdown, status: "draft" }), []);
 
 const snapshot: WorkSnapshot = {
   missions: [
