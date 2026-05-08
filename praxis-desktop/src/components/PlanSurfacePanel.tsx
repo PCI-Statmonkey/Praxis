@@ -163,8 +163,17 @@ const formatPlanTime = (value: string | Date, timeFormat: UiTimeFormat) => {
   return formatted || formatTimeInput(String(value));
 };
 
-const formatTimelineHour = (hour: number, timeFormat: UiTimeFormat) =>
-  formatPraxisTime(new Date(2000, 0, 1, hour, 0), timeFormat);
+const formatTimelineHour = (hour: number, timeFormat: UiTimeFormat) => {
+  const date = new Date(2000, 0, 1, hour, 0);
+  if (timeFormat === "standard") {
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: true,
+    }).format(date);
+  }
+
+  return formatPraxisTime(date, timeFormat);
+};
 
 const blockRangeLabel = (
   block: PlanningTimeBlockItem,
@@ -464,7 +473,10 @@ export function PlanSurfacePanel({
           <div>
             <div className="plan-title-row">
               <span className="recommended-label">Plan</span>
-              <span className="badge plan-current-time">Now {currentTimeLabel}</span>
+              <span className="plan-current-time" aria-label={`Current time ${currentTimeLabel}`}>
+                <span className="plan-current-time-label">Now</span>
+                <strong>{currentTimeLabel}</strong>
+              </span>
             </div>
             <h2>Day Plan</h2>
             <p className="brief-path">{selectedDateLabel}</p>
@@ -538,7 +550,10 @@ export function PlanSurfacePanel({
         <div>
           <div className="plan-title-row">
             <span className="recommended-label">Plan</span>
-            <span className="badge plan-current-time">Now {currentTimeLabel}</span>
+            <span className="plan-current-time" aria-label={`Current time ${currentTimeLabel}`}>
+              <span className="plan-current-time-label">Now</span>
+              <strong>{currentTimeLabel}</strong>
+            </span>
           </div>
           <h2>Day Plan</h2>
           <p className="brief-path">{selectedDateLabel}</p>
