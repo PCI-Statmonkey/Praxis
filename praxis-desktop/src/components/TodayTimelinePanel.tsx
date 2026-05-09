@@ -85,6 +85,7 @@ type TodayTimelinePanelProps = {
   dismissChatSuggestion: (suggestionId: string) => Promise<void>;
   dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  rejectProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   saveProjectTemplateProposal: (input: ProjectTemplateProposalSaveInput) => Promise<void>;
   deleteAppointment: (id: string) => Promise<void>;
@@ -134,6 +135,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       dismissChatSuggestion,
       dismissProjectTemplateProposal,
       snoozeProjectTemplateProposal,
+      rejectProjectTemplateProposal,
       neverSuggestProjectTemplateProposal,
       saveProjectTemplateProposal,
       deleteAppointment,
@@ -226,6 +228,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
             dismissChatSuggestion={dismissChatSuggestion}
             dismissProjectTemplateProposal={dismissProjectTemplateProposal}
             snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
+            rejectProjectTemplateProposal={rejectProjectTemplateProposal}
             neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
             saveProjectTemplateProposal={saveProjectTemplateProposal}
           />

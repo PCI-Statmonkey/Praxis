@@ -265,6 +265,15 @@ assert.deepEqual(
 assert.deepEqual(
   filterEligibleProjectTemplateProposals([materiallyChangedProposal], [
     stateFor({
+      status: "rejected",
+    }),
+  ]).map((proposal) => proposal.proposalFingerprint),
+  [materiallyChangedProposal.proposalFingerprint]
+);
+
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([materiallyChangedProposal], [
+    stateFor({
       fingerprint: "never-other-fingerprint",
       status: "never",
     }),

@@ -1,5 +1,27 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Project Template Reject And Creation Usability
+
+### Closed
+
+- Added `Not this template` handling for AI project template proposals through the existing proposal state pipeline.
+- Rejected proposal drafts are suppressed without using do-not-suggest-again cluster suppression.
+- Added active saved markdown project task templates to the work snapshot.
+- Project creation now uses snapshot-provided template options, so saved markdown templates can seed future project todos.
+- Existing projects remain unchanged, and no provider writes or AI/API calls were added.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Add template management for listing, editing/archiving, suppression reversal, and future revision proposals.
+
 ## 2026-05-09 - AI Project Template Proposal Save And Editor
 
 ### Closed

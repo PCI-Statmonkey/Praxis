@@ -469,6 +469,8 @@ export function WorkCreationPanel({
   createDeadline,
   createAppointment,
 }: WorkCreationPanelProps) {
+  const projectTaskTemplateOptions = snapshot.projectTaskTemplates ?? PROJECT_TASK_TEMPLATE_OPTIONS;
+
   return (
     <div className="form-stack">
       <h3>Create Records</h3>
@@ -525,7 +527,7 @@ export function WorkCreationPanel({
             })
           }
         >
-          {PROJECT_TASK_TEMPLATE_OPTIONS.map((option) => (
+          {projectTaskTemplateOptions.map((option) => (
             <option key={option.id} value={option.id}>
               {option.label}
             </option>

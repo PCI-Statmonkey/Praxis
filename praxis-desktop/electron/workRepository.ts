@@ -1,10 +1,13 @@
 import crypto from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
   buildProjectTaskTemplateTodos,
   getProjectTaskTemplateSeed,
   parseProjectTaskTemplateMarkdown,
+  PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT,
+  PROJECT_TASK_TEMPLATE_NONE,
+  PROJECT_TASK_TEMPLATES,
 } from "../shared/workModel";
 import type {
   AppointmentRecord,
@@ -23,6 +26,7 @@ import type {
   MissionRecord,
   PersonRecord,
   PersonWorkLinkRecord,
+  ProjectTaskTemplateDefinition,
   ProjectRecord,
   TodoRecord,
   UpdateWorkRecordInput,
@@ -451,19 +455,59 @@ const syncSummaryMarkdown = () => {
   refreshMemoryDocumentIndex();
 };
 
+const listMarkdownProjectTaskTemplates = () => {
+  const templateRoot = path.join(resolveMemoryRoot(), PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT);
+  if (!existsSync(templateRoot)) {
+    return [];
+  }
+
+  return readdirSync(templateRoot, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".md"))
+    .map((entry) => {
+      const relativePath = path.posix.join(PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT, entry.name);
+      const absolutePath = path.join(templateRoot, entry.name);
+      try {
+        return parseProjectTaskTemplateMarkdown(readFileSync(absolutePath, "utf8"), relativePath);
+      } catch {
+        return null;
+      }
+    })
+    .filter((template): template is ProjectTaskTemplateDefinition => Boolean(template));
+};
+
+export const listProjectTaskTemplateOptions = () => {
+  const bySlug = new Map(PROJECT_TASK_TEMPLATES.map((template) => [template.slug, template]));
+  for (const template of listMarkdownProjectTaskTemplates()) {
+    bySlug.set(template.slug, template);
+  }
+
+  return [
+    { id: PROJECT_TASK_TEMPLATE_NONE, label: "None" },
+    ...[...bySlug.values()]
+      .filter((template) => template.status === "active")
+      .sort((left, right) => left.label.localeCompare(right.label))
+      .map((template) => ({ id: template.slug, label: template.label })),
+  ];
+};
+
 const loadProjectTaskTemplateForCreation = (templateId: CreateProjectInput["taskTemplateId"]) => {
-  const seed = getProjectTaskTemplateSeed(templateId);
-  if (!seed) {
+  const normalizedTemplateId = (templateId ?? "").trim();
+  if (!normalizedTemplateId || normalizedTemplateId === PROJECT_TASK_TEMPLATE_NONE) {
     return null;
   }
 
-  const absolutePath = path.join(resolveMemoryRoot(), seed.markdownPath);
-  if (!existsSync(absolutePath)) {
-    mkdirSync(path.dirname(absolutePath), { recursive: true });
-    writeFileSync(absolutePath, seed.markdown, "utf8");
+  const seed = getProjectTaskTemplateSeed(templateId);
+  if (seed) {
+    const absolutePath = path.join(resolveMemoryRoot(), seed.markdownPath);
+    if (!existsSync(absolutePath)) {
+      mkdirSync(path.dirname(absolutePath), { recursive: true });
+      writeFileSync(absolutePath, seed.markdown, "utf8");
+    }
+
+    return parseProjectTaskTemplateMarkdown(readFileSync(absolutePath, "utf8"), seed.markdownPath);
   }
 
-  return parseProjectTaskTemplateMarkdown(readFileSync(absolutePath, "utf8"), seed.markdownPath);
+  return listMarkdownProjectTaskTemplates().find((template) => template.slug === normalizedTemplateId) ?? null;
 };
 
 const upsertPersonWorkLink = (
@@ -582,6 +626,7 @@ export const getWorkSnapshot = (): WorkSnapshot => {
     people: listPeople(),
     personWorkLinks: listPersonWorkLinks(),
     memoryDocuments: listMemoryDocuments(),
+    projectTaskTemplates: listProjectTaskTemplateOptions(),
   };
 };
 

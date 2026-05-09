@@ -313,6 +313,9 @@ declare global {
         snoozeProposal: (
           input: ProjectTemplateProposalActionInput
         ) => Promise<ProjectTemplateProposalActionResult>;
+        rejectProposal: (
+          input: ProjectTemplateProposalActionInput
+        ) => Promise<ProjectTemplateProposalActionResult>;
         neverSuggestProposal: (
           input: ProjectTemplateProposalActionInput
         ) => Promise<ProjectTemplateProposalActionResult>;

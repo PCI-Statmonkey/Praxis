@@ -44,8 +44,8 @@ Current implementation work should keep room for the agreed PRAXIS direction:
 
 ## Current AI Proposal Track
 
-The AI project template proposal detector, SQLite proposal state/filtering, Review Inbox surfacing, and explicit markdown save/editor path are complete. Accepted templates are written only after confirmation under `memory/templates/project-task-templates/`; existing projects and connected providers do not change.
+The AI project template proposal detector, SQLite proposal state/filtering, Review Inbox surfacing, explicit markdown save/editor path, `Not this template` rejection, and saved-template project creation usability are complete. Accepted templates are written only after confirmation under `memory/templates/project-task-templates/`; existing projects and connected providers do not change.
 
-The next work should add `Not this template` rejection and make saved markdown templates selectable during future project creation. Template management, template revision proposals, and applying templates to existing projects remain later follow-ups.
+The next work should add template management/reversal. Template revision proposals and applying templates to existing projects remain later follow-ups.
 
 Provider calendar write-back and persistent presence/Rainmeter remain separate later tracks.

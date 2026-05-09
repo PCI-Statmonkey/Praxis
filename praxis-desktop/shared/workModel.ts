@@ -2,7 +2,7 @@ export type WorkStatus = "active" | "blocked" | "completed" | "paused";
 
 export type WorkPriority = "low" | "normal" | "high" | "critical";
 
-export type ProjectTaskTemplateId = "engineering-project";
+export type ProjectTaskTemplateId = string;
 
 export type ProjectTaskTemplateSelection = "none" | ProjectTaskTemplateId;
 
@@ -126,6 +126,11 @@ export type MemoryDocumentSummary = {
   entityKind: string;
 };
 
+export type ProjectTaskTemplateOption = {
+  id: ProjectTaskTemplateSelection;
+  label: string;
+};
+
 export type WorkSnapshot = {
   missions: MissionRecord[];
   projects: ProjectRecord[];
@@ -135,6 +140,7 @@ export type WorkSnapshot = {
   people: PersonRecord[];
   personWorkLinks: PersonWorkLinkRecord[];
   memoryDocuments: MemoryDocumentSummary[];
+  projectTaskTemplates?: ProjectTaskTemplateOption[];
 };
 
 export type CreateMissionInput = {
@@ -326,10 +332,7 @@ source: built_in
 - [ ] Under building department review
 `;
 
-export const PROJECT_TASK_TEMPLATE_OPTIONS: Array<{
-  id: ProjectTaskTemplateSelection;
-  label: string;
-}> = [
+export const PROJECT_TASK_TEMPLATE_OPTIONS: ProjectTaskTemplateOption[] = [
   { id: PROJECT_TASK_TEMPLATE_NONE, label: "None" },
   { id: ENGINEERING_PROJECT_TEMPLATE_ID, label: "Engineering Project" },
 ];

@@ -56,6 +56,7 @@ import {
   getProjectTemplateProposalSnapshot,
   neverSuggestProjectTemplateProposalForReview,
   recordProjectTemplateProposalsShownForReview,
+  rejectProjectTemplateProposalForReview,
   saveProjectTemplateProposalForReview,
   snoozeProjectTemplateProposalForReview,
 } from './projectTemplateProposalRepository'
@@ -797,6 +798,11 @@ app.whenReady().then(() => {
     'projectTemplates:snoozeProposal',
     async (_event, input: ProjectTemplateProposalActionInput) =>
       snoozeProjectTemplateProposalForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:rejectProposal',
+    async (_event, input: ProjectTemplateProposalActionInput) =>
+      rejectProjectTemplateProposalForReview(input)
   )
   ipcMain.handle(
     'projectTemplates:neverSuggestProposal',

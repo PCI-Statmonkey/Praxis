@@ -18,6 +18,7 @@ type ReviewInboxPanelProps = {
   dismissChatSuggestion: (suggestionId: string) => Promise<void>;
   dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  rejectProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   saveProjectTemplateProposal: (input: ProjectTemplateProposalSaveInput) => Promise<void>;
 };
@@ -33,6 +34,7 @@ export function ReviewInboxPanel({
   dismissChatSuggestion,
   dismissProjectTemplateProposal,
   snoozeProjectTemplateProposal,
+  rejectProjectTemplateProposal,
   neverSuggestProjectTemplateProposal,
   saveProjectTemplateProposal,
 }: ReviewInboxPanelProps) {
@@ -219,6 +221,18 @@ export function ReviewInboxPanel({
                           }
                         >
                           Snooze 30 days
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pendingProjectTemplateProposalActionId === item.id}
+                          onClick={() =>
+                            void runProjectTemplateProposalAction(
+                              item,
+                              rejectProjectTemplateProposal
+                            )
+                          }
+                        >
+                          Not this template
                         </button>
                         <button
                           type="button"

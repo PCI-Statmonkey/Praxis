@@ -17,9 +17,10 @@ Current Review Inbox actions:
 - `Confirm save`
 - `Dismiss`
 - `Snooze 30 days`
+- `Not this template`
 - `Do not suggest this again`
 
-Confirmed saves write one markdown file under `memory/templates/project-task-templates/`, validate the markdown, refresh memory indexing, and mark proposal state as accepted with the saved slug/path. `Not this template` rejection and saved-template selection in project creation remain follow-up slices.
+Confirmed saves write one markdown file under `memory/templates/project-task-templates/`, validate the markdown, refresh memory indexing, and mark proposal state as accepted with the saved slug/path. `Not this template` rejection is wired, and active saved markdown templates are selectable in project creation for future projects.
 
 ## Surfaces
 

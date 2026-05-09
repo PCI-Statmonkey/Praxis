@@ -24,6 +24,7 @@ import {
   listProjectTemplateProposalStates,
   neverSuggestProjectTemplateProposal,
   recordProjectTemplateProposalShown,
+  rejectProjectTemplateProposal,
   snoozeProjectTemplateProposal,
 } from "./projectTemplateProposalStateRepository";
 import { getWorkSnapshot } from "./workRepository";
@@ -196,6 +197,17 @@ export const snoozeProjectTemplateProposalForReview = (
     now.toISOString()
   );
   return resultWithSnapshot("Snoozed that project template suggestion for 30 days.", now);
+};
+
+export const rejectProjectTemplateProposalForReview = (
+  input: unknown,
+  now = new Date()
+): ProjectTemplateProposalActionResult => {
+  rejectProjectTemplateProposal(currentEligibleActionTarget(input, now), now.toISOString());
+  return resultWithSnapshot(
+    "Marked that project template draft as not this template.",
+    now
+  );
 };
 
 export const neverSuggestProjectTemplateProposalForReview = (

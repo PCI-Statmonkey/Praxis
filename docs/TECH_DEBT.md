@@ -74,11 +74,12 @@
 - Likely Fix: Route write-like model suggestions into Review Inbox candidates, staged drafts, or explicit confirmation commands, with rule-based ranking as the safety net and no silent task graph mutations.
 - Related: `docs/ARCHITECTURE.md`, `praxis-desktop/electron/assistantRouter.ts`, `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/shared/assistantContextResolver.ts`
 
-### Project Template Reject And Saved Template Usability Are Missing
+### Project Template Reject And Saved Template Usability Were Missing
 
 - Priority: High
-- Impact: Template proposals can now be edited and saved as markdown after explicit confirmation, but the operator still cannot reject a specific wrong draft as `Not this template`, and saved markdown templates still need to appear in project creation choices.
-- Likely Fix: Add reject handling against proposal state, then load saved markdown templates into the project creation template selector without changing existing projects.
+- Status: Resolved in the reject/usability slice
+- Impact: Template proposals can now be rejected with `Not this template`, and active saved markdown project task templates appear in the existing project creation selector for future projects.
+- Residual Risk: Native visual QA of the new menu action and selector remains useful when the Electron window is stable.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
 ### Template Save Confirmation Flow Was Missing
@@ -92,8 +93,8 @@
 ### Template Management Is Deferred
 
 - Priority: Medium
-- Impact: Proposal editor, markdown template listing/editing, template revision proposals, and applying templates to existing projects remain later work, so accepted templates may be hard to manage without additional surfaces.
-- Likely Fix: Add template management after the initial Review Inbox and save-confirmation path, including revision proposals and explicit apply-template actions for existing projects.
+- Impact: Markdown templates can be created and used for future project creation, but there is no dedicated management surface yet for listing, editing, archiving, or reviewing suppressions.
+- Likely Fix: Add template management after the initial save/reject path, including suppression reversal, revision proposals, and explicit apply-template actions for existing projects.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
 ### Do-Not-Suggest-Again Reversal Is Undefined

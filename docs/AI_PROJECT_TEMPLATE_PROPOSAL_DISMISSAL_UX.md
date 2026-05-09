@@ -8,9 +8,9 @@ These states define how Review Inbox proposal cards defer, reject, save, or perm
 
 ## Current Implementation Status
 
-The current Review Inbox implementation supports `Edit draft`, explicit `Confirm save`, `Dismiss`, `Snooze 30 days`, and `Do not suggest this again`.
+The current Review Inbox implementation supports `Edit draft`, explicit `Confirm save`, `Dismiss`, `Snooze 30 days`, `Not this template`, and `Do not suggest this again`.
 
-`Not this template` remains future explicit-confirmation work. Saved templates are written only after `Confirm save`; existing projects and connected providers are not changed.
+Saved templates are written only after `Confirm save`; existing projects and connected providers are not changed.
 
 ## State Meanings
 

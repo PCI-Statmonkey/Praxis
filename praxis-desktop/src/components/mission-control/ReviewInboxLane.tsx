@@ -16,6 +16,7 @@ type ReviewInboxLaneProps = {
   dismissChatSuggestion: (suggestionId: string) => Promise<void>;
   dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  rejectProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   saveProjectTemplateProposal: (input: ProjectTemplateProposalSaveInput) => Promise<void>;
 };
@@ -31,6 +32,7 @@ export function ReviewInboxLane({
   dismissChatSuggestion,
   dismissProjectTemplateProposal,
   snoozeProjectTemplateProposal,
+  rejectProjectTemplateProposal,
   neverSuggestProjectTemplateProposal,
   saveProjectTemplateProposal,
 }: ReviewInboxLaneProps) {
@@ -46,6 +48,7 @@ export function ReviewInboxLane({
       dismissChatSuggestion={dismissChatSuggestion}
       dismissProjectTemplateProposal={dismissProjectTemplateProposal}
       snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
+      rejectProjectTemplateProposal={rejectProjectTemplateProposal}
       neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
       saveProjectTemplateProposal={saveProjectTemplateProposal}
     />

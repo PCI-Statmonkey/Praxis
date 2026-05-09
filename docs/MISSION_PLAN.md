@@ -142,13 +142,12 @@ Inbox item, a staged draft, or an explicit confirmation prompt before local stat
 Project-template proposals follow the same boundary. The completed detector is pure and no-write: it
 can notice that a project resembles work that should have a reusable markdown template, but detection
 alone must not create, edit, or apply a template. PRAXIS now surfaces eligible proposals in Review
-Inbox, remembers dismiss/snooze/do-not-suggest-again state, and lets the operator edit and save one
-markdown template only after explicit confirmation. Existing projects and connected providers do not
-change.
+Inbox, remembers dismiss/snooze/reject/do-not-suggest-again state, and lets the operator edit and
+save one markdown template only after explicit confirmation. Active saved markdown templates appear
+in future project creation choices. Existing projects and connected providers do not change.
 
-The next implementation slice is proposal reject handling plus saved-template usability, so wrong
-drafts can be rejected without permanent cluster suppression and saved markdown templates can become
-future project creation choices.
+The next implementation slice is template management/reversal, so saved templates and suppressions
+can be reviewed after the first creation path exists.
 
 Model direction is local-first through Ollama with a configurable local model. Optional API provider
 settings may exist later, but API use should be explicit, operator-controlled, and governed by an AI
@@ -333,7 +332,7 @@ Initial remote access design should assume access from anywhere, not only same-h
 
 ## Immediate Development Priorities
 
-1. Add `Not this template` reject handling and saved-template project creation usability
+1. Add project template management/reversal for saved templates and suppressions
 2. Wire AI draft planning through the deterministic Schedule Review source with a no-write confirmation boundary
 3. Keep provider calendar write-back explicit and later, after local planning behavior is proven
 4. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks

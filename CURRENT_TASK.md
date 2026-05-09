@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, and explicit markdown template save/editor are complete. Move the immediate execution queue to reject handling plus saved-template usability/management follow-up, while preserving the boundary that proposals do not mutate existing projects, call AI, or write to providers. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, and saved-template project creation usability are complete. Move the immediate execution queue to template management/reversal and future template revision/apply flows, while preserving the boundary that proposals do not mutate existing projects, call AI, or write to providers. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
 
 ## CURRENT STATE
 
@@ -123,34 +123,16 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, and 
 - Explicit AI project template proposal save/editor is complete: proposal drafts can be edited inline, previewed, and saved only after a separate confirmation.
 - Confirmed template saves write one markdown file under `memory/templates/project-task-templates/`, validate the markdown before and after writing, refuse slug/path collisions, refresh the memory index, and mark the proposal accepted with saved slug/path.
 - Existing projects remain unchanged, and no AI/API calls, provider writes, or external calendar writes were added by the template save/editor slice.
+- `Not this template` reject handling is complete and suppresses the wrong draft without using do-not-suggest-again.
+- Saved active markdown project task templates now appear in the existing project creation template selector and seed future project-linked todos when selected.
 
 ## NEXT STEPS
 
-### 1. Add Proposal Reject Handling And Saved Template Usability
+### 1. Add Template Management And Reversal
 
 **GOAL**
 
-Finish the operator loop around saved or wrong project template proposals.
-
-**DIRECTION**
-
-- Add the missing `Not this template` / reject path so a wrong draft can be rejected without suppressing the entire cluster forever.
-- Ensure saved markdown templates appear in future project creation template choices.
-- Keep accepted proposal state tied to saved template slug/path.
-- Do not mutate existing projects when templates change.
-- Preserve source identity for future template-created todos.
-
-**DONE WHEN**
-
-- Wrong proposal drafts can be rejected without using do-not-suggest-again.
-- Future project creation can select the saved template.
-- Rejected drafts stop repeating unless materially changed evidence creates a new proposal.
-
-### 2. Add Template Management And Reversal Later
-
-**GOAL**
-
-Make saved templates and suppressions manageable after the first save path exists.
+Make saved templates and suppressions manageable after the first save/reject path exists.
 
 **DIRECTION**
 
@@ -164,6 +146,25 @@ Make saved templates and suppressions manageable after the first save path exist
 - Saved templates and suppressed proposal patterns are visible and reversible.
 - Template revision proposals do not overwrite operator edits automatically.
 - Existing projects are changed only through a separate selected-project review flow.
+
+### 2. Wire AI Draft Planning From Schedule Review
+
+**GOAL**
+
+Turn the pure `buildAiDraftPlan` contract into a visible local-first planning surface without adding automatic writes.
+
+**DIRECTION**
+
+- Use deterministic Schedule Review as the source of truth.
+- Keep proposed blocks as staged suggestions until the operator schedules them.
+- Do not add provider calendar write-back in this slice.
+- Preserve the no-write confirmation boundary for all model-assisted planning suggestions.
+
+**DONE WHEN**
+
+- AI draft planning is visible and useful without auto-creating time blocks.
+- Deterministic fallback remains available when local model output is unavailable.
+- Provider calendars remain read-only.
 
 ### 3. Plan Provider Calendar Write-Back
 

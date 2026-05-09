@@ -128,8 +128,8 @@
 - [x] Add read-only Review Inbox UI for eligible project template proposals with dismiss, snooze, and do-not-suggest-again actions
 - [x] Add explicit markdown template save after Review Inbox confirmation
 - [x] Add proposal editor for reviewing and adjusting suggested template content before save
-- [ ] Add `Not this template` / reject handling for wrong proposal drafts
-- [ ] Make saved markdown project task templates selectable during project creation
+- [x] Add `Not this template` / reject handling for wrong proposal drafts
+- [x] Make saved markdown project task templates selectable during project creation
 - [ ] Add template revision proposals for existing markdown templates
 - [ ] Add apply-template flow for existing projects, behind explicit review and confirmation
 - [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health

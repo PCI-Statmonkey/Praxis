@@ -128,6 +128,8 @@ contextBridge.exposeInMainWorld('praxis', {
       ipcRenderer.invoke('projectTemplates:dismissProposal', input),
     snoozeProposal: (input: unknown) =>
       ipcRenderer.invoke('projectTemplates:snoozeProposal', input),
+    rejectProposal: (input: unknown) =>
+      ipcRenderer.invoke('projectTemplates:rejectProposal', input),
     neverSuggestProposal: (input: unknown) =>
       ipcRenderer.invoke('projectTemplates:neverSuggestProposal', input),
     saveProposal: (input: unknown) => ipcRenderer.invoke('projectTemplates:saveProposal', input),

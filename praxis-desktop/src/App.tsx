@@ -886,6 +886,12 @@ export default function App() {
     setStatus(result.message);
   };
 
+  const rejectProjectTemplateProposal = async (input: ProjectTemplateProposalActionInput) => {
+    const result = await window.praxis.projectTemplates.rejectProposal(input);
+    setProjectTemplateProposalSnapshot(result.snapshot);
+    setStatus(result.message);
+  };
+
   const neverSuggestProjectTemplateProposal = async (
     input: ProjectTemplateProposalActionInput
   ) => {
@@ -1098,6 +1104,7 @@ export default function App() {
         dismissChatSuggestion={dismissChatSuggestion}
         dismissProjectTemplateProposal={dismissProjectTemplateProposal}
         snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
+        rejectProjectTemplateProposal={rejectProjectTemplateProposal}
         neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
         saveProjectTemplateProposal={saveProjectTemplateProposal}
         deleteAppointment={(id) => deleteRecord("appointment", id)}
