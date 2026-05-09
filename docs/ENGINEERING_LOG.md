@@ -1,5 +1,28 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Project Task UI Polish Slice 1
+
+### Closed
+
+- Project cards now receive linked todos.
+- Project cards show task progress such as `N of total complete`.
+- Project cards show up to 3 active-first linked task preview rows.
+- Project task rows reuse existing todo complete/reactivate, edit, and delete flows.
+- `Add task` preselects the project in the existing todo creation flow.
+- Checklist behavior remains unchanged.
+- Local-only/no-provider-write boundary remains intact.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `git diff --check` passed.
+
+### QA Limitation
+
+- Ana saw Command render and no provider write-back controls, but native Electron input did not respond, so manual task progress/action QA was blocked. Do not claim full visual/manual pass.
+
 ## 2026-05-08 - Actual Duration Persistence For Local Time Blocks
 
 ### Closed

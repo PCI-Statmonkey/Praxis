@@ -1082,6 +1082,91 @@ ol {
   gap: 6px;
 }
 
+.project-task-summary {
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.project-task-summary .badge {
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+}
+
+.project-task-summary button,
+.project-task-row button {
+  padding: 6px 8px;
+  font-size: 0.72rem;
+}
+
+.project-task-preview {
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.project-task-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 8px;
+  border-color: rgba(185, 222, 219, 0.09);
+  background: rgba(6, 10, 10, 0.34);
+  box-shadow: none;
+  padding: 7px 8px;
+}
+
+.project-task-row .operator-card-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.project-task-row strong {
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.project-task-row .badge {
+  font-size: 0.66rem;
+}
+
+.project-task-row .operator-card-actions {
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.project-task-overflow {
+  font-size: 0.72rem !important;
+}
+
+.app-shell.is-surface-command .project-task-summary {
+  gap: 5px;
+}
+
+.app-shell.is-surface-command .project-task-summary button,
+.app-shell.is-surface-command .project-task-row button {
+  padding: 5px 6px;
+  font-size: 0.68rem;
+}
+
+.app-shell.is-surface-command .project-task-preview {
+  gap: 5px;
+}
+
+.app-shell.is-surface-command .project-task-row {
+  grid-template-columns: 1fr;
+  gap: 5px;
+  padding: 6px;
+}
+
+.app-shell.is-surface-command .project-task-row strong {
+  font-size: 0.78rem;
+}
+
+.app-shell.is-surface-command .project-task-row .operator-card-actions {
+  justify-content: flex-start;
+}
+
 .person-card {
   gap: 4px;
 }

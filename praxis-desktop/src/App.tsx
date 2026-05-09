@@ -705,6 +705,17 @@ export default function App() {
     </ActionMenu>
   );
 
+  const startProjectTask = (projectId: string) => {
+    const project = snapshot.projects.find((candidate) => candidate.id === projectId);
+    setTodoForm({ ...emptyTodoForm(), projectId });
+    setActivePanel("morningPlan");
+    setStatus(
+      project
+        ? `Todo form is ready for ${project.title}. Open manual create records to enter the task title.`
+        : "Todo form is ready for that project. Open manual create records to enter the task title."
+    );
+  };
+
   const createTimeBlock = async (input: CreateTimeBlockInput) => {
     const nextSnapshot = await window.praxis.timeBlocks.create(input);
     setTimeBlocks(nextSnapshot.timeBlocks);
@@ -959,14 +970,18 @@ export default function App() {
         isActive={activePanel === "command" || activePanel === "projectStack"}
         missions={snapshot.missions}
         projects={snapshot.projects}
+        todos={snapshot.todos}
         people={snapshot.people}
         openCapture={() => setActivePanel("morningPlan")}
         formatDateTime={formatDateTime}
         renderStatusActions={renderStatusActions}
         setEditingMission={setEditingMission}
         setEditingProject={setEditingProject}
+        setEditingTodo={setEditingTodo}
+        startProjectTask={startProjectTask}
         deleteMission={(id) => deleteRecord("mission", id)}
         deleteProject={(id) => deleteRecord("project", id)}
+        deleteTodo={(id) => deleteRecord("todo", id)}
       />
 
       <TodayTimelinePanel
