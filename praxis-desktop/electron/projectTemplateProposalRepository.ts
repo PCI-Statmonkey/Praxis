@@ -1,11 +1,13 @@
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
   buildProjectTemplateProposals,
   filterEligibleProjectTemplateProposals,
+  projectTemplateProposalMarkdownPathForSlug,
+  validateProjectTemplateProposalMarkdownDraft,
   type ExistingProjectTemplateMetadata,
-  type ProjectTemplateProposalActionInput,
   type ProjectTemplateProposalActionResult,
+  type ProjectTemplateProposalSaveResult,
   type ProjectTemplateProposalShownInput,
   type ProjectTemplateProposalShownResult,
   type ProjectTemplateProposalSnapshot,
@@ -15,8 +17,9 @@ import {
   PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT,
   PROJECT_TASK_TEMPLATES,
 } from "../shared/workModel";
-import { resolveMemoryRoot } from "./praxisDb";
+import { refreshMemoryDocumentIndex, resolveMemoryRoot } from "./praxisDb";
 import {
+  acceptProjectTemplateProposal,
   dismissProjectTemplateProposal,
   listProjectTemplateProposalStates,
   neverSuggestProjectTemplateProposal,
@@ -25,7 +28,7 @@ import {
 } from "./projectTemplateProposalStateRepository";
 import { getWorkSnapshot } from "./workRepository";
 
-const readTextField = (input: unknown, field: keyof ProjectTemplateProposalActionInput) => {
+const readTextField = (input: unknown, field: string) => {
   if (!input || typeof input !== "object" || !(field in input)) {
     return "";
   }
@@ -46,6 +49,14 @@ const actionTarget = (input: unknown) => {
     clusterId,
     materialChangeHash,
   };
+};
+
+const saveMarkdownField = (input: unknown) => {
+  const markdown = readTextField(input, "markdown");
+  if (!markdown) {
+    throw new Error("Project template save requires markdown.");
+  }
+  return markdown;
 };
 
 const toExistingTemplateMetadata = (
@@ -129,6 +140,30 @@ const currentEligibleActionTarget = (input: unknown, now: Date) => {
   return target;
 };
 
+const ensureTemplateSlugIsNew = (slug: string) => {
+  if (listExistingProjectTemplateMetadata().some((template) => template.slug === slug)) {
+    throw new Error("A project template with that slug already exists.");
+  }
+};
+
+const writeProjectTemplateMarkdown = (markdown: string) => {
+  const validated = validateProjectTemplateProposalMarkdownDraft(markdown);
+  ensureTemplateSlugIsNew(validated.slug);
+
+  const templateRoot = path.join(resolveMemoryRoot(), PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT);
+  mkdirSync(templateRoot, { recursive: true });
+  const absolutePath = path.join(templateRoot, `${validated.slug}.md`);
+  const expectedPath = path.join(resolveMemoryRoot(), projectTemplateProposalMarkdownPathForSlug(validated.slug));
+  if (path.resolve(absolutePath) !== path.resolve(expectedPath)) {
+    throw new Error("Project template path is outside the allowed template folder.");
+  }
+
+  writeFileSync(absolutePath, validated.markdown, { encoding: "utf8", flag: "wx" });
+  parseProjectTaskTemplateMarkdown(readFileSync(absolutePath, "utf8"), validated.path);
+  refreshMemoryDocumentIndex();
+  return validated;
+};
+
 const resultWithSnapshot = (
   message: string,
   now = new Date()
@@ -173,6 +208,32 @@ export const neverSuggestProjectTemplateProposalForReview = (
     now.toISOString()
   );
   return resultWithSnapshot("PRAXIS will not suggest that project template pattern again.", now);
+};
+
+export const saveProjectTemplateProposalForReview = (
+  input: unknown,
+  now = new Date()
+): ProjectTemplateProposalSaveResult => {
+  const target = currentEligibleActionTarget(input, now);
+  const savedTemplate = writeProjectTemplateMarkdown(saveMarkdownField(input));
+  acceptProjectTemplateProposal(
+    target,
+    {
+      slug: savedTemplate.slug,
+      path: savedTemplate.path,
+    },
+    now.toISOString()
+  );
+  return {
+    ok: true,
+    message: `Saved project template "${savedTemplate.label}".`,
+    snapshot: getProjectTemplateProposalSnapshot(now),
+    template: {
+      slug: savedTemplate.slug,
+      label: savedTemplate.label,
+      path: savedTemplate.path,
+    },
+  };
 };
 
 export const recordProjectTemplateProposalsShownForReview = (

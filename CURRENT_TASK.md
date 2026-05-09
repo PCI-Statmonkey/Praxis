@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering and read-only Review Inbox surfacing are complete. Move the immediate execution queue to the explicit markdown template save/editor slice, while preserving the boundary that proposals do not create templates, mutate projects, call AI, or write to providers unless the operator confirms a later save flow. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal save/editor work.
+AI project template proposal persistence/filtering, Review Inbox surfacing, and explicit markdown template save/editor are complete. Move the immediate execution queue to reject handling plus saved-template usability/management follow-up, while preserving the boundary that proposals do not mutate existing projects, call AI, or write to providers. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
 
 ## CURRENT STATE
 
@@ -120,29 +120,29 @@ AI project template proposal persistence/filtering and read-only Review Inbox su
 - AI project template proposal persistence/filtering is complete: schema v13 proposal-state table/indexes, repository state actions, pure eligibility filtering, shown-state helper, and regression coverage are in place without UI, markdown writes, AI calls, provider writes, or project/todo/template mutations.
 - Basic AI project template proposal Review Inbox surfacing is complete: eligible filtered proposals appear as read-only draft previews with evidence, no-write boundary copy, dismiss, snooze 30 days, and do-not-suggest-again actions.
 - Proposal snapshot reads are side-effect-free; shown-state recording is explicit and action targets are validated against currently eligible proposals before suppression writes.
-- No markdown template writes, AI/API calls, provider writes, or project/todo/template mutations were added by the Review Inbox proposal UI slice.
+- Explicit AI project template proposal save/editor is complete: proposal drafts can be edited inline, previewed, and saved only after a separate confirmation.
+- Confirmed template saves write one markdown file under `memory/templates/project-task-templates/`, validate the markdown before and after writing, refuse slug/path collisions, refresh the memory index, and mark the proposal accepted with saved slug/path.
+- Existing projects remain unchanged, and no AI/API calls, provider writes, or external calendar writes were added by the template save/editor slice.
 
 ## NEXT STEPS
 
-### 1. Add Explicit Markdown Template Save And Proposal Editor
+### 1. Add Proposal Reject Handling And Saved Template Usability
 
 **GOAL**
 
-Turn an accepted proposal into a markdown-backed project task template only after explicit operator confirmation.
+Finish the operator loop around saved or wrong project template proposals.
 
 **DIRECTION**
 
-- Build a review/editor flow for proposed markdown template content.
-- Save to `memory/templates/project-task-templates/` only after explicit confirmation.
 - Add the missing `Not this template` / reject path so a wrong draft can be rejected without suppressing the entire cluster forever.
-- Mark accepted proposals only after the save flow succeeds and records the saved template slug/path.
+- Ensure saved markdown templates appear in future project creation template choices.
+- Keep accepted proposal state tied to saved template slug/path.
 - Do not mutate existing projects when templates change.
 - Preserve source identity for future template-created todos.
 
 **DONE WHEN**
 
-- Accepted proposal markdown can be reviewed, edited, and saved intentionally.
-- Existing projects remain unchanged.
+- Wrong proposal drafts can be rejected without using do-not-suggest-again.
 - Future project creation can select the saved template.
 - Rejected drafts stop repeating unless materially changed evidence creates a new proposal.
 

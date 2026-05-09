@@ -3,8 +3,10 @@ import {
   buildProjectTemplateProposals,
   filterEligibleProjectTemplateProposals,
   normalizeProjectTemplateTaskTitle,
+  projectTemplateProposalMarkdownPathForSlug,
   projectTemplateTaskSlug,
   recordProjectTemplateProposalShownState,
+  validateProjectTemplateProposalMarkdownDraft,
   type ProjectTemplateProposalState,
 } from "../shared/projectTemplateProposals";
 import type { ProjectRecord, TodoRecord, WorkPriority, WorkStatus } from "../shared/workModel";
@@ -282,6 +284,30 @@ assert.equal(
   "templates/project-task-templates/engineering-project.md"
 );
 assert.equal(engineeringProposal.markdownDraft.includes("source: ai_proposal"), true);
+
+const validatedProposalMarkdown = validateProjectTemplateProposalMarkdownDraft(
+  engineeringProposal.markdownDraft
+);
+assert.equal(validatedProposalMarkdown.slug, "engineering-project");
+assert.equal(validatedProposalMarkdown.label, "Engineering Project");
+assert.equal(
+  validatedProposalMarkdown.path,
+  projectTemplateProposalMarkdownPathForSlug("engineering-project")
+);
+assert.equal(validatedProposalMarkdown.taskCount, 10);
+assert.equal(validatedProposalMarkdown.markdown.endsWith("\n"), true);
+
+assert.throws(
+  () => validateProjectTemplateProposalMarkdownDraft(""),
+  /cannot be blank/
+);
+assert.throws(
+  () =>
+    validateProjectTemplateProposalMarkdownDraft(
+      engineeringProposal.markdownDraft.replace("slug: engineering-project", "slug: ../escape")
+    ),
+  /lowercase letters/
+);
 
 assert.deepEqual(
   buildProjectTemplateProposals({

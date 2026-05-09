@@ -74,18 +74,19 @@
 - Likely Fix: Route write-like model suggestions into Review Inbox candidates, staged drafts, or explicit confirmation commands, with rule-based ranking as the safety net and no silent task graph mutations.
 - Related: `docs/ARCHITECTURE.md`, `praxis-desktop/electron/assistantRouter.ts`, `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/shared/assistantContextResolver.ts`
 
-### Project Template Reject And Save Handoff Are Missing
+### Project Template Reject And Saved Template Usability Are Missing
 
 - Priority: High
-- Impact: Template proposals can now appear in Review Inbox as read-only drafts with dismiss, snooze, and do-not-suggest-again actions, but the operator still cannot reject a specific wrong draft as `Not this template` or accept into an explicit markdown save/editor flow.
-- Likely Fix: Add reject handling against proposal state, then add the reviewed save/editor flow that writes markdown only after operator confirmation.
+- Impact: Template proposals can now be edited and saved as markdown after explicit confirmation, but the operator still cannot reject a specific wrong draft as `Not this template`, and saved markdown templates still need to appear in project creation choices.
+- Likely Fix: Add reject handling against proposal state, then load saved markdown templates into the project creation template selector without changing existing projects.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
-### Template Save Confirmation Flow Is Missing
+### Template Save Confirmation Flow Was Missing
 
 - Priority: High
-- Impact: Even after proposals are visible, markdown template creation needs an explicit save-confirmation path so PRAXIS does not imply or perform automatic template writes.
-- Likely Fix: Add a reviewed draft/save-confirmation flow that writes markdown templates only after operator approval and records the result in proposal state.
+- Status: Resolved in the initial save/editor slice
+- Impact: Proposal markdown can now be edited, previewed, and written only after explicit confirmation. The save path validates markdown, refuses collisions, refreshes memory indexing, and marks accepted proposal state with the saved slug/path.
+- Residual Risk: Native visual QA of the editor remains useful when the Electron window is stable.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
 ### Template Management Is Deferred

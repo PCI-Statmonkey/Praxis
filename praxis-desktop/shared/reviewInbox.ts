@@ -305,7 +305,7 @@ export const buildReviewInboxFromProjectTemplateProposals = (
     subject: proposal.proposedLabel,
     snippet: proposal.evidenceSummary,
     reason:
-      "PRAXIS noticed a repeated project checklist. Preview this read-only draft before any later save step.",
+      "PRAXIS noticed a repeated project checklist. Edit the draft if needed, then confirm before saving a markdown template.",
     recommendedDecision: "review" as const,
     recommendationReason:
       "Existing projects will not change. No connected providers will be updated.",

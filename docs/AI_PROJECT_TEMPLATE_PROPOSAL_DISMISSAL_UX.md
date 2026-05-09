@@ -4,13 +4,13 @@
 
 Project template proposals must feel review-first and easy to silence. The operator should be able to defer, reject, or permanently suppress a suggestion without worrying that PRAXIS wrote a template, changed projects, or will keep asking the same question.
 
-These states apply before Review Inbox wiring. They are UX definitions for no-write AI project template proposals.
+These states define how Review Inbox proposal cards defer, reject, save, or permanently suppress AI project template proposals.
 
 ## Current Implementation Status
 
-The first Review Inbox implementation supports `Preview draft`, `Dismiss`, `Snooze 30 days`, and `Do not suggest this again`.
+The current Review Inbox implementation supports `Edit draft`, explicit `Confirm save`, `Dismiss`, `Snooze 30 days`, and `Do not suggest this again`.
 
-`Not this template` and `Save template` remain future explicit-confirmation work. Until those slices exist, the draft preview is read-only and no markdown template is saved.
+`Not this template` remains future explicit-confirmation work. Saved templates are written only after `Confirm save`; existing projects and connected providers are not changed.
 
 ## State Meanings
 

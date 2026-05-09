@@ -162,7 +162,7 @@ assert.equal(proposalItems[0].sourceKind, "project_template_proposal");
 assert.equal(proposalItems[0].title, "Reusable project template found");
 assert.equal(
   proposalItems[0].reason,
-  "PRAXIS noticed a repeated project checklist. Preview this read-only draft before any later save step."
+  "PRAXIS noticed a repeated project checklist. Edit the draft if needed, then confirm before saving a markdown template."
 );
 assert.equal(
   proposalItems[0].recommendationReason,

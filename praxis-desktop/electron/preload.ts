@@ -130,6 +130,7 @@ contextBridge.exposeInMainWorld('praxis', {
       ipcRenderer.invoke('projectTemplates:snoozeProposal', input),
     neverSuggestProposal: (input: unknown) =>
       ipcRenderer.invoke('projectTemplates:neverSuggestProposal', input),
+    saveProposal: (input: unknown) => ipcRenderer.invoke('projectTemplates:saveProposal', input),
   },
   calendar: {
     importEvents: (input: unknown) => ipcRenderer.invoke('calendar:importEvents', input),

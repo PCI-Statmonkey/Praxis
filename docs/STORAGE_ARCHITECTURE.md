@@ -161,7 +161,7 @@ The operator still needs a readable mission document.
 ### Project Template Proposals
 
 - Primary: SQLite
-- Mirror: none before explicit template save
+- Accepted template artifact: markdown under `memory/templates/project-task-templates/`
 
 Reason:
 Proposal detection is no-write logic. SQLite stores operational proposal state after detection so
@@ -169,9 +169,10 @@ Praxis can filter eligible Review Inbox candidates, remember dismissed or stale 
 repeatedly nagging the operator. This state should stay high-level and must not store or expose raw
 provider payloads, tokens, encrypted values, `secure_secrets`, or unnecessary external identifiers.
 
-Accepted proposal state is not itself a saved template. A later explicit confirmation flow may create
-or update a markdown project template, and that markdown file is then the canonical accepted template.
-Templates seed future project creation only; they do not backfill or mutate existing projects.
+Accepted proposal state is not itself a saved template. The explicit save-confirmation flow validates
+the edited markdown, writes one canonical markdown project template, refreshes the memory index, and
+stores the saved slug/path in proposal state. Templates seed future project creation only; they do
+not backfill or mutate existing projects.
 
 ### Integration Secrets
 

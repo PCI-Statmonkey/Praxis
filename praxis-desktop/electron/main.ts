@@ -48,6 +48,7 @@ import type {
 } from '../shared/workModel'
 import type {
   ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalSaveInput,
   ProjectTemplateProposalShownInput,
 } from '../shared/projectTemplateProposals'
 import {
@@ -55,6 +56,7 @@ import {
   getProjectTemplateProposalSnapshot,
   neverSuggestProjectTemplateProposalForReview,
   recordProjectTemplateProposalsShownForReview,
+  saveProjectTemplateProposalForReview,
   snoozeProjectTemplateProposalForReview,
 } from './projectTemplateProposalRepository'
 import type {
@@ -800,6 +802,11 @@ app.whenReady().then(() => {
     'projectTemplates:neverSuggestProposal',
     async (_event, input: ProjectTemplateProposalActionInput) =>
       neverSuggestProjectTemplateProposalForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:saveProposal',
+    async (_event, input: ProjectTemplateProposalSaveInput) =>
+      saveProjectTemplateProposalForReview(input)
   )
   ipcMain.handle('calendar:getGoogleOAuthReadiness', async () => getGoogleCalendarOAuthReadiness())
   ipcMain.handle('calendar:getOutlookOAuthReadiness', async () => getOutlookCalendarOAuthReadiness())

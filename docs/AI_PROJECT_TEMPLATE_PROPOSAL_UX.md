@@ -8,16 +8,18 @@ Templates are markdown-backed creation-time seeds. Saving a template changes onl
 
 ## Current Implementation Status
 
-The first Review Inbox UI slice is intentionally read-only. It shows eligible proposals, evidence, no-write boundary copy, and a markdown draft preview. The live card action is `Preview draft`, not a save action.
+The Review Inbox UI now shows eligible proposals, evidence, boundary copy, inline markdown editing, markdown preview, and an explicit save confirmation. The live card action is `Edit draft`; no markdown is written until `Confirm save`.
 
 Current Review Inbox actions:
 
-- `Preview draft`
+- `Edit draft`
+- `Save template`
+- `Confirm save`
 - `Dismiss`
 - `Snooze 30 days`
 - `Do not suggest this again`
 
-The proposal editor, `Not this template` rejection action, accepted handoff, and markdown template save flow remain future explicit-confirmation slices.
+Confirmed saves write one markdown file under `memory/templates/project-task-templates/`, validate the markdown, refresh memory indexing, and mark proposal state as accepted with the saved slug/path. `Not this template` rejection and saved-template selection in project creation remain follow-up slices.
 
 ## Surfaces
 

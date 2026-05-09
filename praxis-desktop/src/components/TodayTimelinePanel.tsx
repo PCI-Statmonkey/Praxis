@@ -1,7 +1,10 @@
 import { forwardRef, type Dispatch, type SetStateAction, type ReactNode } from "react";
 import type { AppointmentReport } from "../../shared/appointmentReport";
 import type { DailyBrief, FocusReport } from "../../shared/dailyBrief";
-import type { ProjectTemplateProposalActionInput } from "../../shared/projectTemplateProposals";
+import type {
+  ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalSaveInput,
+} from "../../shared/projectTemplateProposals";
 import type { ProactiveSuggestion } from "../../shared/proactiveSuggestion";
 import type { ReviewInboxItem } from "../../shared/reviewInbox";
 import type {
@@ -83,6 +86,7 @@ type TodayTimelinePanelProps = {
   dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  saveProjectTemplateProposal: (input: ProjectTemplateProposalSaveInput) => Promise<void>;
   deleteAppointment: (id: string) => Promise<void>;
   deleteDeadline: (id: string) => Promise<void>;
 };
@@ -131,6 +135,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       dismissProjectTemplateProposal,
       snoozeProjectTemplateProposal,
       neverSuggestProjectTemplateProposal,
+      saveProjectTemplateProposal,
       deleteAppointment,
       deleteDeadline,
     },
@@ -222,6 +227,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
             dismissProjectTemplateProposal={dismissProjectTemplateProposal}
             snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
             neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
+            saveProjectTemplateProposal={saveProjectTemplateProposal}
           />
 
           <ServiceHealthLane serviceHealthItems={serviceHealthItems} />

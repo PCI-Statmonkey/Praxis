@@ -1403,6 +1403,24 @@ ol {
   overflow-wrap: anywhere;
 }
 
+.project-template-draft-editor {
+  min-height: 220px;
+  max-height: 380px;
+  margin-top: 8px;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.project-template-save-actions {
+  margin-top: 10px;
+}
+
+.project-template-save-confirmation {
+  margin-top: 10px;
+}
+
 .assistant-presence-card {
   display: grid;
   grid-template-columns: 58px 1fr;

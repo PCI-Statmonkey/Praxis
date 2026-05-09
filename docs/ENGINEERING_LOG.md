@@ -1,5 +1,26 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - AI Project Template Proposal Save And Editor
+
+### Closed
+
+- Added inline Review Inbox editing for AI project template proposal markdown drafts.
+- Added a separate confirmation step before saving a proposed template.
+- Added a confirmed save IPC path that validates markdown before writing, writes one file under `memory/templates/project-task-templates/`, reparses the saved file, refreshes the memory document index, and marks the proposal accepted with saved slug/path.
+- Refused existing template slug/path collisions instead of overwriting markdown.
+- Preserved the write boundary: existing projects do not change, providers are not written, and no AI/API call is made by the save path.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run test:assistant` passed.
+
+### Follow-Up
+
+- Add `Not this template` / reject handling.
+- Make saved markdown templates selectable in project creation.
+- Native Review Inbox editor visual QA remains useful when the Electron window is stable.
+
 ## 2026-05-09 - AI Project Template Proposal Review Inbox UI
 
 ### Closed

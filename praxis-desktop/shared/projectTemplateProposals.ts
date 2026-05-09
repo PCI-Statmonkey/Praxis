@@ -1,4 +1,9 @@
-import type { ProjectRecord, TodoRecord } from "./workModel";
+import {
+  parseProjectTaskTemplateMarkdown,
+  PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT,
+  type ProjectRecord,
+  type TodoRecord,
+} from "./workModel";
 
 export type ExistingProjectTemplateMetadata = {
   slug: string;
@@ -80,6 +85,10 @@ export type ProjectTemplateProposalActionInput = {
   materialChangeHash: string;
 };
 
+export type ProjectTemplateProposalSaveInput = ProjectTemplateProposalActionInput & {
+  markdown: string;
+};
+
 export type ProjectTemplateProposalShownInput = {
   proposals: ProjectTemplateProposalActionInput[];
 };
@@ -93,6 +102,14 @@ export type ProjectTemplateProposalActionResult = {
   ok: true;
   message: string;
   snapshot: ProjectTemplateProposalSnapshot;
+};
+
+export type ProjectTemplateProposalSaveResult = ProjectTemplateProposalActionResult & {
+  template: {
+    slug: string;
+    label: string;
+    path: string;
+  };
 };
 
 export type ProjectTemplateProposalFilterOptions = {
@@ -125,6 +142,7 @@ const DEFAULT_MIN_SIMILAR_PROJECTS = 3;
 const DEFAULT_MIN_RECURRING_TASKS = 5;
 const DEFAULT_MIN_PROJECT_OVERLAP = 0.6;
 const DEFAULT_DISMISSED_COOLDOWN_DAYS = 30;
+const MAX_PROJECT_TEMPLATE_PROPOSAL_MARKDOWN_LENGTH = 50_000;
 
 const titleStopWords = new Set(["a", "an", "the"]);
 
@@ -138,6 +156,8 @@ const projectTemplateProposalStateStatuses = new Set<ProjectTemplateProposalStat
   "accepted",
   "never",
 ]);
+
+const projectTemplateSlugPattern = /^[a-z0-9](?:[a-z0-9-]{0,78}[a-z0-9])?$/;
 
 const toTitleCase = (value: string) =>
   value
@@ -425,6 +445,37 @@ const markdownForProposal = (
   ...evidence.map((item) => `- [ ] ${item.title}`),
   "",
 ].join("\n");
+
+export const projectTemplateProposalMarkdownPathForSlug = (slug: string) =>
+  `${PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT}/${slug}.md`;
+
+export const validateProjectTemplateProposalMarkdownDraft = (markdown: string) => {
+  const trimmedMarkdown = markdown.trim();
+  if (!trimmedMarkdown) {
+    throw new Error("Project template markdown cannot be blank.");
+  }
+  if (trimmedMarkdown.length > MAX_PROJECT_TEMPLATE_PROPOSAL_MARKDOWN_LENGTH) {
+    throw new Error("Project template markdown is too large.");
+  }
+
+  const parsedWithPlaceholder = parseProjectTaskTemplateMarkdown(
+    `${trimmedMarkdown}\n`,
+    `${PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT}/draft.md`
+  );
+  if (!projectTemplateSlugPattern.test(parsedWithPlaceholder.slug)) {
+    throw new Error("Project template slug must use lowercase letters, numbers, and hyphens.");
+  }
+
+  const markdownPath = projectTemplateProposalMarkdownPathForSlug(parsedWithPlaceholder.slug);
+  const parsed = parseProjectTaskTemplateMarkdown(`${trimmedMarkdown}\n`, markdownPath);
+  return {
+    markdown: `${trimmedMarkdown}\n`,
+    slug: parsed.slug,
+    label: parsed.label,
+    path: markdownPath,
+    taskCount: parsed.items.length,
+  };
+};
 
 export const buildProjectTemplateProposals = ({
   projects,

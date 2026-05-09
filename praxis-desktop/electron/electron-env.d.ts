@@ -91,6 +91,8 @@ import type {
 import type {
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalActionResult,
+  ProjectTemplateProposalSaveInput,
+  ProjectTemplateProposalSaveResult,
   ProjectTemplateProposalShownInput,
   ProjectTemplateProposalShownResult,
   ProjectTemplateProposalSnapshot,
@@ -314,6 +316,9 @@ declare global {
         neverSuggestProposal: (
           input: ProjectTemplateProposalActionInput
         ) => Promise<ProjectTemplateProposalActionResult>;
+        saveProposal: (
+          input: ProjectTemplateProposalSaveInput
+        ) => Promise<ProjectTemplateProposalSaveResult>;
       };
       calendar: {
         importEvents: (input: ImportCalendarEventsInput) => Promise<CalendarImportResult>;

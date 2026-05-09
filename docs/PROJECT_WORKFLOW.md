@@ -44,8 +44,8 @@ Current implementation work should keep room for the agreed PRAXIS direction:
 
 ## Current AI Proposal Track
 
-The AI project template proposal detector is complete as a pure/no-write detector. The next work should add SQLite proposal state and filtering before UI, so accepted, dismissed, snoozed, and do-not-suggest-again choices prevent repeat nags.
+The AI project template proposal detector, SQLite proposal state/filtering, Review Inbox surfacing, and explicit markdown save/editor path are complete. Accepted templates are written only after confirmation under `memory/templates/project-task-templates/`; existing projects and connected providers do not change.
 
-Review Inbox UI comes after persistence. Explicit markdown template save comes after the Review Inbox confirmation path. Proposal editing, template management, template revision proposals, and applying templates to existing projects remain later follow-ups.
+The next work should add `Not this template` rejection and make saved markdown templates selectable during future project creation. Template management, template revision proposals, and applying templates to existing projects remain later follow-ups.
 
 Provider calendar write-back and persistent presence/Rainmeter remain separate later tracks.

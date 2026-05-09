@@ -12,9 +12,11 @@ No markdown template file should be written by the proposal detector or by Revie
 
 ## Current Implementation Status
 
-The persistence slice and first Review Inbox display slice are complete. The live Review Inbox path uses a side-effect-free proposal snapshot read, records shown state through an explicit display path, and validates dismiss/snooze/do-not-suggest-again actions against currently eligible proposals before writing suppression state.
+The persistence slice, Review Inbox display slice, and explicit markdown save/editor slice are complete. The live Review Inbox path uses a side-effect-free proposal snapshot read, records shown state through an explicit display path, and validates dismiss/snooze/do-not-suggest-again/save actions against currently eligible proposals before writing proposal state.
 
-Reject / `Not this template`, accepted handoff, and markdown template save remain future slices.
+Confirmed saves validate the edited markdown, write one markdown file under `memory/templates/project-task-templates/`, refresh memory indexing, and populate `accepted_template_slug` plus `accepted_template_path`.
+
+Reject / `Not this template` remains a future slice.
 
 ## Minimal Schema
 
@@ -72,7 +74,7 @@ The app should validate statuses in repository code rather than trusting raw str
 - `later`
 - `other`
 
-`accepted_template_slug` and `accepted_template_path` are populated only after the save-confirmation slice writes the markdown template. The persistence slice can reserve the fields without writing markdown.
+`accepted_template_slug` and `accepted_template_path` are populated only after the save-confirmation path writes the markdown template.
 
 ## Filtering Detector Output
 

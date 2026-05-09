@@ -1,5 +1,8 @@
 import { useState } from "react";
-import type { ProjectTemplateProposalActionInput } from "../../shared/projectTemplateProposals";
+import type {
+  ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalSaveInput,
+} from "../../shared/projectTemplateProposals";
 import type { ReviewInboxItem } from "../../shared/reviewInbox";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
@@ -16,6 +19,7 @@ type ReviewInboxPanelProps = {
   dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  saveProjectTemplateProposal: (input: ProjectTemplateProposalSaveInput) => Promise<void>;
 };
 
 export function ReviewInboxPanel({
@@ -30,11 +34,19 @@ export function ReviewInboxPanel({
   dismissProjectTemplateProposal,
   snoozeProjectTemplateProposal,
   neverSuggestProjectTemplateProposal,
+  saveProjectTemplateProposal,
 }: ReviewInboxPanelProps) {
   const [openProjectTemplateProposalId, setOpenProjectTemplateProposalId] =
     useState<string | null>(null);
   const [pendingProjectTemplateProposalActionId, setPendingProjectTemplateProposalActionId] =
     useState<string | null>(null);
+  const [projectTemplateProposalDrafts, setProjectTemplateProposalDrafts] = useState<
+    Record<string, string>
+  >({});
+  const [
+    confirmingProjectTemplateProposalSaveId,
+    setConfirmingProjectTemplateProposalSaveId,
+  ] = useState<string | null>(null);
   const isActionableSource = (sourceKind: ReviewInboxItem["sourceKind"]) =>
     sourceKind === "email" || sourceKind === "chat_import";
   const isProjectTemplateProposal = (item: ReviewInboxItem) =>
@@ -65,6 +77,17 @@ export function ReviewInboxPanel({
           materialChangeHash: item.projectTemplateProposal.materialChangeHash,
         }
       : null;
+  const proposalDraftFor = (item: ReviewInboxItem) =>
+    projectTemplateProposalDrafts[item.id] ??
+    item.projectTemplateProposal?.markdownDraft ??
+    "";
+  const updateProposalDraft = (item: ReviewInboxItem, markdown: string) => {
+    setProjectTemplateProposalDrafts((currentDrafts) => ({
+      ...currentDrafts,
+      [item.id]: markdown,
+    }));
+    setConfirmingProjectTemplateProposalSaveId(null);
+  };
   const runProjectTemplateProposalAction = async (
     item: ReviewInboxItem,
     action: (input: ProjectTemplateProposalActionInput) => Promise<void>
@@ -76,6 +99,28 @@ export function ReviewInboxPanel({
     setPendingProjectTemplateProposalActionId(item.id);
     try {
       await action(input);
+    } finally {
+      setPendingProjectTemplateProposalActionId(null);
+    }
+  };
+  const runProjectTemplateProposalSave = async (item: ReviewInboxItem) => {
+    const input = proposalActionInput(item);
+    if (!input) {
+      return;
+    }
+    setPendingProjectTemplateProposalActionId(item.id);
+    try {
+      await saveProjectTemplateProposal({
+        ...input,
+        markdown: proposalDraftFor(item),
+      });
+      setProjectTemplateProposalDrafts((currentDrafts) => {
+        const nextDrafts = { ...currentDrafts };
+        delete nextDrafts[item.id];
+        return nextDrafts;
+      });
+      setConfirmingProjectTemplateProposalSaveId(null);
+      setOpenProjectTemplateProposalId(null);
     } finally {
       setPendingProjectTemplateProposalActionId(null);
     }
@@ -149,7 +194,7 @@ export function ReviewInboxPanel({
                             )
                           }
                         >
-                          Preview draft
+                          Edit draft
                         </button>
                         <button
                           type="button"
@@ -231,12 +276,64 @@ export function ReviewInboxPanel({
                     {openProjectTemplateProposalId === item.id ? (
                       <>
                         <p>
-                          Read-only draft. Saving and editing templates will be handled by a later
-                          explicit-confirmation slice.
+                          Edit the markdown if needed. Nothing is written until you confirm save.
                         </p>
+                        <textarea
+                          className="project-template-draft-editor"
+                          value={proposalDraftFor(item)}
+                          onChange={(event) => updateProposalDraft(item, event.target.value)}
+                        />
                         <pre className="project-template-draft-preview">
-                          {item.projectTemplateProposal.markdownDraft}
+                          {proposalDraftFor(item)}
                         </pre>
+                        <div className="capture-confirmation-actions project-template-save-actions">
+                          <button
+                            type="button"
+                            disabled={pendingProjectTemplateProposalActionId === item.id}
+                            onClick={() =>
+                              setConfirmingProjectTemplateProposalSaveId(item.id)
+                            }
+                          >
+                            Save template
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setProjectTemplateProposalDrafts((currentDrafts) => {
+                                const nextDrafts = { ...currentDrafts };
+                                delete nextDrafts[item.id];
+                                return nextDrafts;
+                              });
+                              setConfirmingProjectTemplateProposalSaveId(null);
+                            }}
+                          >
+                            Reset draft
+                          </button>
+                        </div>
+                        {confirmingProjectTemplateProposalSaveId === item.id ? (
+                          <div className="capture-confirmation project-template-save-confirmation">
+                            <p>
+                              Confirm save writes one markdown template file under memory templates.
+                              Existing projects and connected providers will not change.
+                            </p>
+                            <div className="capture-confirmation-actions">
+                              <button
+                                type="button"
+                                disabled={pendingProjectTemplateProposalActionId === item.id}
+                                onClick={() => void runProjectTemplateProposalSave(item)}
+                              >
+                                Confirm save
+                              </button>
+                              <button
+                                type="button"
+                                disabled={pendingProjectTemplateProposalActionId === item.id}
+                                onClick={() => setConfirmingProjectTemplateProposalSaveId(null)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : null}
                       </>
                     ) : null}
                   </div>

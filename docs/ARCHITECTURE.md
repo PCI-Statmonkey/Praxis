@@ -160,12 +160,12 @@ operator-controlled, and governed by an AI reliance policy. The policy is:
 
 AI project template discovery is a staged architecture, not a direct write path.
 
-The required boundary is:
+The implemented boundary is:
 
 1. Pure detector
 2. Proposal state and filtering service
 3. Review Inbox UI
-4. Explicit accepted-template markdown save
+4. Explicit markdown editor and save confirmation
 
 The detector is pure, deterministic, and no-write. It may inspect local structured context and return
 candidate project-template proposals, but it must not insert database rows, write markdown, create
@@ -180,9 +180,10 @@ The Review Inbox should receive only proposals that pass the service's eligibili
 provider payloads, tokens, encrypted values, `secure_secrets`, and unnecessary external identifiers
 must not be exposed through proposal packets or review UI surfaces.
 
-Accepting a proposal in Review Inbox should not immediately write markdown. Accepted proposals become
-eligible for a later explicit confirmation slice that saves a canonical markdown project template.
-Until that confirmation happens, the accepted state remains proposal state, not a durable template.
+Opening or editing a proposal in Review Inbox does not write markdown. Only the explicit save
+confirmation path validates the edited markdown, writes one file under
+`memory/templates/project-task-templates/`, refreshes the memory index, and marks proposal state as
+accepted with the saved template slug/path.
 
 Saved project templates are creation-time seeds. They may help initialize future projects, but
 existing projects do not auto-mutate when a template is added, accepted, edited, or removed.

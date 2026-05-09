@@ -1,5 +1,8 @@
 import type { ReviewInboxItem } from "../../../shared/reviewInbox";
-import type { ProjectTemplateProposalActionInput } from "../../../shared/projectTemplateProposals";
+import type {
+  ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalSaveInput,
+} from "../../../shared/projectTemplateProposals";
 import { ReviewInboxPanel } from "../ReviewInboxPanel";
 
 type ReviewInboxLaneProps = {
@@ -14,6 +17,7 @@ type ReviewInboxLaneProps = {
   dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
   neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  saveProjectTemplateProposal: (input: ProjectTemplateProposalSaveInput) => Promise<void>;
 };
 
 export function ReviewInboxLane({
@@ -28,6 +32,7 @@ export function ReviewInboxLane({
   dismissProjectTemplateProposal,
   snoozeProjectTemplateProposal,
   neverSuggestProjectTemplateProposal,
+  saveProjectTemplateProposal,
 }: ReviewInboxLaneProps) {
   return (
     <ReviewInboxPanel
@@ -42,6 +47,7 @@ export function ReviewInboxLane({
       dismissProjectTemplateProposal={dismissProjectTemplateProposal}
       snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
       neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
+      saveProjectTemplateProposal={saveProjectTemplateProposal}
     />
   );
 }

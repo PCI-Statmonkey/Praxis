@@ -23,6 +23,7 @@ import {
 } from "../shared/settingsModel";
 import type {
   ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalSaveInput,
   ProjectTemplateProposalSnapshot,
 } from "../shared/projectTemplateProposals";
 import {
@@ -893,6 +894,12 @@ export default function App() {
     setStatus(result.message);
   };
 
+  const saveProjectTemplateProposal = async (input: ProjectTemplateProposalSaveInput) => {
+    const result = await window.praxis.projectTemplates.saveProposal(input);
+    setProjectTemplateProposalSnapshot(result.snapshot);
+    setStatus(`${result.message} Saved to ${result.template.path}.`);
+  };
+
   const importManualChatSnippet = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const conversationTitle = manualChatImportForm.conversationTitle.trim();
@@ -1092,6 +1099,7 @@ export default function App() {
         dismissProjectTemplateProposal={dismissProjectTemplateProposal}
         snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
         neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
+        saveProjectTemplateProposal={saveProjectTemplateProposal}
         deleteAppointment={(id) => deleteRecord("appointment", id)}
         deleteDeadline={(id) => deleteRecord("deadline", id)}
       />
