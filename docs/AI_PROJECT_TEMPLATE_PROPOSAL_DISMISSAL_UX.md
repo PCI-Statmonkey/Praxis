@@ -6,6 +6,12 @@ Project template proposals must feel review-first and easy to silence. The opera
 
 These states apply before Review Inbox wiring. They are UX definitions for no-write AI project template proposals.
 
+## Current Implementation Status
+
+The first Review Inbox implementation supports `Preview draft`, `Dismiss`, `Snooze 30 days`, and `Do not suggest this again`.
+
+`Not this template` and `Save template` remain future explicit-confirmation work. Until those slices exist, the draft preview is read-only and no markdown template is saved.
+
 ## State Meanings
 
 ### Dismiss
@@ -268,4 +274,3 @@ Each proposal needs enough state to avoid nagging:
 - `acceptedTemplateVersion`
 
 Use local PRAXIS ids and normalized task slugs. Do not store or display raw provider payloads, tokens, encrypted values, `secure_secrets`, or full imported message bodies.
-

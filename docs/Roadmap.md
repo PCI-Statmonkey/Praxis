@@ -125,9 +125,10 @@
 - [x] Add pure/no-write AI project template proposal detector for identifying projects that may benefit from reusable templates
 - [x] Document persistence and anti-nagging plan for project template proposals
 - [x] Add SQLite proposal state and filtering so accepted, dismissed, snoozed, and do-not-suggest-again choices suppress repeat nags before any Review Inbox UI work
-- [ ] Add Review Inbox UI for project template proposals after proposal state exists
+- [x] Add read-only Review Inbox UI for eligible project template proposals with dismiss, snooze, and do-not-suggest-again actions
 - [ ] Add explicit markdown template save after Review Inbox confirmation
 - [ ] Add proposal editor for reviewing and adjusting suggested template content before save
+- [ ] Add `Not this template` / reject handling for wrong proposal drafts
 - [ ] Add template revision proposals for existing markdown templates
 - [ ] Add apply-template flow for existing projects, behind explicit review and confirmation
 - [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health

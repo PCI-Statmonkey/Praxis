@@ -70,6 +70,31 @@ export type ProjectTemplateProposalState = {
   updatedAt: string;
 };
 
+export type ProjectTemplateProposalSnapshot = {
+  proposals: ProjectTemplateProposal[];
+};
+
+export type ProjectTemplateProposalActionInput = {
+  fingerprint: string;
+  clusterId: string;
+  materialChangeHash: string;
+};
+
+export type ProjectTemplateProposalShownInput = {
+  proposals: ProjectTemplateProposalActionInput[];
+};
+
+export type ProjectTemplateProposalShownResult = {
+  ok: true;
+  shownCount: number;
+};
+
+export type ProjectTemplateProposalActionResult = {
+  ok: true;
+  message: string;
+  snapshot: ProjectTemplateProposalSnapshot;
+};
+
 export type ProjectTemplateProposalFilterOptions = {
   now?: string | Date;
   dismissedCooldownDays?: number;
@@ -549,21 +574,13 @@ export const recordProjectTemplateProposalShownState = ({
   fingerprint: proposal.proposalFingerprint,
   clusterId: proposal.clusterId,
   materialChangeHash: proposal.materialChangeHash,
-  status:
-    existingState &&
-    (existingState.status === "dismissed" ||
-      existingState.status === "rejected" ||
-      existingState.status === "snoozed" ||
-      existingState.status === "accepted" ||
-      existingState.status === "never")
-      ? existingState.status
-      : "draft",
+  status: existingState?.status === "never" ? "never" : "draft",
   shownCount: (existingState?.shownCount ?? 0) + 1,
   lastShownAt: shownAt,
-  dismissalReason: existingState?.dismissalReason ?? null,
-  snoozeUntil: existingState?.snoozeUntil ?? null,
-  acceptedTemplateSlug: existingState?.acceptedTemplateSlug ?? null,
-  acceptedTemplatePath: existingState?.acceptedTemplatePath ?? null,
+  dismissalReason: existingState?.status === "never" ? existingState.dismissalReason : null,
+  snoozeUntil: null,
+  acceptedTemplateSlug: null,
+  acceptedTemplatePath: null,
   createdAt: existingState?.createdAt ?? shownAt,
   updatedAt: shownAt,
 });

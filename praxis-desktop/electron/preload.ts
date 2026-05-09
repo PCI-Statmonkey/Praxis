@@ -121,6 +121,16 @@ contextBridge.exposeInMainWorld('praxis', {
     archiveSuggestion: (input: unknown) => ipcRenderer.invoke('chat:archiveSuggestion', input),
     dismissSuggestion: (input: unknown) => ipcRenderer.invoke('chat:dismissSuggestion', input),
   },
+  projectTemplates: {
+    getProposalSnapshot: () => ipcRenderer.invoke('projectTemplates:getProposalSnapshot'),
+    recordShown: (input: unknown) => ipcRenderer.invoke('projectTemplates:recordShown', input),
+    dismissProposal: (input: unknown) =>
+      ipcRenderer.invoke('projectTemplates:dismissProposal', input),
+    snoozeProposal: (input: unknown) =>
+      ipcRenderer.invoke('projectTemplates:snoozeProposal', input),
+    neverSuggestProposal: (input: unknown) =>
+      ipcRenderer.invoke('projectTemplates:neverSuggestProposal', input),
+  },
   calendar: {
     importEvents: (input: unknown) => ipcRenderer.invoke('calendar:importEvents', input),
     getGoogleOAuthReadiness: () => ipcRenderer.invoke('calendar:getGoogleOAuthReadiness'),

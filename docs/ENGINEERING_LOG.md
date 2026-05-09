@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - AI Project Template Proposal Review Inbox UI
+
+### Closed
+
+- Added read-only Review Inbox surfacing for eligible AI project template proposals.
+- Proposal cards show evidence, matched projects, task overlap, no-write boundary copy, and a read-only markdown draft preview.
+- Wired proposal actions for dismiss, snooze 30 days, and do-not-suggest-again through persisted proposal state.
+- Kept snapshot reads side-effect-free and moved shown-state recording to an explicit display path.
+- Added runtime proposal-action validation against currently eligible proposals before suppression writes.
+- Preserved the no-write proposal boundary: no markdown template writes, AI calls, provider writes, or project/todo/template mutations.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed after one transient Windows/Dropbox `EBUSY` retry on the assistant test build directory.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Add `Not this template` / reject handling.
+- Add the explicit proposal editor and markdown template save-confirmation flow.
+- Native Review Inbox visual QA remains useful when the Electron window is stable.
+
 ## 2026-05-09 - AI Project Template Proposal Persistence And Filtering
 
 ### Closed
@@ -7,7 +31,7 @@
 - Added SQLite schema v13 proposal-state table and cluster/status indexes.
 - Added proposal state repository actions for listing, recording shown state, dismissing, rejecting, snoozing, marking never/do-not-suggest-again, and accepting with optional template slug/path.
 - Added pure eligibility filtering against persisted proposal state, including dismissed cooldown, snoozed cluster suppression, exact rejected/accepted suppression, cluster-level never suppression, and material-change reappearance.
-- Added shown-state helper behavior for draft insertion, shown-count incrementing, and last-shown timestamp updates while preserving terminal states.
+- Added shown-state helper behavior for draft insertion, shown-count incrementing, last-shown timestamp updates, and resurfacing dismissed/snoozed proposals as drafts when they become eligible again.
 - Preserved the no-write proposal boundary: no Review Inbox UI, markdown writes, AI calls, provider writes, or project/todo/template mutations.
 
 ### Verification

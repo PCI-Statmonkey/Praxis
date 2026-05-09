@@ -89,6 +89,13 @@ import type {
   ImportChatConversationResult,
 } from "../shared/chatImport";
 import type {
+  ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalActionResult,
+  ProjectTemplateProposalShownInput,
+  ProjectTemplateProposalShownResult,
+  ProjectTemplateProposalSnapshot,
+} from "../shared/projectTemplateProposals";
+import type {
   CalendarConnectionRecord,
   CheckOllamaModelAvailabilityInput,
   CreateCalendarConnectionInput,
@@ -292,6 +299,21 @@ declare global {
         dismissSuggestion: (
           input: DismissChatSuggestionInput
         ) => Promise<DismissChatSuggestionResult>;
+      };
+      projectTemplates: {
+        getProposalSnapshot: () => Promise<ProjectTemplateProposalSnapshot>;
+        recordShown: (
+          input: ProjectTemplateProposalShownInput
+        ) => Promise<ProjectTemplateProposalShownResult>;
+        dismissProposal: (
+          input: ProjectTemplateProposalActionInput
+        ) => Promise<ProjectTemplateProposalActionResult>;
+        snoozeProposal: (
+          input: ProjectTemplateProposalActionInput
+        ) => Promise<ProjectTemplateProposalActionResult>;
+        neverSuggestProposal: (
+          input: ProjectTemplateProposalActionInput
+        ) => Promise<ProjectTemplateProposalActionResult>;
       };
       calendar: {
         importEvents: (input: ImportCalendarEventsInput) => Promise<CalendarImportResult>;

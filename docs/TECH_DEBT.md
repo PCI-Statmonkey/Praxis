@@ -74,11 +74,11 @@
 - Likely Fix: Route write-like model suggestions into Review Inbox candidates, staged drafts, or explicit confirmation commands, with rule-based ranking as the safety net and no silent task graph mutations.
 - Related: `docs/ARCHITECTURE.md`, `praxis-desktop/electron/assistantRouter.ts`, `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/shared/assistantContextResolver.ts`
 
-### Project Template Review Inbox UI Is Missing
+### Project Template Reject And Save Handoff Are Missing
 
 - Priority: High
-- Impact: Template proposals have no user-facing review surface yet, so the operator cannot inspect, accept, dismiss, snooze, or revise proposal candidates in the app.
-- Likely Fix: Build the Review Inbox UI only after proposal persistence exists, using explicit actions and preserving no automatic writes from detection.
+- Impact: Template proposals can now appear in Review Inbox as read-only drafts with dismiss, snooze, and do-not-suggest-again actions, but the operator still cannot reject a specific wrong draft as `Not this template` or accept into an explicit markdown save/editor flow.
+- Likely Fix: Add reject handling against proposal state, then add the reviewed save/editor flow that writes markdown only after operator confirmation.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
 ### Template Save Confirmation Flow Is Missing
@@ -210,6 +210,11 @@
 
 - Resolved: 2026-05-09
 - Resolution: Added SQLite schema v13 proposal-state table/indexes, repository state actions, pure eligibility filtering, shown-state helper behavior, and regression coverage. Review Inbox UI and markdown template save confirmation remain separate later slices.
+
+### Project Template Review Inbox UI Was Missing
+
+- Resolved: 2026-05-09
+- Resolution: Added read-only Review Inbox surfacing for eligible filtered project template proposals, including evidence preview, markdown draft preview, no-write boundary copy, dismiss, snooze 30 days, and do-not-suggest-again actions. Markdown save/editor and `Not this template` reject handling remain later work.
 
 ### Stale Tauri Direction
 

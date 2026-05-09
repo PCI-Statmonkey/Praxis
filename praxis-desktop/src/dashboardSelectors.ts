@@ -4,9 +4,11 @@ import type { EmailSnapshot } from "../shared/emailModel";
 import {
   buildReviewInboxFromChatSuggestions,
   buildReviewInboxFromEmailSuggestions,
+  buildReviewInboxFromProjectTemplateProposals,
   sortReviewInboxItems,
 } from "../shared/reviewInbox";
 import type { ReviewInboxItem } from "../shared/reviewInbox";
+import type { ProjectTemplateProposalSnapshot } from "../shared/projectTemplateProposals";
 import {
   sanitizeServiceConnectionErrorMessage,
   type SettingsSnapshot,
@@ -68,7 +70,8 @@ export const selectUpcomingAppointments = (
 
 export const selectReviewInboxItems = (
   emailSnapshot: EmailSnapshot,
-  chatSnapshot: ChatImportSnapshot
+  chatSnapshot: ChatImportSnapshot,
+  projectTemplateProposalSnapshot: ProjectTemplateProposalSnapshot = { proposals: [] }
 ): ReviewInboxItem[] => {
   const pendingEmailSuggestions = emailSnapshot.suggestions.filter(
     (suggestion) => suggestion.status === "pending"
@@ -80,6 +83,7 @@ export const selectReviewInboxItems = (
   return sortReviewInboxItems([
     ...buildReviewInboxFromEmailSuggestions(pendingEmailSuggestions),
     ...buildReviewInboxFromChatSuggestions(pendingChatSuggestions),
+    ...buildReviewInboxFromProjectTemplateProposals(projectTemplateProposalSnapshot.proposals),
   ]);
 };
 

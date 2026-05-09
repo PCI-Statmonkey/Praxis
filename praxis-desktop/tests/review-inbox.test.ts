@@ -1,11 +1,14 @@
 import { strict as assert } from "node:assert";
 import {
+  buildReviewInboxFromProjectTemplateProposals,
   buildReviewInboxFromChatSuggestions,
   buildReviewInboxFromEmailSuggestions,
   sortReviewInboxItems,
 } from "../shared/reviewInbox";
-import type { ChatSuggestionRecord } from "../shared/chatImport";
-import type { EmailSuggestionRecord } from "../shared/emailModel";
+import { selectReviewInboxItems } from "../src/dashboardSelectors";
+import type { ChatImportSnapshot, ChatSuggestionRecord } from "../shared/chatImport";
+import type { EmailSnapshot, EmailSuggestionRecord } from "../shared/emailModel";
+import type { ProjectTemplateProposal } from "../shared/projectTemplateProposals";
 
 const suggestion = (
   overrides: Partial<EmailSuggestionRecord> = {}
@@ -116,5 +119,90 @@ assert.equal(chatItems[0].recommendedDecision, "create_todo");
 const combined = sortReviewInboxItems([...items, ...chatItems]);
 assert.equal(combined[0].sourceRecordId, "overdue");
 assert.equal(combined.some((item) => item.sourceKind === "chat_import"), true);
+
+const proposal: ProjectTemplateProposal = {
+  id: "project-template-proposal:engineering",
+  status: "draft",
+  proposedSlug: "engineering-project",
+  proposedLabel: "Engineering Project",
+  proposedVersion: 1,
+  source: "ai_proposal",
+  basedOnProjectIds: ["project-a", "project-b", "project-c"],
+  matchedProjectCount: 3,
+  matchedProjectTitles: ["Engineering A", "Engineering B", "Engineering C"],
+  recurringTaskCount: 10,
+  taskOverlapPercent: 91,
+  evidenceSummary: "10 tasks repeated across 3 projects",
+  clusterId: "project-template-cluster:engineering",
+  proposalFingerprint: "project-template-fingerprint:engineering",
+  materialChangeHash: "engineeringhash",
+  writeBoundary: {
+    saved: false,
+    writesOnConfirmOnly: true,
+    existingProjectsChange: false,
+    providerWrites: false,
+  },
+  evidence: [
+    {
+      title: "Contract",
+      taskSlug: "contract",
+      projectIds: ["project-a", "project-b", "project-c"],
+      projectCount: 3,
+      occurrenceCount: 3,
+    },
+  ],
+  markdownDraft:
+    "---\nkind: project_task_template\nslug: engineering-project\nlabel: Engineering Project\nversion: 1\nstatus: active\nsource: ai_proposal\n---\n\n# Engineering Project\n\n## Tasks\n\n- [ ] Contract\n",
+  explanation: "Detected 10 tasks repeated across 3 projects.",
+};
+
+const proposalItems = buildReviewInboxFromProjectTemplateProposals([proposal]);
+assert.equal(proposalItems.length, 1);
+assert.equal(proposalItems[0].sourceKind, "project_template_proposal");
+assert.equal(proposalItems[0].title, "Reusable project template found");
+assert.equal(
+  proposalItems[0].reason,
+  "PRAXIS noticed a repeated project checklist. Preview this read-only draft before any later save step."
+);
+assert.equal(
+  proposalItems[0].recommendationReason,
+  "Existing projects will not change. No connected providers will be updated."
+);
+assert.equal(proposalItems[0].receivedAt, "1970-01-01T00:00:00.000Z");
+assert.equal(proposalItems[0].recommendedDecision, "review");
+assert.equal(proposalItems[0].suggestedActionKind, "project_template");
+assert.equal(proposalItems[0].projectTemplateProposal?.writeBoundary.saved, false);
+assert.equal(proposalItems[0].projectTemplateProposal?.writeBoundary.providerWrites, false);
+assert.equal(proposalItems[0].projectTemplateProposal?.markdownDraft, proposal.markdownDraft);
+
+const combinedWithProposal = sortReviewInboxItems([...items, ...chatItems, ...proposalItems]);
+assert.equal(combinedWithProposal[0].sourceRecordId, "overdue");
+assert.equal(combinedWithProposal.some((item) => item.sourceKind === "email"), true);
+assert.equal(combinedWithProposal.some((item) => item.sourceKind === "chat_import"), true);
+assert.equal(
+  combinedWithProposal.some((item) => item.sourceKind === "project_template_proposal"),
+  true
+);
+
+const emailSnapshot: EmailSnapshot = {
+  connections: [],
+  messages: [],
+  suggestions: [suggestion({ id: "selector-email" })],
+  contactSuggestionDismissals: [],
+};
+const chatSnapshot: ChatImportSnapshot = {
+  imports: [],
+  recentMessages: [],
+  suggestions: [chatSuggestion({ id: "selector-chat" })],
+};
+const selectorItems = selectReviewInboxItems(emailSnapshot, chatSnapshot, {
+  proposals: [proposal],
+});
+assert.equal(selectorItems.some((item) => item.sourceKind === "email"), true);
+assert.equal(selectorItems.some((item) => item.sourceKind === "chat_import"), true);
+assert.equal(
+  selectorItems.some((item) => item.sourceKind === "project_template_proposal"),
+  true
+);
 
 console.log("review inbox tests passed");

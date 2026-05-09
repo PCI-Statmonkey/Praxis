@@ -6,6 +6,19 @@ PRAXIS may notice that the operator repeatedly creates similar project checklist
 
 Templates are markdown-backed creation-time seeds. Saving a template changes only future project creation choices. Existing projects do not update automatically.
 
+## Current Implementation Status
+
+The first Review Inbox UI slice is intentionally read-only. It shows eligible proposals, evidence, no-write boundary copy, and a markdown draft preview. The live card action is `Preview draft`, not a save action.
+
+Current Review Inbox actions:
+
+- `Preview draft`
+- `Dismiss`
+- `Snooze 30 days`
+- `Do not suggest this again`
+
+The proposal editor, `Not this template` rejection action, accepted handoff, and markdown template save flow remain future explicit-confirmation slices.
+
 ## Surfaces
 
 ### Primary Surface: Review Inbox
@@ -273,4 +286,3 @@ Out of scope:
 - Full template gallery.
 - Template analytics.
 - Automatic task deletion when a template changes.
-

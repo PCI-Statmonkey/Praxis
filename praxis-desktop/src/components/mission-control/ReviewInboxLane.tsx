@@ -1,4 +1,5 @@
 import type { ReviewInboxItem } from "../../../shared/reviewInbox";
+import type { ProjectTemplateProposalActionInput } from "../../../shared/projectTemplateProposals";
 import { ReviewInboxPanel } from "../ReviewInboxPanel";
 
 type ReviewInboxLaneProps = {
@@ -10,6 +11,9 @@ type ReviewInboxLaneProps = {
   acceptChatSuggestion: (suggestionId: string, mode: "todo" | "project") => Promise<void>;
   archiveChatSuggestion: (suggestionId: string) => Promise<void>;
   dismissChatSuggestion: (suggestionId: string) => Promise<void>;
+  dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
 };
 
 export function ReviewInboxLane({
@@ -21,6 +25,9 @@ export function ReviewInboxLane({
   acceptChatSuggestion,
   archiveChatSuggestion,
   dismissChatSuggestion,
+  dismissProjectTemplateProposal,
+  snoozeProjectTemplateProposal,
+  neverSuggestProjectTemplateProposal,
 }: ReviewInboxLaneProps) {
   return (
     <ReviewInboxPanel
@@ -32,6 +39,9 @@ export function ReviewInboxLane({
       acceptChatSuggestion={acceptChatSuggestion}
       archiveChatSuggestion={archiveChatSuggestion}
       dismissChatSuggestion={dismissChatSuggestion}
+      dismissProjectTemplateProposal={dismissProjectTemplateProposal}
+      snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
+      neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
     />
   );
 }

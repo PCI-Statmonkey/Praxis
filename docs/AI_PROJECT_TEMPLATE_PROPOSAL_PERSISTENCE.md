@@ -10,6 +10,12 @@ Use markdown only after explicit operator confirmation creates or updates a temp
 
 No markdown template file should be written by the proposal detector or by Review Inbox display.
 
+## Current Implementation Status
+
+The persistence slice and first Review Inbox display slice are complete. The live Review Inbox path uses a side-effect-free proposal snapshot read, records shown state through an explicit display path, and validates dismiss/snooze/do-not-suggest-again actions against currently eligible proposals before writing suppression state.
+
+Reject / `Not this template`, accepted handoff, and markdown template save remain future slices.
+
 ## Minimal Schema
 
 Proposed table:
@@ -172,12 +178,12 @@ Slice 1 persistence:
 Slice 2 UI:
 
 1. Show eligible proposals in Review Inbox.
-2. Wire dismiss/snooze/reject actions to proposal state.
-3. Keep `Review template` read-only until the save-confirmation slice.
+2. Wire dismiss/snooze/never actions to proposal state.
+3. Keep `Preview draft` read-only until the save-confirmation slice.
+4. Add reject / `Not this template` in a follow-up slice.
 
 Slice 3 confirmation:
 
 1. Add proposal review editor.
 2. Save markdown template only after explicit confirmation.
 3. Mark proposal `accepted` with template slug/path after successful write.
-

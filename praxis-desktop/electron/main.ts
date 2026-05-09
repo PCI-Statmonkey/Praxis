@@ -47,6 +47,17 @@ import type {
   UpdateWorkStatusInput,
 } from '../shared/workModel'
 import type {
+  ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalShownInput,
+} from '../shared/projectTemplateProposals'
+import {
+  dismissProjectTemplateProposalForReview,
+  getProjectTemplateProposalSnapshot,
+  neverSuggestProjectTemplateProposalForReview,
+  recordProjectTemplateProposalsShownForReview,
+  snoozeProjectTemplateProposalForReview,
+} from './projectTemplateProposalRepository'
+import type {
   CreateTimeBlockInput,
   DeleteTimeBlockInput,
   GenerateDraftPlanRequest,
@@ -766,6 +777,29 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('chat:dismissSuggestion', async (_event, input: DismissChatSuggestionInput) =>
     dismissChatSuggestion(input)
+  )
+  ipcMain.handle('projectTemplates:getProposalSnapshot', async () =>
+    getProjectTemplateProposalSnapshot()
+  )
+  ipcMain.handle(
+    'projectTemplates:recordShown',
+    async (_event, input: ProjectTemplateProposalShownInput) =>
+      recordProjectTemplateProposalsShownForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:dismissProposal',
+    async (_event, input: ProjectTemplateProposalActionInput) =>
+      dismissProjectTemplateProposalForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:snoozeProposal',
+    async (_event, input: ProjectTemplateProposalActionInput) =>
+      snoozeProjectTemplateProposalForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:neverSuggestProposal',
+    async (_event, input: ProjectTemplateProposalActionInput) =>
+      neverSuggestProjectTemplateProposalForReview(input)
   )
   ipcMain.handle('calendar:getGoogleOAuthReadiness', async () => getGoogleCalendarOAuthReadiness())
   ipcMain.handle('calendar:getOutlookOAuthReadiness', async () => getOutlookCalendarOAuthReadiness())

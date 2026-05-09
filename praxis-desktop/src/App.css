@@ -1388,6 +1388,21 @@ ol {
   padding: 7px 9px;
 }
 
+.project-template-draft-preview {
+  max-width: 100%;
+  margin: 8px 0 0;
+  overflow-x: auto;
+  border: 1px solid rgba(185, 222, 219, 0.12);
+  border-radius: 8px;
+  background: rgba(2, 6, 6, 0.58);
+  color: var(--text);
+  font-size: 0.74rem;
+  line-height: 1.45;
+  padding: 10px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .assistant-presence-card {
   display: grid;
   grid-template-columns: 58px 1fr;
@@ -1849,6 +1864,7 @@ ol {
   display: grid;
   gap: 5px;
   min-width: 145px;
+  max-width: min(260px, calc(100vw - 28px));
   margin-top: 6px;
   border: 1px solid rgba(85, 234, 220, 0.26);
   border-radius: 8px;
@@ -1859,6 +1875,8 @@ ol {
 
 .action-menu-content button {
   width: 100%;
+  min-width: 0;
+  white-space: normal;
   text-align: left;
 }
 
@@ -3309,6 +3327,11 @@ ol {
   .operator-card-header .badge,
   .review-inbox-header .action-menu {
     justify-self: start;
+  }
+
+  .review-inbox-header .action-menu-content {
+    right: auto;
+    left: 0;
   }
 
   .daily-brief-copy h2 {

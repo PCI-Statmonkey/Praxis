@@ -202,6 +202,26 @@ assert.deepEqual(
   []
 );
 
+const resurfacedShownState = recordProjectTemplateProposalShownState({
+  proposal: engineeringProposal,
+  existingState: dismissedState,
+  shownAt: "2026-06-10T15:00:00.000Z",
+});
+assert.equal(resurfacedShownState.status, "draft");
+assert.equal(resurfacedShownState.dismissalReason, null);
+assert.equal(resurfacedShownState.shownCount, dismissedState.shownCount + 1);
+
+const neverShownState = recordProjectTemplateProposalShownState({
+  proposal: engineeringProposal,
+  existingState: stateFor({
+    status: "never",
+    dismissalReason: "never_from_review_inbox",
+  }),
+  shownAt: "2026-06-10T15:00:00.000Z",
+});
+assert.equal(neverShownState.status, "never");
+assert.equal(neverShownState.dismissalReason, "never_from_review_inbox");
+
 const materiallyChangedProposal = {
   ...engineeringProposal,
   proposalFingerprint: `${engineeringProposal.proposalFingerprint}:changed`,

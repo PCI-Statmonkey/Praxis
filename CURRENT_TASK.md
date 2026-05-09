@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering and anti-nagging state are complete. Move the immediate execution queue to Review Inbox UI wiring for eligible filtered proposals while preserving explicit confirmation boundaries. Markdown template save/edit remains a later explicit-confirmation slice, and provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the current proposal UI work.
+AI project template proposal persistence/filtering and read-only Review Inbox surfacing are complete. Move the immediate execution queue to the explicit markdown template save/editor slice, while preserving the boundary that proposals do not create templates, mutate projects, call AI, or write to providers unless the operator confirms a later save flow. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal save/editor work.
 
 ## CURRENT STATE
 
@@ -115,38 +115,16 @@ AI project template proposal persistence/filtering and anti-nagging state are co
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
-- Latest pushed commit is `5862ef4 Add no-write project template proposal detector`.
+- Latest local checkpoint commit before the current proposal UI work was `4897456 Add proposal persistence and anti-nagging docs`.
 - AI project template proposal Slice 1 is complete as a pure no-write detector/builder.
 - AI project template proposal persistence/filtering is complete: schema v13 proposal-state table/indexes, repository state actions, pure eligibility filtering, shown-state helper, and regression coverage are in place without UI, markdown writes, AI calls, provider writes, or project/todo/template mutations.
-- `docs/AI_PROJECT_TEMPLATE_PROPOSAL_PERSISTENCE.md` is an untracked planning artifact for SQLite-first proposal persistence, material-change filtering, and anti-nagging.
-- `docs/AI_PROJECT_TEMPLATE_PROPOSAL_DISMISSAL_UX.md` is an untracked planning artifact; Quinn reviewed the dismissal UX direction and found it sufficient.
-- Next implementation should wire eligible filtered proposals into Review Inbox using persisted state for dismiss/reject/snooze/accepted behavior.
+- Basic AI project template proposal Review Inbox surfacing is complete: eligible filtered proposals appear as read-only draft previews with evidence, no-write boundary copy, dismiss, snooze 30 days, and do-not-suggest-again actions.
+- Proposal snapshot reads are side-effect-free; shown-state recording is explicit and action targets are validated against currently eligible proposals before suppression writes.
+- No markdown template writes, AI/API calls, provider writes, or project/todo/template mutations were added by the Review Inbox proposal UI slice.
 
 ## NEXT STEPS
 
-### 1. Wire AI Project Template Proposals Into Review Inbox
-
-**GOAL**
-
-Surface eligible filtered project-template proposals in Review Inbox without creating markdown templates or mutating projects automatically.
-
-**DIRECTION**
-
-- Use the no-write detector plus persisted proposal-state filtering as the source of truth for eligible proposals.
-- Show compact proposal evidence such as matched project count/titles, recurring task count, task overlap, evidence summary, and no-write boundary.
-- Wire Review Inbox actions to proposal state where safe: dismiss, reject, snooze, never/do-not-suggest-again, and accepted handoff.
-- Keep accepted proposal handling as a review handoff only until the markdown template save/editor slice exists.
-- Preserve the existing no-write detector boundary: no project/template creation, no markdown template writes, no provider writes, and no automatic project/todo/template mutations in this slice.
-- Treat `docs/AI_PROJECT_TEMPLATE_PROPOSAL_PERSISTENCE.md` and `docs/AI_PROJECT_TEMPLATE_PROPOSAL_DISMISSAL_UX.md` as current untracked planning artifacts unless they are intentionally included in a docs checkpoint.
-
-**DONE WHEN**
-
-- Eligible proposals appear in Review Inbox with evidence and explicit confirmation boundaries.
-- Review Inbox proposal actions update proposal state without duplicate nagging.
-- Existing Review Inbox behavior remains intact.
-- No markdown template writes, provider writes, or project/todo/template mutations happen from display alone.
-
-### 2. Add Explicit Markdown Template Save Later
+### 1. Add Explicit Markdown Template Save And Proposal Editor
 
 **GOAL**
 
@@ -156,14 +134,36 @@ Turn an accepted proposal into a markdown-backed project task template only afte
 
 - Build a review/editor flow for proposed markdown template content.
 - Save to `memory/templates/project-task-templates/` only after explicit confirmation.
+- Add the missing `Not this template` / reject path so a wrong draft can be rejected without suppressing the entire cluster forever.
+- Mark accepted proposals only after the save flow succeeds and records the saved template slug/path.
 - Do not mutate existing projects when templates change.
 - Preserve source identity for future template-created todos.
 
 **DONE WHEN**
 
-- Accepted proposal markdown can be reviewed and saved intentionally.
+- Accepted proposal markdown can be reviewed, edited, and saved intentionally.
 - Existing projects remain unchanged.
 - Future project creation can select the saved template.
+- Rejected drafts stop repeating unless materially changed evidence creates a new proposal.
+
+### 2. Add Template Management And Reversal Later
+
+**GOAL**
+
+Make saved templates and suppressions manageable after the first save path exists.
+
+**DIRECTION**
+
+- List saved templates in a settings or template-management surface.
+- Allow do-not-suggest-again suppressions to be reviewed and reversed.
+- Add template revision proposals for existing markdown templates.
+- Keep apply-template-to-existing-projects as a separate explicit-confirmation flow.
+
+**DONE WHEN**
+
+- Saved templates and suppressed proposal patterns are visible and reversible.
+- Template revision proposals do not overwrite operator edits automatically.
+- Existing projects are changed only through a separate selected-project review flow.
 
 ### 3. Plan Provider Calendar Write-Back
 

@@ -21,6 +21,10 @@ import {
   uiFontScaleCssValue,
   type UiTimeFormat,
 } from "../shared/settingsModel";
+import type {
+  ProjectTemplateProposalActionInput,
+  ProjectTemplateProposalSnapshot,
+} from "../shared/projectTemplateProposals";
 import {
   buildPlanningDayView,
   buildScheduleReview,
@@ -145,6 +149,10 @@ const EMPTY_CHAT_SNAPSHOT: ChatImportSnapshot = {
   suggestions: [],
 };
 
+const EMPTY_PROJECT_TEMPLATE_PROPOSAL_SNAPSHOT: ProjectTemplateProposalSnapshot = {
+  proposals: [],
+};
+
 const emptyManualChatImportForm = (): ManualChatImportForm => ({
   sourceSystem: "whatsapp",
   conversationTitle: "",
@@ -266,6 +274,9 @@ export default function App() {
   const [dailyBrief, setDailyBrief] = useState<DailyBrief>(EMPTY_BRIEF);
   const [emailSnapshot, setEmailSnapshot] = useState<EmailSnapshot>(EMPTY_EMAIL_SNAPSHOT);
   const [chatSnapshot, setChatSnapshot] = useState<ChatImportSnapshot>(EMPTY_CHAT_SNAPSHOT);
+  const [projectTemplateProposalSnapshot, setProjectTemplateProposalSnapshot] =
+    useState<ProjectTemplateProposalSnapshot>(EMPTY_PROJECT_TEMPLATE_PROPOSAL_SNAPSHOT);
+  const recordedProjectTemplateProposalShows = useRef(new Set<string>());
   const [manualChatImportForm, setManualChatImportForm] = useState<ManualChatImportForm>(() =>
     emptyManualChatImportForm()
   );
@@ -307,6 +318,7 @@ export default function App() {
       nextBrief,
       nextEmailSnapshot,
       nextChatSnapshot,
+      nextProjectTemplateProposalSnapshot,
       nextSettings,
       nextStorage,
       nextSlack,
@@ -316,6 +328,7 @@ export default function App() {
       window.praxis.brief.getDaily(),
       window.praxis.email.getSnapshot(),
       window.praxis.chat.getSnapshot(),
+      window.praxis.projectTemplates.getProposalSnapshot(),
       window.praxis.settings.getSnapshot(),
       window.praxis.storage.getOverview(),
       window.praxis.slack.getStatus(),
@@ -325,6 +338,7 @@ export default function App() {
     setDailyBrief(nextBrief);
     setEmailSnapshot(nextEmailSnapshot);
     setChatSnapshot(nextChatSnapshot);
+    setProjectTemplateProposalSnapshot(nextProjectTemplateProposalSnapshot);
     setServiceSnapshot({
       settings: nextSettings,
       storage: nextStorage,
@@ -393,6 +407,33 @@ export default function App() {
       setStatus("Praxis could not load local time blocks.");
     });
   }, [dailyBrief.localDate, loadTimeBlocksForDate, planningDateOverride]);
+
+  useEffect(() => {
+    const proposalsToRecord = projectTemplateProposalSnapshot.proposals.filter((proposal) => {
+      const shownKey = `${proposal.proposalFingerprint}:${proposal.materialChangeHash}`;
+      if (recordedProjectTemplateProposalShows.current.has(shownKey)) {
+        return false;
+      }
+      recordedProjectTemplateProposalShows.current.add(shownKey);
+      return true;
+    });
+
+    if (proposalsToRecord.length === 0) {
+      return;
+    }
+
+    void window.praxis.projectTemplates
+      .recordShown({
+        proposals: proposalsToRecord.map((proposal) => ({
+          fingerprint: proposal.proposalFingerprint,
+          clusterId: proposal.clusterId,
+          materialChangeHash: proposal.materialChangeHash,
+        })),
+      })
+      .catch(() => {
+        setStatus("Praxis could not update project template proposal shown state.");
+      });
+  }, [projectTemplateProposalSnapshot.proposals]);
 
   useEffect(() => {
     document.documentElement.style.setProperty(
@@ -736,7 +777,11 @@ export default function App() {
 
   const upcomingDeadlines = selectUpcomingDeadlines(snapshot.deadlines);
   const upcomingAppointments = selectUpcomingAppointments(snapshot.appointments);
-  const reviewInboxItems = selectReviewInboxItems(emailSnapshot, chatSnapshot);
+  const reviewInboxItems = selectReviewInboxItems(
+    emailSnapshot,
+    chatSnapshot,
+    projectTemplateProposalSnapshot
+  );
   const serviceHealthItems = selectServiceHealthItems(serviceSnapshot, formatDateTime);
   const dashboardReadiness = selectDashboardReadiness(serviceHealthItems);
   const basePlanningDate = dailyBrief.localDate || formatLocalDate(new Date());
@@ -825,6 +870,26 @@ export default function App() {
   const archiveChatSuggestion = async (suggestionId: string) => {
     const result = await window.praxis.chat.archiveSuggestion({ suggestionId });
     await loadWorkModel();
+    setStatus(result.message);
+  };
+
+  const dismissProjectTemplateProposal = async (input: ProjectTemplateProposalActionInput) => {
+    const result = await window.praxis.projectTemplates.dismissProposal(input);
+    setProjectTemplateProposalSnapshot(result.snapshot);
+    setStatus(result.message);
+  };
+
+  const snoozeProjectTemplateProposal = async (input: ProjectTemplateProposalActionInput) => {
+    const result = await window.praxis.projectTemplates.snoozeProposal(input);
+    setProjectTemplateProposalSnapshot(result.snapshot);
+    setStatus(result.message);
+  };
+
+  const neverSuggestProjectTemplateProposal = async (
+    input: ProjectTemplateProposalActionInput
+  ) => {
+    const result = await window.praxis.projectTemplates.neverSuggestProposal(input);
+    setProjectTemplateProposalSnapshot(result.snapshot);
     setStatus(result.message);
   };
 
@@ -1024,6 +1089,9 @@ export default function App() {
         acceptChatSuggestion={acceptChatSuggestion}
         archiveChatSuggestion={archiveChatSuggestion}
         dismissChatSuggestion={dismissChatSuggestion}
+        dismissProjectTemplateProposal={dismissProjectTemplateProposal}
+        snoozeProjectTemplateProposal={snoozeProjectTemplateProposal}
+        neverSuggestProjectTemplateProposal={neverSuggestProjectTemplateProposal}
         deleteAppointment={(id) => deleteRecord("appointment", id)}
         deleteDeadline={(id) => deleteRecord("deadline", id)}
       />

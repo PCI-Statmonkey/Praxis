@@ -120,11 +120,18 @@ export const recordProjectTemplateProposalShown = (
         cluster_id = excluded.cluster_id,
         material_change_hash = excluded.material_change_hash,
         status = CASE
-          WHEN status IN ('dismissed', 'rejected', 'snoozed', 'accepted', 'never') THEN status
+          WHEN status = 'never' THEN status
           ELSE 'draft'
         END,
         shown_count = shown_count + 1,
         last_shown_at = excluded.last_shown_at,
+        dismissal_reason = CASE
+          WHEN status = 'never' THEN dismissal_reason
+          ELSE NULL
+        END,
+        snooze_until = NULL,
+        accepted_template_slug = NULL,
+        accepted_template_path = NULL,
         updated_at = excluded.updated_at`
     )
     .run({
@@ -273,4 +280,3 @@ export const acceptProjectTemplateProposal = (
 export const isTerminalProjectTemplateProposalState = (
   status: ProjectTemplateProposalStateStatus
 ) => terminalStatuses.has(status);
-

@@ -1,14 +1,16 @@
 import type { ChatSuggestionRecord } from "./chatImport";
 import type { EmailSuggestionRecord } from "./emailModel";
+import type { ProjectTemplateProposal } from "./projectTemplateProposals";
 
-export type ReviewInboxSourceKind = "email" | "slack" | "chat_import";
+export type ReviewInboxSourceKind = "email" | "slack" | "chat_import" | "project_template_proposal";
 
 export type ReviewInboxActionKind =
   | "todo"
   | "project"
   | "mission_note"
   | "deadline"
-  | "contact_update";
+  | "contact_update"
+  | "project_template";
 
 export type ReviewInboxItemStatus = "pending" | "accepted" | "dismissed" | "archived";
 
@@ -17,6 +19,26 @@ export type ReviewInboxRecommendation =
   | "create_project"
   | "archive"
   | "review";
+
+export type ReviewInboxProjectTemplateProposalDetails = {
+  fingerprint: string;
+  clusterId: string;
+  materialChangeHash: string;
+  proposedSlug: string;
+  proposedLabel: string;
+  evidenceSummary: string;
+  matchedProjectCount: number;
+  matchedProjectTitles: string[];
+  recurringTaskCount: number;
+  taskOverlapPercent: number;
+  markdownDraft: string;
+  writeBoundary: ProjectTemplateProposal["writeBoundary"];
+  evidence: Array<{
+    title: string;
+    taskSlug: string;
+    projectCount: number;
+  }>;
+};
 
 export type ReviewInboxItem = {
   id: string;
@@ -38,6 +60,7 @@ export type ReviewInboxItem = {
   reason: string;
   recommendedDecision: ReviewInboxRecommendation;
   recommendationReason: string;
+  projectTemplateProposal?: ReviewInboxProjectTemplateProposalDetails;
 };
 
 const sourceLabelForEmail = (sourceSystem: string) => {
@@ -238,3 +261,53 @@ export const buildReviewInboxFromChatSuggestions = (
         };
       })
   );
+
+const projectTemplateProposalDetails = (
+  proposal: ProjectTemplateProposal
+): ReviewInboxProjectTemplateProposalDetails => ({
+  fingerprint: proposal.proposalFingerprint,
+  clusterId: proposal.clusterId,
+  materialChangeHash: proposal.materialChangeHash,
+  proposedSlug: proposal.proposedSlug,
+  proposedLabel: proposal.proposedLabel,
+  evidenceSummary: proposal.evidenceSummary,
+  matchedProjectCount: proposal.matchedProjectCount,
+  matchedProjectTitles: proposal.matchedProjectTitles,
+  recurringTaskCount: proposal.recurringTaskCount,
+  taskOverlapPercent: proposal.taskOverlapPercent,
+  markdownDraft: proposal.markdownDraft,
+  writeBoundary: proposal.writeBoundary,
+  evidence: proposal.evidence.map((item) => ({
+    title: item.title,
+    taskSlug: item.taskSlug,
+    projectCount: item.projectCount,
+  })),
+});
+
+export const buildReviewInboxFromProjectTemplateProposals = (
+  proposals: ProjectTemplateProposal[]
+): ReviewInboxItem[] =>
+  proposals.map((proposal) => ({
+    id: `project-template-proposal:${proposal.proposalFingerprint}`,
+    sourceKind: "project_template_proposal" as const,
+    sourceSystem: "praxis",
+    sourceLabel: "PRAXIS",
+    sourceRecordId: proposal.proposalFingerprint,
+    title: "Reusable project template found",
+    suggestedActionKind: "project_template" as const,
+    confidence: Math.max(0, Math.min(1, proposal.taskOverlapPercent / 100)),
+    status: "pending" as const,
+    dueAt: null,
+    receivedAt: "1970-01-01T00:00:00.000Z",
+    isOverdue: false,
+    actorLabel: "local work patterns",
+    matchedPersonName: null,
+    subject: proposal.proposedLabel,
+    snippet: proposal.evidenceSummary,
+    reason:
+      "PRAXIS noticed a repeated project checklist. Preview this read-only draft before any later save step.",
+    recommendedDecision: "review" as const,
+    recommendationReason:
+      "Existing projects will not change. No connected providers will be updated.",
+    projectTemplateProposal: projectTemplateProposalDetails(proposal),
+  }));

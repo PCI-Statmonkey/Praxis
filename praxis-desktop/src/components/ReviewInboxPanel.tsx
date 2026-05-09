@@ -1,3 +1,5 @@
+import { useState } from "react";
+import type { ProjectTemplateProposalActionInput } from "../../shared/projectTemplateProposals";
 import type { ReviewInboxItem } from "../../shared/reviewInbox";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
@@ -11,6 +13,9 @@ type ReviewInboxPanelProps = {
   acceptChatSuggestion: (suggestionId: string, mode: "todo" | "project") => Promise<void>;
   archiveChatSuggestion: (suggestionId: string) => Promise<void>;
   dismissChatSuggestion: (suggestionId: string) => Promise<void>;
+  dismissProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  snoozeProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
+  neverSuggestProjectTemplateProposal: (input: ProjectTemplateProposalActionInput) => Promise<void>;
 };
 
 export function ReviewInboxPanel({
@@ -22,9 +27,18 @@ export function ReviewInboxPanel({
   acceptChatSuggestion,
   archiveChatSuggestion,
   dismissChatSuggestion,
+  dismissProjectTemplateProposal,
+  snoozeProjectTemplateProposal,
+  neverSuggestProjectTemplateProposal,
 }: ReviewInboxPanelProps) {
+  const [openProjectTemplateProposalId, setOpenProjectTemplateProposalId] =
+    useState<string | null>(null);
+  const [pendingProjectTemplateProposalActionId, setPendingProjectTemplateProposalActionId] =
+    useState<string | null>(null);
   const isActionableSource = (sourceKind: ReviewInboxItem["sourceKind"]) =>
     sourceKind === "email" || sourceKind === "chat_import";
+  const isProjectTemplateProposal = (item: ReviewInboxItem) =>
+    item.sourceKind === "project_template_proposal" && Boolean(item.projectTemplateProposal);
   const acceptSuggestion = (
     sourceKind: ReviewInboxItem["sourceKind"],
     suggestionId: string,
@@ -41,6 +55,31 @@ export function ReviewInboxPanel({
     item.sourceKind === "chat_import"
       ? dismissChatSuggestion(item.sourceRecordId)
       : dismissEmailSuggestion(item.sourceRecordId);
+  const proposalActionInput = (
+    item: ReviewInboxItem
+  ): ProjectTemplateProposalActionInput | null =>
+    item.projectTemplateProposal
+      ? {
+          fingerprint: item.projectTemplateProposal.fingerprint,
+          clusterId: item.projectTemplateProposal.clusterId,
+          materialChangeHash: item.projectTemplateProposal.materialChangeHash,
+        }
+      : null;
+  const runProjectTemplateProposalAction = async (
+    item: ReviewInboxItem,
+    action: (input: ProjectTemplateProposalActionInput) => Promise<void>
+  ) => {
+    const input = proposalActionInput(item);
+    if (!input) {
+      return;
+    }
+    setPendingProjectTemplateProposalActionId(item.id);
+    try {
+      await action(input);
+    } finally {
+      setPendingProjectTemplateProposalActionId(null);
+    }
+  };
 
   return (
     <details className="review-inbox-disclosure">
@@ -100,6 +139,56 @@ export function ReviewInboxPanel({
                         </button>
                       </>
                     ) : null}
+                    {isProjectTemplateProposal(item) ? (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setOpenProjectTemplateProposalId((currentId) =>
+                              currentId === item.id ? null : item.id
+                            )
+                          }
+                        >
+                          Preview draft
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pendingProjectTemplateProposalActionId === item.id}
+                          onClick={() =>
+                            void runProjectTemplateProposalAction(
+                              item,
+                              dismissProjectTemplateProposal
+                            )
+                          }
+                        >
+                          Dismiss
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pendingProjectTemplateProposalActionId === item.id}
+                          onClick={() =>
+                            void runProjectTemplateProposalAction(
+                              item,
+                              snoozeProjectTemplateProposal
+                            )
+                          }
+                        >
+                          Snooze 30 days
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pendingProjectTemplateProposalActionId === item.id}
+                          onClick={() =>
+                            void runProjectTemplateProposalAction(
+                              item,
+                              neverSuggestProjectTemplateProposal
+                            )
+                          }
+                        >
+                          Do not suggest this again
+                        </button>
+                      </>
+                    ) : null}
                   </ActionMenu>
                 </div>
                 <p className="review-inbox-recommendation">
@@ -109,7 +198,9 @@ export function ReviewInboxPanel({
                 <div className="review-inbox-badges">
                   <span className="badge">{item.suggestedActionKind}</span>
                   <span className="badge">{item.confidence.toFixed(2)}</span>
-                  <span className="badge">{formatDateTime(item.receivedAt)}</span>
+                  {item.sourceKind !== "project_template_proposal" ? (
+                    <span className="badge">{formatDateTime(item.receivedAt)}</span>
+                  ) : null}
                   {item.dueAt ? (
                     <span className={item.isOverdue ? "badge urgent-badge" : "badge"}>
                       due {formatDateTime(item.dueAt)}
@@ -127,13 +218,36 @@ export function ReviewInboxPanel({
                 <p className="brief-path">Subject: {item.subject}</p>
                 {item.snippet ? <p className="brief-path">Summary: {item.snippet}</p> : null}
                 <p className="brief-path">{item.reason}</p>
+                {item.projectTemplateProposal ? (
+                  <div className="brief-path">
+                    <p>
+                      {item.projectTemplateProposal.evidenceSummary};{" "}
+                      {item.projectTemplateProposal.taskOverlapPercent}% task overlap across{" "}
+                      {item.projectTemplateProposal.matchedProjectCount} projects.
+                    </p>
+                    <p>
+                      Projects: {item.projectTemplateProposal.matchedProjectTitles.join(", ")}
+                    </p>
+                    {openProjectTemplateProposalId === item.id ? (
+                      <>
+                        <p>
+                          Read-only draft. Saving and editing templates will be handled by a later
+                          explicit-confirmation slice.
+                        </p>
+                        <pre className="project-template-draft-preview">
+                          {item.projectTemplateProposal.markdownDraft}
+                        </pre>
+                      </>
+                    ) : null}
+                  </div>
+                ) : null}
               </li>
             ))}
           </ol>
         ) : (
           <EmptyState
             title="Review inbox clear"
-            detail="Pending email, Slack, and future chat-import suggestions will collect here for accept or dismiss decisions."
+            detail="Pending email, chat, Slack, and project-template suggestions will collect here for review decisions."
           />
         )}
       </article>
