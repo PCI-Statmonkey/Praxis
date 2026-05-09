@@ -1,0 +1,6 @@
+# PRAXIS runtime/operator memory.
+#
+# This tree can contain personal work records, daily briefs, provider-derived summaries,
+# QA screenshots, saved templates, and generated mirrors. Do not bulk-stage it.
+/memory/
+

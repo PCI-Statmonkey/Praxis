@@ -18,6 +18,22 @@ Praxis should store extracted facts and structured context, not raw source dumps
 
 The goal is recall and orientation, not archival hoarding.
 
+## Git Boundary
+
+The root `memory/` tree is runtime/operator data and is ignored by git by default.
+
+It may contain personal work records, daily briefs, provider-derived summaries, QA screenshots,
+saved project templates, generated markdown mirrors, and other local context. Do not bulk-stage
+`memory/`.
+
+Generic product assets should live outside `memory/` in a repo-owned source location. If a future
+slice needs to version a safe memory scaffold or seed template, stage it by an explicit allowlist or
+move it to a dedicated product seed directory first.
+
+Confirmed project task templates under `memory/templates/project-task-templates/` are durable local
+operator artifacts. They are intentionally available to the app, but they are not automatically
+versioned with source code.
+
 ## Memory Layers
 
 ### 1. Index Layer

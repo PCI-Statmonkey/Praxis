@@ -1,5 +1,22 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Memory Tree Git Hygiene
+
+### Closed
+
+- Audited the root `memory/` tree by path, size, and timestamp only, without dumping file contents.
+- Classified `memory/` as runtime/operator data because it contains live work memory, daily notes, provider-derived summaries, QA artifacts, generated mirrors, and saved local templates.
+- Added a root `.gitignore` entry for `/memory/` so future work does not accidentally stage operator memory.
+- Documented that source-controlled memory seeds or generic templates should live outside `memory/` unless explicitly allowlisted.
+
+### Verification
+
+- `git status --short` no longer reports the existing `memory/` tree as untracked noise.
+
+### Follow-Up
+
+- If a future slice needs versioned generic memory scaffolds, move or copy them into a dedicated repo-owned seed directory before staging.
+
 ## 2026-05-09 - Project Template Reject And Creation Usability
 
 ### Closed

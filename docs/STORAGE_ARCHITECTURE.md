@@ -280,6 +280,7 @@ Implemented as of 2026-04-21:
 - Shared authority rules: `praxis-desktop/shared/storage/hybridStorage.ts`
 - Database location: Electron `userData` as `praxis.sqlite`
 - Markdown memory root: project `memory/` folder when available, with a Documents fallback for packaged contexts
+- Git policy: project `memory/` is runtime/operator data and ignored by default; source-controlled seeds should live outside `memory/` unless explicitly allowlisted
 - Startup behavior: initialize schema, enable WAL, enforce foreign keys, index markdown memory files
 - Work repository: `praxis-desktop/electron/workRepository.ts`
 - Daily brief generator: `praxis-desktop/electron/dailyBrief.ts`
