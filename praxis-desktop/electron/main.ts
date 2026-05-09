@@ -47,12 +47,15 @@ import type {
   UpdateWorkStatusInput,
 } from '../shared/workModel'
 import type {
+  ClearProjectTemplateProposalStateInput,
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalSaveInput,
   ProjectTemplateProposalShownInput,
 } from '../shared/projectTemplateProposals'
 import {
+  clearProjectTemplateProposalStateForReview,
   dismissProjectTemplateProposalForReview,
+  getProjectTemplateManagementSnapshot,
   getProjectTemplateProposalSnapshot,
   neverSuggestProjectTemplateProposalForReview,
   recordProjectTemplateProposalsShownForReview,
@@ -256,6 +259,7 @@ type SettingsWindowTab =
   | 'slack'
   | 'icsImport'
   | 'people'
+  | 'templates'
   | 'storage'
 
 const EMAIL_AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000
@@ -314,6 +318,7 @@ const isSettingsWindowTab = (value: unknown): value is SettingsWindowTab =>
   value === 'slack' ||
   value === 'icsImport' ||
   value === 'people' ||
+  value === 'templates' ||
   value === 'storage'
 
 const openSettingsWindow = (tab?: SettingsWindowTab) => {
@@ -783,6 +788,14 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('projectTemplates:getProposalSnapshot', async () =>
     getProjectTemplateProposalSnapshot()
+  )
+  ipcMain.handle('projectTemplates:getManagementSnapshot', async () =>
+    getProjectTemplateManagementSnapshot()
+  )
+  ipcMain.handle(
+    'projectTemplates:clearProposalState',
+    async (_event, input: ClearProjectTemplateProposalStateInput) =>
+      clearProjectTemplateProposalStateForReview(input)
   )
   ipcMain.handle(
     'projectTemplates:recordShown',

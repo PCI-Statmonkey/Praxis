@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, and saved-template project creation usability are complete. Move the immediate execution queue to template management/reversal and future template revision/apply flows, while preserving the boundary that proposals do not mutate existing projects, call AI, or write to providers. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, and first template management/reversal visibility are complete. Move the immediate execution queue to future template revision/apply flows or AI draft planning from Schedule Review, while preserving the boundary that proposals do not mutate existing projects, call AI, or write to providers. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
 
 ## CURRENT STATE
 
@@ -125,27 +125,29 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Existing projects remain unchanged, and no AI/API calls, provider writes, or external calendar writes were added by the template save/editor slice.
 - `Not this template` reject handling is complete and suppresses the wrong draft without using do-not-suggest-again.
 - Saved active markdown project task templates now appear in the existing project creation template selector and seed future project-linked todos when selected.
+- Settings now has a Templates tab showing saved/built-in project templates and hidden proposal patterns.
+- Dismissed, snoozed, rejected, and do-not-suggest-again proposal states can be cleared with `Allow suggestions again`; accepted states remain tied to saved templates.
 
 ## NEXT STEPS
 
-### 1. Add Template Management And Reversal
+### 1. Plan Template Revision And Apply Flows
 
 **GOAL**
 
-Make saved templates and suppressions manageable after the first save/reject path exists.
+Plan the next template capabilities without automatic edits or project mutation.
 
 **DIRECTION**
 
-- List saved templates in a settings or template-management surface.
-- Allow do-not-suggest-again suppressions to be reviewed and reversed.
 - Add template revision proposals for existing markdown templates.
 - Keep apply-template-to-existing-projects as a separate explicit-confirmation flow.
+- Preserve operator edits to saved templates.
+- Do not overwrite markdown templates automatically.
 
 **DONE WHEN**
 
-- Saved templates and suppressed proposal patterns are visible and reversible.
-- Template revision proposals do not overwrite operator edits automatically.
-- Existing projects are changed only through a separate selected-project review flow.
+- Template revision behavior has a safe plan and test strategy.
+- Existing projects are changed only through a later selected-project review flow.
+- Automatic overwrite/apply behavior remains out of scope.
 
 ### 2. Wire AI Draft Planning From Schedule Review
 

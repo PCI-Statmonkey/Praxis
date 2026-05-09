@@ -123,6 +123,10 @@ contextBridge.exposeInMainWorld('praxis', {
   },
   projectTemplates: {
     getProposalSnapshot: () => ipcRenderer.invoke('projectTemplates:getProposalSnapshot'),
+    getManagementSnapshot: () =>
+      ipcRenderer.invoke('projectTemplates:getManagementSnapshot'),
+    clearProposalState: (input: unknown) =>
+      ipcRenderer.invoke('projectTemplates:clearProposalState', input),
     recordShown: (input: unknown) => ipcRenderer.invoke('projectTemplates:recordShown', input),
     dismissProposal: (input: unknown) =>
       ipcRenderer.invoke('projectTemplates:dismissProposal', input),

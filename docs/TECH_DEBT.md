@@ -90,18 +90,19 @@
 - Residual Risk: Native visual QA of the editor remains useful when the Electron window is stable.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
-### Template Management Is Deferred
+### Template Editing And Revision Management Is Deferred
 
 - Priority: Medium
-- Impact: Markdown templates can be created and used for future project creation, but there is no dedicated management surface yet for listing, editing, archiving, or reviewing suppressions.
-- Likely Fix: Add template management after the initial save/reject path, including suppression reversal, revision proposals, and explicit apply-template actions for existing projects.
+- Impact: Markdown templates can be created, used for future project creation, listed in Settings, and proposal suppressions can be reversed, but there is no dedicated edit/archive/revision workflow yet.
+- Likely Fix: Add template editing/archive management after the visibility/reversal slice, including revision proposals and explicit apply-template actions for existing projects.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
-### Do-Not-Suggest-Again Reversal Is Undefined
+### Do-Not-Suggest-Again Reversal Was Undefined
 
 - Priority: Medium
-- Impact: A do-not-suggest-again action is useful for anti-nagging, but the operator may later need to reverse it if a project pattern becomes relevant again.
-- Likely Fix: Store suppressions in SQLite with enough metadata to show and reverse them in a future template management or settings surface.
+- Status: Resolved in the first template management slice
+- Impact: Dismissed, snoozed, rejected, and do-not-suggest-again proposal states can now be cleared from Settings with `Allow suggestions again`.
+- Residual Risk: Proposal state rows do not yet carry human-friendly evidence labels, so the Settings view shows technical cluster/fingerprint identifiers until richer metadata is added.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
 
 ### Persistent Presence Depends On AI Review

@@ -83,6 +83,19 @@ export const listProjectTemplateProposalStates = (): ProjectTemplateProposalStat
       .all() as DbProjectTemplateProposalState[]
   ).map(toProposalState);
 
+export const deleteProjectTemplateProposalState = (fingerprint: string) => {
+  const normalizedFingerprint = fingerprint.trim();
+  if (!normalizedFingerprint) {
+    throw new Error("Proposal state fingerprint is required.");
+  }
+
+  const existingState = getProposalState(normalizedFingerprint);
+  getPraxisDatabase()
+    .prepare("DELETE FROM project_template_proposal_states WHERE fingerprint = ?")
+    .run(normalizedFingerprint);
+  return existingState;
+};
+
 export const recordProjectTemplateProposalShown = (
   proposal: ProjectTemplateProposal,
   shownAt = nowIso()

@@ -130,6 +130,7 @@
 - [x] Add proposal editor for reviewing and adjusting suggested template content before save
 - [x] Add `Not this template` / reject handling for wrong proposal drafts
 - [x] Make saved markdown project task templates selectable during project creation
+- [x] Add first template management visibility and suppression reversal
 - [ ] Add template revision proposals for existing markdown templates
 - [ ] Add apply-template flow for existing projects, behind explicit review and confirmation
 - [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health

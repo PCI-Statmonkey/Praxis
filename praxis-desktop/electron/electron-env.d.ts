@@ -89,6 +89,9 @@ import type {
   ImportChatConversationResult,
 } from "../shared/chatImport";
 import type {
+  ClearProjectTemplateProposalStateInput,
+  ClearProjectTemplateProposalStateResult,
+  ProjectTemplateManagementSnapshot,
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalActionResult,
   ProjectTemplateProposalSaveInput,
@@ -172,6 +175,7 @@ type SettingsWindowTab =
   | "slack"
   | "icsImport"
   | "people"
+  | "templates"
   | "storage";
 
 declare global {
@@ -304,6 +308,10 @@ declare global {
       };
       projectTemplates: {
         getProposalSnapshot: () => Promise<ProjectTemplateProposalSnapshot>;
+        getManagementSnapshot: () => Promise<ProjectTemplateManagementSnapshot>;
+        clearProposalState: (
+          input: ClearProjectTemplateProposalStateInput
+        ) => Promise<ClearProjectTemplateProposalStateResult>;
         recordShown: (
           input: ProjectTemplateProposalShownInput
         ) => Promise<ProjectTemplateProposalShownResult>;

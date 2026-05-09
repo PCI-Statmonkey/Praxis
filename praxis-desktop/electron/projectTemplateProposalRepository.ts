@@ -6,6 +6,8 @@ import {
   projectTemplateProposalMarkdownPathForSlug,
   validateProjectTemplateProposalMarkdownDraft,
   type ExistingProjectTemplateMetadata,
+  type ClearProjectTemplateProposalStateResult,
+  type ProjectTemplateManagementSnapshot,
   type ProjectTemplateProposalActionResult,
   type ProjectTemplateProposalSaveResult,
   type ProjectTemplateProposalShownInput,
@@ -20,6 +22,7 @@ import {
 import { refreshMemoryDocumentIndex, resolveMemoryRoot } from "./praxisDb";
 import {
   acceptProjectTemplateProposal,
+  deleteProjectTemplateProposalState,
   dismissProjectTemplateProposal,
   listProjectTemplateProposalStates,
   neverSuggestProjectTemplateProposal,
@@ -27,7 +30,7 @@ import {
   rejectProjectTemplateProposal,
   snoozeProjectTemplateProposal,
 } from "./projectTemplateProposalStateRepository";
-import { getWorkSnapshot } from "./workRepository";
+import { getWorkSnapshot, listProjectTaskTemplateManagementSummaries } from "./workRepository";
 
 const readTextField = (input: unknown, field: string) => {
   if (!input || typeof input !== "object" || !(field in input)) {
@@ -58,6 +61,14 @@ const saveMarkdownField = (input: unknown) => {
     throw new Error("Project template save requires markdown.");
   }
   return markdown;
+};
+
+const fingerprintField = (input: unknown) => {
+  const fingerprint = readTextField(input, "fingerprint");
+  if (!fingerprint) {
+    throw new Error("Project template proposal state fingerprint is required.");
+  }
+  return fingerprint;
 };
 
 const toExistingTemplateMetadata = (
@@ -173,6 +184,39 @@ const resultWithSnapshot = (
   message,
   snapshot: getProjectTemplateProposalSnapshot(now),
 });
+
+export const getProjectTemplateManagementSnapshot = (): ProjectTemplateManagementSnapshot => ({
+  templates: listProjectTaskTemplateManagementSummaries(),
+  proposalStates: listProjectTemplateProposalStates().filter(
+    (state) =>
+      state.status === "dismissed" ||
+      state.status === "rejected" ||
+      state.status === "snoozed" ||
+      state.status === "never"
+  ),
+});
+
+export const clearProjectTemplateProposalStateForReview = (
+  input: unknown
+): ClearProjectTemplateProposalStateResult => {
+  const fingerprint = fingerprintField(input);
+  const existingState = listProjectTemplateProposalStates().find(
+    (state) => state.fingerprint === fingerprint
+  );
+  if (existingState?.status === "accepted") {
+    throw new Error("Accepted project template state cannot be cleared from this reversal path.");
+  }
+
+  const clearedState = deleteProjectTemplateProposalState(fingerprint);
+  const status = clearedState?.status ?? "state";
+  return {
+    ok: true,
+    message: clearedState
+      ? `Cleared project template ${status} state.`
+      : "No matching project template proposal state was found.",
+    snapshot: getProjectTemplateManagementSnapshot(),
+  };
+};
 
 export const dismissProjectTemplateProposalForReview = (
   input: unknown,

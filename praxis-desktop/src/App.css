@@ -2891,6 +2891,13 @@ ol {
   font-size: 0.9em;
 }
 
+.template-management-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
 .email-setup-panel {
   display: grid;
   gap: 14px;

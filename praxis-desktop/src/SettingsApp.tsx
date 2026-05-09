@@ -17,6 +17,7 @@ import {
 } from "../shared/personContactSuggestion";
 import type { SlackAdapterStatus } from "../shared/slackAdapter";
 import type { StorageOverview } from "../shared/storage/hybridStorage";
+import type { ProjectTemplateManagementSnapshot } from "../shared/projectTemplateProposals";
 import {
   DEFAULT_AI_SETTINGS,
   DEFAULT_UI_SETTINGS,
@@ -65,6 +66,7 @@ const SETTINGS_TABS = [
   "slack",
   "icsImport",
   "people",
+  "templates",
   "storage",
 ] as const;
 
@@ -87,6 +89,11 @@ const EMPTY_SNAPSHOT: WorkSnapshot = {
   people: [],
   personWorkLinks: [],
   memoryDocuments: [],
+};
+
+const EMPTY_PROJECT_TEMPLATE_MANAGEMENT: ProjectTemplateManagementSnapshot = {
+  templates: [],
+  proposalStates: [],
 };
 
 const EMPTY_SETTINGS: SettingsSnapshot = {
@@ -266,6 +273,8 @@ export default function SettingsApp() {
   );
   const [slackStatus, setSlackStatus] = useState<SlackAdapterStatus>(EMPTY_SLACK_STATUS);
   const [storageOverview, setStorageOverview] = useState<StorageOverview | null>(null);
+  const [projectTemplateManagement, setProjectTemplateManagement] =
+    useState<ProjectTemplateManagementSnapshot>(EMPTY_PROJECT_TEMPLATE_MANAGEMENT);
   const [memoryReindexing, setMemoryReindexing] = useState(false);
   const [status, setStatus] = useState("Loading settings...");
   const [selectedPersonId, setSelectedPersonId] = useState("");
@@ -317,6 +326,7 @@ export default function SettingsApp() {
       nextGmailOAuthReadiness,
       nextOutlookEmailOAuthReadiness,
       nextOutlookOAuthReadiness,
+      nextProjectTemplateManagement,
     ] = await Promise.all([
       window.praxis.work.getSnapshot(),
       window.praxis.storage.getOverview(),
@@ -327,6 +337,7 @@ export default function SettingsApp() {
       window.praxis.email.getGoogleOAuthReadiness(),
       window.praxis.email.getOutlookOAuthReadiness(),
       window.praxis.calendar.getOutlookOAuthReadiness(),
+      window.praxis.projectTemplates.getManagementSnapshot(),
     ]);
 
     setSnapshot(nextSnapshot);
@@ -338,6 +349,7 @@ export default function SettingsApp() {
     setGmailOAuthReadiness(nextGmailOAuthReadiness);
     setOutlookEmailOAuthReadiness(nextOutlookEmailOAuthReadiness);
     setOutlookOAuthReadiness(nextOutlookOAuthReadiness);
+    setProjectTemplateManagement(nextProjectTemplateManagement);
     setSlackForm({
       operatorChannelId: nextSettings.slack.operatorChannelId ?? "",
       proactiveMirroringEnabled: nextSettings.slack.proactiveMirroringEnabled,
@@ -988,6 +1000,7 @@ export default function SettingsApp() {
     { id: "slack", label: "Slack" },
     { id: "icsImport", label: "Import With ICS" },
     { id: "people", label: "People" },
+    { id: "templates", label: "Templates" },
     { id: "storage", label: "Storage" },
   ];
   const currentFontScalePercent =
@@ -1091,6 +1104,16 @@ export default function SettingsApp() {
       setStatus("Praxis could not refresh the markdown memory index.");
     } finally {
       setMemoryReindexing(false);
+    }
+  };
+
+  const clearProjectTemplateProposalState = async (fingerprint: string) => {
+    try {
+      const result = await window.praxis.projectTemplates.clearProposalState({ fingerprint });
+      setProjectTemplateManagement(result.snapshot);
+      setStatus(result.message);
+    } catch {
+      setStatus("Praxis could not clear that project template proposal state.");
     }
   };
 
@@ -1364,6 +1387,90 @@ export default function SettingsApp() {
               saveAppointmentEdit={unavailableEdit}
             />
           </>
+        ) : null}
+
+        {activeTab === "templates" ? (
+          <div className="template-management-grid">
+            <article className="brief-card">
+              <h3>Project Templates</h3>
+              <p className="brief-path">
+                Saved templates seed future projects only. Existing projects and connected
+                providers do not change automatically.
+              </p>
+              {projectTemplateManagement.templates.length > 0 ? (
+                <ol className="review-inbox-list">
+                  {projectTemplateManagement.templates.map((template) => (
+                    <li key={template.slug} className="review-inbox-item">
+                      <div className="review-inbox-header">
+                        <div>
+                          <strong>{template.label}</strong>
+                          <p>{template.slug}</p>
+                        </div>
+                        <span className="badge">{template.status}</span>
+                      </div>
+                      <div className="review-inbox-badges">
+                        <span className="badge">{template.builtIn ? "built in" : "markdown"}</span>
+                        <span className="badge">{template.taskCount} tasks</span>
+                        <span className="badge">{template.source}</span>
+                      </div>
+                      <p className="brief-path">{template.path}</p>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p>No saved local templates yet. Accepted proposal templates will appear here.</p>
+              )}
+            </article>
+
+            <article className="brief-card">
+              <h3>Hidden Proposal Patterns</h3>
+              <p className="brief-path">
+                Allow suggestions again for dismissed, snoozed, rejected, or do-not-suggest-again
+                patterns. PRAXIS may show them again if the evidence is still eligible.
+              </p>
+              {projectTemplateManagement.proposalStates.length > 0 ? (
+                <ol className="review-inbox-list">
+                  {projectTemplateManagement.proposalStates.map((state) => (
+                    <li key={state.fingerprint} className="review-inbox-item">
+                      <div className="review-inbox-header">
+                        <div>
+                          <strong>{state.status.replace("_", " ")}</strong>
+                          <p>{state.clusterId}</p>
+                        </div>
+                        <span className="badge">{state.shownCount} shown</span>
+                      </div>
+                      <div className="review-inbox-badges">
+                        <span className="badge">updated {formatDateTime(state.updatedAt)}</span>
+                        {state.snoozeUntil ? (
+                          <span className="badge">snoozed until {formatDateTime(state.snoozeUntil)}</span>
+                        ) : null}
+                        {state.acceptedTemplateSlug ? (
+                          <span className="badge">template: {state.acceptedTemplateSlug}</span>
+                        ) : null}
+                      </div>
+                      <p className="brief-path">{state.fingerprint}</p>
+                      {state.dismissalReason ? (
+                        <p className="brief-path">Reason: {state.dismissalReason}</p>
+                      ) : null}
+                      {state.acceptedTemplatePath ? (
+                        <p className="brief-path">Saved path: {state.acceptedTemplatePath}</p>
+                      ) : null}
+                      <div className="filter-actions">
+                        <button
+                          type="button"
+                          onClick={() => void clearProjectTemplateProposalState(state.fingerprint)}
+                        >
+                          Allow suggestions again
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p>No hidden proposal patterns.</p>
+              )}
+            </article>
+          </div>
         ) : null}
 
         {activeTab === "storage" ? (

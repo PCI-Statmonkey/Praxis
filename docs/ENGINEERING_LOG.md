@@ -1,5 +1,28 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Template Management And Suppression Reversal
+
+### Closed
+
+- Added a project-template management snapshot with saved/built-in template summaries and hidden proposal states.
+- Added a safe proposal-state reversal endpoint for dismissed, snoozed, rejected, and do-not-suggest-again states.
+- Blocked accepted proposal state from the reversal endpoint so saved-template acceptance is not confused with file deletion or undo.
+- Added a Settings `Templates` tab that lists project templates and hidden proposal patterns.
+- Added `Allow suggestions again` controls for hidden proposal patterns.
+- Kept markdown editing, archiving, template revision proposals, and apply-to-existing-project behavior out of this slice.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Plan template revision and apply flows as separate explicit-confirmation tracks.
+
 ## 2026-05-09 - Memory Tree Git Hygiene
 
 ### Closed

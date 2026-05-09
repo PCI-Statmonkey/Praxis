@@ -10,6 +10,9 @@ import {
   PROJECT_TASK_TEMPLATES,
 } from "../shared/workModel";
 import type {
+  ProjectTemplateManagementTemplate,
+} from "../shared/projectTemplateProposals";
+import type {
   AppointmentRecord,
   CreateAppointmentInput,
   CreateDeadlineInput,
@@ -488,6 +491,42 @@ export const listProjectTaskTemplateOptions = () => {
       .sort((left, right) => left.label.localeCompare(right.label))
       .map((template) => ({ id: template.slug, label: template.label })),
   ];
+};
+
+export const listProjectTaskTemplateManagementSummaries = (): ProjectTemplateManagementTemplate[] => {
+  const bySlug = new Map(
+    PROJECT_TASK_TEMPLATES.map((template) => [
+      template.slug,
+      {
+        slug: template.slug,
+        label: template.label,
+        status: template.status,
+        source: template.source,
+        path: template.markdownPath,
+        taskCount: template.items.length,
+        builtIn: true,
+      },
+    ])
+  );
+
+  for (const template of listMarkdownProjectTaskTemplates()) {
+    bySlug.set(template.slug, {
+      slug: template.slug,
+      label: template.label,
+      status: template.status,
+      source: template.source,
+      path: template.markdownPath,
+      taskCount: template.items.length,
+      builtIn: false,
+    });
+  }
+
+  return [...bySlug.values()].sort(
+    (left, right) =>
+      left.status.localeCompare(right.status) ||
+      left.label.localeCompare(right.label) ||
+      left.slug.localeCompare(right.slug)
+  );
 };
 
 const loadProjectTaskTemplateForCreation = (templateId: CreateProjectInput["taskTemplateId"]) => {

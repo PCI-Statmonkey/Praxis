@@ -86,6 +86,7 @@ type SettingsWindowTab =
   | "slack"
   | "icsImport"
   | "people"
+  | "templates"
   | "storage";
 
 type ManualChatImportForm = {

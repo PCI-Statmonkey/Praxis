@@ -112,6 +112,31 @@ export type ProjectTemplateProposalSaveResult = ProjectTemplateProposalActionRes
   };
 };
 
+export type ProjectTemplateManagementTemplate = {
+  slug: string;
+  label: string;
+  status: "active" | "draft" | "archived";
+  source: string;
+  path: string;
+  taskCount: number;
+  builtIn: boolean;
+};
+
+export type ProjectTemplateManagementSnapshot = {
+  templates: ProjectTemplateManagementTemplate[];
+  proposalStates: ProjectTemplateProposalState[];
+};
+
+export type ClearProjectTemplateProposalStateInput = {
+  fingerprint: string;
+};
+
+export type ClearProjectTemplateProposalStateResult = {
+  ok: true;
+  message: string;
+  snapshot: ProjectTemplateManagementSnapshot;
+};
+
 export type ProjectTemplateProposalFilterOptions = {
   now?: string | Date;
   dismissedCooldownDays?: number;
