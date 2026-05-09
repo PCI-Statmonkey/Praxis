@@ -14,7 +14,7 @@ const BetterSqlite3 = require("better-sqlite3") as typeof import("better-sqlite3
 type DatabaseHandle = import("better-sqlite3").Database;
 
 const DATABASE_FILENAME = "praxis.sqlite";
-const SCHEMA_VERSION = 11;
+const SCHEMA_VERSION = 12;
 
 let database: DatabaseHandle | null = null;
 
@@ -348,6 +348,7 @@ const migrateSchema = (db: DatabaseHandle) => {
       status TEXT NOT NULL,
       source TEXT NOT NULL DEFAULT 'local',
       notes TEXT,
+      actual_minutes INTEGER,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -385,6 +386,13 @@ const migrateSchema = (db: DatabaseHandle) => {
   }
   if (!hasTodoColumn("estimated_minutes")) {
     db.exec("ALTER TABLE todos ADD COLUMN estimated_minutes INTEGER");
+  }
+
+  const timeBlockColumns = db.pragma("table_info(time_blocks)") as Array<{ name: string }>;
+  const hasTimeBlockColumn = (name: string) =>
+    timeBlockColumns.some((column) => column.name === name);
+  if (!hasTimeBlockColumn("actual_minutes")) {
+    db.exec("ALTER TABLE time_blocks ADD COLUMN actual_minutes INTEGER");
   }
 
   const personColumns = db.pragma("table_info(people)") as Array<{ name: string }>;

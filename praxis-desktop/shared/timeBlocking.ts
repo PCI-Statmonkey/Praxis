@@ -24,6 +24,7 @@ export type TimeBlockRecord = {
   status: TimeBlockStatus;
   source: TimeBlockSource;
   notes: string | null;
+  actualMinutes: number | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -51,6 +52,7 @@ export type UpdateTimeBlockInput = {
   entityId?: string | null;
   status?: TimeBlockStatus;
   notes?: string | null;
+  actualMinutes?: number | null;
 };
 
 export type DeleteTimeBlockInput = {
@@ -118,6 +120,7 @@ export type PlanningTimeBlockItem = {
   entityKind: TimeBlockEntityKind;
   entityId: string | null;
   notes: string | null;
+  actualMinutes: number | null;
 };
 
 export type PlanningConflict = {
@@ -336,6 +339,20 @@ export const validateTimeBlockRange = (startsAt: string, endsAt: string): string
   return null;
 };
 
+export const validateTimeBlockActualMinutes = (
+  actualMinutes: number | null | undefined
+): string | null => {
+  if (actualMinutes === null || actualMinutes === undefined) {
+    return null;
+  }
+
+  if (!Number.isInteger(actualMinutes) || actualMinutes <= 0) {
+    return "Actual duration must be a positive whole number of minutes.";
+  }
+
+  return null;
+};
+
 const isOnTargetDate = (value: string | null, targetDate: string) => {
   const parsed = parseDateTime(value);
   return parsed ? formatLocalDate(parsed) === targetDate : false;
@@ -399,6 +416,7 @@ const toTimeBlockItem = (timeBlock: TimeBlockRecord): PlanningTimeBlockItem => (
   entityKind: timeBlock.entityKind,
   entityId: timeBlock.entityId,
   notes: timeBlock.notes,
+  actualMinutes: timeBlock.actualMinutes,
 });
 
 const todoReason = (todo: TodoRecord, targetDate: string): PlanningWorkCandidate["reason"] => {

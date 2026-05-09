@@ -437,9 +437,17 @@ export function PlanSurfacePanel({
     }
   };
 
-  const updateBlockStatus = async (id: string, status: "canceled" | "completed") => {
+  const updateBlockStatus = async (
+    id: string,
+    status: "canceled" | "completed",
+    actualMinutes?: number
+  ) => {
     try {
-      await updateTimeBlock({ id, status });
+      const input: UpdateTimeBlockInput = { id, status };
+      if (status === "completed" && actualMinutes !== undefined) {
+        input.actualMinutes = actualMinutes;
+      }
+      await updateTimeBlock(input);
       setCompletionPrompt(null);
     } catch (error) {
       setFormError(error instanceof Error ? error.message : "Praxis could not update this block.");
@@ -736,12 +744,18 @@ export function PlanSurfacePanel({
             </select>
           </label>
           <p className="plan-conflict-copy">
-            Actual duration is not persisted yet; the existing API can save status only.
+            Actual duration is saved locally for future planning.
           </p>
           <div className="plan-block-form-actions">
             <button
               type="button"
-              onClick={() => void updateBlockStatus(completionPrompt.block.id, "completed")}
+              onClick={() =>
+                void updateBlockStatus(
+                  completionPrompt.block.id,
+                  "completed",
+                  completionPrompt.actualMinutes
+                )
+              }
             >
               Mark complete
             </button>
@@ -953,6 +967,9 @@ export function PlanSurfacePanel({
                   <strong>{timeBlock.title}</strong>
                   <span className="badge">{timeBlock.status}</span>
                   <span className="badge">{timeBlock.entityKind}</span>
+                  {timeBlock.status === "completed" && timeBlock.actualMinutes ? (
+                    <span className="badge">Actual {timeBlock.actualMinutes} min</span>
+                  ) : null}
                   <div className="plan-block-actions">
                     <button type="button" onClick={() => openEditBlock(timeBlock)}>
                       Edit

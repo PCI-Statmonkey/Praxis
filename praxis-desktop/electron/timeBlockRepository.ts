@@ -12,6 +12,7 @@ import type {
 import {
   isTimeBlockEntityKind,
   isTimeBlockStatus,
+  validateTimeBlockActualMinutes,
   validateTimeBlockRange,
 } from "../shared/timeBlocking";
 import { getPraxisDatabase } from "./praxisDb";
@@ -26,6 +27,7 @@ type DbTimeBlock = {
   status: TimeBlockStatus;
   source: "local";
   notes: string | null;
+  actual_minutes: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -60,6 +62,7 @@ const toTimeBlock = (row: DbTimeBlock): TimeBlockRecord => ({
   status: row.status,
   source: row.source,
   notes: row.notes,
+  actualMinutes: row.actual_minutes,
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -89,6 +92,17 @@ const normalizeStatus = (value: unknown, fallback: TimeBlockStatus = "planned") 
     return value;
   }
   throw new Error("Time block status must be planned, completed, or canceled.");
+};
+
+const normalizeActualMinutes = (value: number | null | undefined, fallback: number | null) => {
+  if (value === undefined) {
+    return fallback;
+  }
+  const issue = validateTimeBlockActualMinutes(value);
+  if (issue) {
+    throw new Error(issue);
+  }
+  return value ?? null;
 };
 
 const listTimeBlockRecords = (input: ListTimeBlocksInput = {}) => {
@@ -161,9 +175,10 @@ export const createTimeBlock = (input: CreateTimeBlockInput): TimeBlockSnapshot 
         status,
         source,
         notes,
+        actual_minutes,
         created_at,
         updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'local', ?, ?, ?)`
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'local', ?, ?, ?, ?)`
     )
     .run(
       createId(),
@@ -174,6 +189,7 @@ export const createTimeBlock = (input: CreateTimeBlockInput): TimeBlockSnapshot 
       entityId,
       "planned",
       notes,
+      null,
       timestamp,
       timestamp
     );
@@ -199,6 +215,8 @@ export const updateTimeBlock = (input: UpdateTimeBlockInput): TimeBlockSnapshot 
       : normalizeEntityId(entityKind, input.entityId);
   const status = normalizeStatus(input.status, current.status);
   const notes = input.notes === undefined ? current.notes : normalizeOptional(input.notes);
+  const requestedActualMinutes = normalizeActualMinutes(input.actualMinutes, current.actual_minutes);
+  const actualMinutes = status === "completed" ? requestedActualMinutes : null;
   assertValidRange(startsAt, endsAt);
 
   getPraxisDatabase()
@@ -211,10 +229,22 @@ export const updateTimeBlock = (input: UpdateTimeBlockInput): TimeBlockSnapshot 
            entity_id = ?,
            status = ?,
            notes = ?,
+           actual_minutes = ?,
            updated_at = ?
        WHERE id = ?`
     )
-    .run(title, startsAt, endsAt, entityKind, entityId, status, notes, nowIso(), input.id);
+    .run(
+      title,
+      startsAt,
+      endsAt,
+      entityKind,
+      entityId,
+      status,
+      notes,
+      actualMinutes,
+      nowIso(),
+      input.id
+    );
 
   return getTimeBlockSnapshot();
 };

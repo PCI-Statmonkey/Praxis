@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-08 - Actual Duration Persistence For Local Time Blocks
+
+### Closed
+
+- Added local persistence for `time_blocks.actual_minutes` with a schema version bump.
+- Completing a local Plan block can save optional actual duration.
+- Completed blocks with saved actual duration show a compact `Actual X min` badge.
+- Cancel and non-completed updates clear actual duration.
+- Delete remains delete-only.
+- Local-only boundary is preserved.
+- No Google/Outlook provider write-back was added.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `git diff --check` passed with CRLF warnings only.
+- Rebuilt runtime contained `actual_minutes` before generated files were restored.
+- DB smoke confirmed the column exists, a completed block stored `45`, cancel cleared it, and delete cleanup worked.
+
+### QA Limitation
+
+- Final visual badge smoke was blocked by renderer visibility/blank direct Electron window; do not claim visual pass.
+
 ## 2026-05-08 - Command Plan Polish And Project Template Slice
 
 ### Closed

@@ -5,6 +5,7 @@ import {
   buildAiDraftPlan,
   buildPlanningDayView,
   buildScheduleReview,
+  validateTimeBlockActualMinutes,
   validateTimeBlockRange,
   type TimeBlockRecord,
 } from "../shared/timeBlocking";
@@ -133,6 +134,7 @@ const timeBlock = (overrides: Partial<TimeBlockRecord> = {}): TimeBlockRecord =>
   status: "planned",
   source: "local",
   notes: null,
+  actualMinutes: null,
   createdAt: timestamp,
   updatedAt: timestamp,
   ...overrides,
@@ -374,7 +376,7 @@ const planningDayWithLocalBlock = buildPlanningDayView({
   ],
   projects: [project()],
   missions: [mission()],
-  timeBlocks: [timeBlock()],
+  timeBlocks: [timeBlock({ actualMinutes: 45 })],
 });
 
 assert.deepEqual(
@@ -387,6 +389,7 @@ assert.deepEqual(
   ]),
   [["Work block", "todo", "todo-due", "planned", "local"]]
 );
+assert.equal(planningDayWithLocalBlock.timeBlocks[0].actualMinutes, 45);
 assert.deepEqual(
   planningDayWithLocalBlock.unscheduledWork.map((item) => item.id),
   ["todo-open"]
@@ -401,6 +404,11 @@ assert.match(
   validateTimeBlockRange("2026-04-24T09:30:00", "2026-04-24T09:00:00") ?? "",
   /end must be after the start/
 );
+assert.equal(validateTimeBlockActualMinutes(null), null);
+assert.equal(validateTimeBlockActualMinutes(undefined), null);
+assert.equal(validateTimeBlockActualMinutes(45), null);
+assert.match(validateTimeBlockActualMinutes(0) ?? "", /positive whole number/);
+assert.match(validateTimeBlockActualMinutes(12.5) ?? "", /positive whole number/);
 
 const priorityReview = buildScheduleReview({
   targetDate: "2026-04-24",
