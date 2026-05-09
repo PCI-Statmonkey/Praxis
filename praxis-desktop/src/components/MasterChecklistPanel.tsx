@@ -38,6 +38,12 @@ const priorityRank: Record<WorkPriority, number> = {
   low: 3,
 };
 
+type ChecklistGroup = {
+  id: string;
+  label: string;
+  todos: TodoRecord[];
+};
+
 export function MasterChecklistPanel({
   isActive,
   todos,
@@ -74,9 +80,38 @@ export function MasterChecklistPanel({
   const moneyCount = activeTodos.filter((todo) => todo.moneyRelated).length;
   const waitingCount = activeTodos.filter((todo) => todo.waitingOnPersonId).length;
 
+  const contextForTodo = (todo: TodoRecord) => {
+    if (!todo.projectId) {
+      return { id: "standalone", label: "Standalone" };
+    }
+
+    const project = projectById.get(todo.projectId);
+    if (!project) {
+      return { id: `project:${todo.projectId}`, label: "Project unavailable" };
+    }
+
+    const mission = project.missionId ? missionById.get(project.missionId) : null;
+    return {
+      id: project.id,
+      label: mission ? `${mission.title} / ${project.title}` : project.title,
+    };
+  };
+
+  const groupedTodos = rankedTodos.slice(0, 8).reduce<ChecklistGroup[]>((groups, todo) => {
+    const context = contextForTodo(todo);
+    const existingGroup = groups.find((group) => group.id === context.id);
+    if (existingGroup) {
+      existingGroup.todos.push(todo);
+      return groups;
+    }
+
+    groups.push({ ...context, todos: [todo] });
+    return groups;
+  }, []);
+
   const renderTodoContextBadges = (projectId: string | null) => {
     if (!projectId) {
-      return <span className="badge">quick</span>;
+      return <span className="badge">standalone</span>;
     }
 
     const project = projectById.get(projectId);
@@ -143,31 +178,41 @@ export function MasterChecklistPanel({
         </button>
       </div>
       {rankedTodos.length > 0 ? (
-        <ul className="checklist-strip">
-          {rankedTodos.slice(0, 8).map((todo) => (
-            <li key={todo.id} className={`item${todo.priority === "critical" ? " is-urgent" : ""}`}>
-              {todo.title}
-              <span className="badge">{todo.priority}</span>
-              {renderTodoContextBadges(todo.projectId)}
-              {todo.quickAction ? <span className="badge">quick</span> : null}
-              {todo.estimatedMinutes ? <span className="badge">{todo.estimatedMinutes} min</span> : null}
-              {todo.dueAt ? (
-                <span className="badge urgent-badge">{formatDateTime(todo.dueAt)}</span>
-              ) : null}
-              {renderWaitingBadge(todo.waitingOnPersonId)}
-              {todo.moneyRelated ? <span className="badge">money</span> : null}
-              {renderStatusActions("todo", todo.id, todo.status)}
-              <ActionMenu>
-                <button type="button" onClick={() => setEditingTodo(todo)}>
-                  Edit
-                </button>
-                <button type="button" onClick={() => void deleteTodo(todo.id)}>
-                  Delete
-                </button>
-              </ActionMenu>
-            </li>
+        <div className="checklist-groups">
+          {groupedTodos.map((group) => (
+            <section key={group.id} className="checklist-group" aria-label={group.label}>
+              <div className="checklist-group-header">
+                <strong>{group.label}</strong>
+                <span className="badge">{group.todos.length}</span>
+              </div>
+              <ul className="checklist-strip">
+                {group.todos.map((todo) => (
+                  <li key={todo.id} className={`item${todo.priority === "critical" ? " is-urgent" : ""}`}>
+                    {todo.title}
+                    <span className="badge">{todo.priority}</span>
+                    {renderTodoContextBadges(todo.projectId)}
+                    {todo.quickAction ? <span className="badge">quick</span> : null}
+                    {todo.estimatedMinutes ? <span className="badge">{todo.estimatedMinutes} min</span> : null}
+                    {todo.dueAt ? (
+                      <span className="badge urgent-badge">{formatDateTime(todo.dueAt)}</span>
+                    ) : null}
+                    {renderWaitingBadge(todo.waitingOnPersonId)}
+                    {todo.moneyRelated ? <span className="badge">money</span> : null}
+                    {renderStatusActions("todo", todo.id, todo.status)}
+                    <ActionMenu>
+                      <button type="button" onClick={() => setEditingTodo(todo)}>
+                        Edit
+                      </button>
+                      <button type="button" onClick={() => void deleteTodo(todo.id)}>
+                        Delete
+                      </button>
+                    </ActionMenu>
+                  </li>
+                ))}
+              </ul>
+            </section>
           ))}
-        </ul>
+        </div>
       ) : (
         <EmptyState
           title={todoFilter === "quick" ? "No quick or urgent todos" : "No active todos"}

@@ -1,5 +1,27 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Checklist Grouping Slice 1
+
+### Closed
+
+- Checklist now groups visible ranked todos by Mission / Project, project-only, or Standalone.
+- Existing All Active and Quick/Urgent filters remain.
+- Existing ranking, badges, and todo complete/edit/delete actions are preserved.
+- Engineering Project template tasks should group under their project.
+- Command bottom lane uses compact horizontal groups and hides extra items per group to avoid height growth.
+- Local-only/no-provider-write boundary remains intact.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `git diff --check` passed.
+
+### QA Limitation
+
+- Ana saw Command render and no provider write-back controls, but native Electron input did not respond, so manual grouping/filter/action QA was blocked. Do not claim full manual pass.
+
 ## 2026-05-09 - Project Task UI Polish Slice 1
 
 ### Closed

@@ -376,9 +376,38 @@ body::before {
   gap: 8px;
 }
 
+.app-shell.is-surface-command .bottom .checklist-groups {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.app-shell.is-surface-command .bottom .checklist-group {
+  min-width: 230px;
+}
+
+.app-shell.is-surface-command .bottom .checklist-group-header {
+  font-size: 0.72rem;
+}
+
+.app-shell.is-surface-command .bottom .checklist-group .checklist-strip {
+  display: grid;
+  overflow: visible;
+  padding-bottom: 0;
+}
+
 .app-shell.is-surface-command .bottom .checklist-strip .item {
   min-width: 210px;
   padding: 8px;
+}
+
+.app-shell.is-surface-command .bottom .checklist-group .checklist-strip .item {
+  min-width: 0;
+}
+
+.app-shell.is-surface-command .bottom .checklist-group .checklist-strip .item:nth-child(n + 3) {
+  display: none;
 }
 
 .app-shell.is-surface-command .bottom .checklist-strip .item p,
@@ -2678,6 +2707,38 @@ ol {
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 4px;
+}
+
+.checklist-groups {
+  display: grid;
+  gap: 12px;
+}
+
+.checklist-group {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.checklist-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.checklist-group-header strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .checklist-strip .item {
