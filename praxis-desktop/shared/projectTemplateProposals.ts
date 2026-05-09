@@ -47,6 +47,40 @@ export type ProjectTemplateProposal = {
   explanation: string;
 };
 
+export type ProjectTemplateProposalStateStatus =
+  | "draft"
+  | "dismissed"
+  | "rejected"
+  | "snoozed"
+  | "accepted"
+  | "never";
+
+export type ProjectTemplateProposalState = {
+  fingerprint: string;
+  clusterId: string;
+  materialChangeHash: string;
+  status: ProjectTemplateProposalStateStatus;
+  shownCount: number;
+  lastShownAt: string | null;
+  dismissalReason: string | null;
+  snoozeUntil: string | null;
+  acceptedTemplateSlug: string | null;
+  acceptedTemplatePath: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProjectTemplateProposalFilterOptions = {
+  now?: string | Date;
+  dismissedCooldownDays?: number;
+};
+
+export type RecordProjectTemplateProposalShownStateInput = {
+  proposal: ProjectTemplateProposal;
+  existingState?: ProjectTemplateProposalState | null;
+  shownAt: string;
+};
+
 export type BuildProjectTemplateProposalsInput = {
   projects: ProjectRecord[];
   todos: TodoRecord[];
@@ -65,10 +99,20 @@ type ProjectTaskProfile = {
 const DEFAULT_MIN_SIMILAR_PROJECTS = 3;
 const DEFAULT_MIN_RECURRING_TASKS = 5;
 const DEFAULT_MIN_PROJECT_OVERLAP = 0.6;
+const DEFAULT_DISMISSED_COOLDOWN_DAYS = 30;
 
 const titleStopWords = new Set(["a", "an", "the"]);
 
 const projectTitleStopWords = new Set(["a", "an", "the", "for", "at", "of"]);
+
+const projectTemplateProposalStateStatuses = new Set<ProjectTemplateProposalStateStatus>([
+  "draft",
+  "dismissed",
+  "rejected",
+  "snoozed",
+  "accepted",
+  "never",
+]);
 
 const toTitleCase = (value: string) =>
   value
@@ -106,6 +150,22 @@ const stableHash = (value: string) => {
   }
   return (hash >>> 0).toString(36);
 };
+
+export const isProjectTemplateProposalStateStatus = (
+  value: unknown
+): value is ProjectTemplateProposalStateStatus =>
+  typeof value === "string" && projectTemplateProposalStateStatuses.has(value as ProjectTemplateProposalStateStatus);
+
+const parseTime = (value: string | Date | null | undefined) => {
+  if (!value) {
+    return null;
+  }
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const addDays = (date: Date, days: number) =>
+  new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 
 const jaccardSimilarity = (left: Set<string>, right: Set<string>) => {
   if (left.size === 0 || right.size === 0) {
@@ -418,3 +478,92 @@ export const buildProjectTemplateProposals = ({
     .filter((proposal): proposal is ProjectTemplateProposal => proposal !== null)
     .sort((left, right) => left.proposedLabel.localeCompare(right.proposedLabel));
 };
+
+export const filterEligibleProjectTemplateProposals = (
+  proposals: ProjectTemplateProposal[],
+  states: ProjectTemplateProposalState[],
+  options: ProjectTemplateProposalFilterOptions = {}
+) => {
+  const now = parseTime(options.now) ?? new Date();
+  const dismissedCooldownDays =
+    options.dismissedCooldownDays ?? DEFAULT_DISMISSED_COOLDOWN_DAYS;
+  const statesByFingerprint = new Map(states.map((state) => [state.fingerprint, state]));
+  const statesByCluster = new Map<string, ProjectTemplateProposalState[]>();
+  states.forEach((state) => {
+    statesByCluster.set(state.clusterId, [...(statesByCluster.get(state.clusterId) ?? []), state]);
+  });
+
+  return proposals.filter((proposal) => {
+    const clusterStates = statesByCluster.get(proposal.clusterId) ?? [];
+    if (clusterStates.some((state) => state.status === "never")) {
+      return false;
+    }
+
+    if (
+      clusterStates.some((state) => {
+        if (state.status !== "snoozed") {
+          return false;
+        }
+        const snoozeUntil = parseTime(state.snoozeUntil);
+        return snoozeUntil ? snoozeUntil.getTime() > now.getTime() : false;
+      })
+    ) {
+      return false;
+    }
+
+    const exactState = statesByFingerprint.get(proposal.proposalFingerprint);
+    if (!exactState) {
+      return true;
+    }
+
+    if (exactState.materialChangeHash !== proposal.materialChangeHash) {
+      return true;
+    }
+
+    if (exactState.status === "accepted" || exactState.status === "rejected") {
+      return false;
+    }
+
+    if (exactState.status === "dismissed") {
+      const dismissedAt = parseTime(exactState.updatedAt) ?? parseTime(exactState.lastShownAt);
+      if (!dismissedAt) {
+        return false;
+      }
+      return addDays(dismissedAt, dismissedCooldownDays).getTime() <= now.getTime();
+    }
+
+    if (exactState.status === "snoozed") {
+      const snoozeUntil = parseTime(exactState.snoozeUntil);
+      return snoozeUntil ? snoozeUntil.getTime() <= now.getTime() : false;
+    }
+
+    return true;
+  });
+};
+
+export const recordProjectTemplateProposalShownState = ({
+  proposal,
+  existingState = null,
+  shownAt,
+}: RecordProjectTemplateProposalShownStateInput): ProjectTemplateProposalState => ({
+  fingerprint: proposal.proposalFingerprint,
+  clusterId: proposal.clusterId,
+  materialChangeHash: proposal.materialChangeHash,
+  status:
+    existingState &&
+    (existingState.status === "dismissed" ||
+      existingState.status === "rejected" ||
+      existingState.status === "snoozed" ||
+      existingState.status === "accepted" ||
+      existingState.status === "never")
+      ? existingState.status
+      : "draft",
+  shownCount: (existingState?.shownCount ?? 0) + 1,
+  lastShownAt: shownAt,
+  dismissalReason: existingState?.dismissalReason ?? null,
+  snoozeUntil: existingState?.snoozeUntil ?? null,
+  acceptedTemplateSlug: existingState?.acceptedTemplateSlug ?? null,
+  acceptedTemplatePath: existingState?.acceptedTemplatePath ?? null,
+  createdAt: existingState?.createdAt ?? shownAt,
+  updatedAt: shownAt,
+});

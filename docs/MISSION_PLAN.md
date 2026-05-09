@@ -139,6 +139,17 @@ should still produce a deterministic review from local ranking.
 The LLM must not silently mutate the task graph. Any write-like suggestion should become a Review
 Inbox item, a staged draft, or an explicit confirmation prompt before local state changes.
 
+Project-template proposals follow the same boundary. The completed detector is pure and no-write: it
+can notice that a project resembles work that should have a reusable markdown template, but detection
+alone must not create, edit, or apply a template. The user-facing value is that PRAXIS can surface
+repeatable project patterns, remember which suggestions were dismissed or snoozed, and let the
+operator turn a reviewed proposal into a reusable template only after explicit confirmation.
+
+The next implementation slice is SQLite proposal state and filtering. Review Inbox UI comes after
+that persistence exists, so PRAXIS can avoid repeatedly asking about suggestions the operator already
+handled. Explicit markdown template save comes after Review Inbox review and should remain a visible
+operator-approved action.
+
 Model direction is local-first through Ollama with a configurable local model. Optional API provider
 settings may exist later, but API use should be explicit, operator-controlled, and governed by an AI
 reliance policy.
@@ -322,10 +333,13 @@ Initial remote access design should assume access from anywhere, not only same-h
 
 ## Immediate Development Priorities
 
-1. Wire AI draft planning through the deterministic Schedule Review source with a no-write confirmation boundary
-2. Keep provider calendar write-back explicit and later, after local planning behavior is proven
-3. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
-4. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
-5. Redesign Context/Memory and checklist grouping after the current planning slice or when the operator asks to prioritize it
-6. Plan persistent presence and Rainmeter after PRAXIS can explain priority and risk
-7. Add voice wake and spoken output after the review and briefing logic are trustworthy
+1. Add SQLite project-template proposal state and filtering before Review Inbox UI
+2. Build Review Inbox UI for project template proposals after persistence and anti-nagging behavior exist
+3. Add explicit markdown template save after Review Inbox review, without automatic writes from detection
+4. Wire AI draft planning through the deterministic Schedule Review source with a no-write confirmation boundary
+5. Keep provider calendar write-back explicit and later, after local planning behavior is proven
+6. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
+7. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
+8. Redesign Context/Memory and checklist grouping after the current planning slice or when the operator asks to prioritize it
+9. Plan persistent presence and Rainmeter after PRAXIS can explain priority and risk
+10. Add voice wake and spoken output after the review and briefing logic are trustworthy

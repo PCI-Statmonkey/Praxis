@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-Move the immediate execution queue to choosing the next Command/Plan follow-up now that Command dashboard and focused Plan layout polish are complete. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they come after Mission Control can show what matters, why it matters, and what to do next.
+AI project template proposal persistence/filtering and anti-nagging state are complete. Move the immediate execution queue to Review Inbox UI wiring for eligible filtered proposals while preserving explicit confirmation boundaries. Markdown template save/edit remains a later explicit-confirmation slice, and provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the current proposal UI work.
 
 ## CURRENT STATE
 
@@ -115,31 +115,57 @@ Move the immediate execution queue to choosing the next Command/Plan follow-up n
 - Slack/companion AI Review exposure remains open unless explicitly closed in a future checkpoint.
 - Locke automated verification passed: `npm run test:assistant`, `npm test`, `npx tsc --noEmit`, `npm run lint`, `npm run build:app`, and `git diff --check` with only CRLF notices.
 - Ana live QA passed: `npm run storage:check` reported `ok: true`, `error: 0`, `warning: 0`; Command/focus nav passed; service pill visual and Settings routing passed; Google/Outlook persistence sanity passed.
+- Latest pushed commit is `5862ef4 Add no-write project template proposal detector`.
+- AI project template proposal Slice 1 is complete as a pure no-write detector/builder.
+- AI project template proposal persistence/filtering is complete: schema v13 proposal-state table/indexes, repository state actions, pure eligibility filtering, shown-state helper, and regression coverage are in place without UI, markdown writes, AI calls, provider writes, or project/todo/template mutations.
+- `docs/AI_PROJECT_TEMPLATE_PROPOSAL_PERSISTENCE.md` is an untracked planning artifact for SQLite-first proposal persistence, material-change filtering, and anti-nagging.
+- `docs/AI_PROJECT_TEMPLATE_PROPOSAL_DISMISSAL_UX.md` is an untracked planning artifact; Quinn reviewed the dismissal UX direction and found it sufficient.
+- Next implementation should wire eligible filtered proposals into Review Inbox using persisted state for dismiss/reject/snooze/accepted behavior.
 
 ## NEXT STEPS
 
-### 1. Choose Next Command/Plan Follow-Up
+### 1. Wire AI Project Template Proposals Into Review Inbox
 
 **GOAL**
 
-Pick the next follow-up after Command/Plan layout polish and keep the local-only/no-write-back boundary intact.
+Surface eligible filtered project-template proposals in Review Inbox without creating markdown templates or mutating projects automatically.
 
 **DIRECTION**
 
-- Persist actual duration and tags.
-- Add true drag/drop visual scheduling.
-- Move context-memory redesign forward.
-- Add checklist grouping.
-- Keep provider write-back explicitly later.
-- Keep Slack/companion AI Review exposure open unless separately closed.
+- Use the no-write detector plus persisted proposal-state filtering as the source of truth for eligible proposals.
+- Show compact proposal evidence such as matched project count/titles, recurring task count, task overlap, evidence summary, and no-write boundary.
+- Wire Review Inbox actions to proposal state where safe: dismiss, reject, snooze, never/do-not-suggest-again, and accepted handoff.
+- Keep accepted proposal handling as a review handoff only until the markdown template save/editor slice exists.
+- Preserve the existing no-write detector boundary: no project/template creation, no markdown template writes, no provider writes, and no automatic project/todo/template mutations in this slice.
+- Treat `docs/AI_PROJECT_TEMPLATE_PROPOSAL_PERSISTENCE.md` and `docs/AI_PROJECT_TEMPLATE_PROPOSAL_DISMISSAL_UX.md` as current untracked planning artifacts unless they are intentionally included in a docs checkpoint.
 
 **DONE WHEN**
 
-- The next slice is selected and scoped.
-- Any chosen Plan work preserves local-only behavior unless provider write-back is explicitly selected later.
-- Any chosen context/checklist work preserves source identity and explicit write boundaries.
+- Eligible proposals appear in Review Inbox with evidence and explicit confirmation boundaries.
+- Review Inbox proposal actions update proposal state without duplicate nagging.
+- Existing Review Inbox behavior remains intact.
+- No markdown template writes, provider writes, or project/todo/template mutations happen from display alone.
 
-### 2. Plan Provider Calendar Write-Back
+### 2. Add Explicit Markdown Template Save Later
+
+**GOAL**
+
+Turn an accepted proposal into a markdown-backed project task template only after explicit operator confirmation.
+
+**DIRECTION**
+
+- Build a review/editor flow for proposed markdown template content.
+- Save to `memory/templates/project-task-templates/` only after explicit confirmation.
+- Do not mutate existing projects when templates change.
+- Preserve source identity for future template-created todos.
+
+**DONE WHEN**
+
+- Accepted proposal markdown can be reviewed and saved intentionally.
+- Existing projects remain unchanged.
+- Future project creation can select the saved template.
+
+### 3. Plan Provider Calendar Write-Back
 
 **GOAL**
 
@@ -155,7 +181,7 @@ Keep external calendar write-back as an explicit later track after local plannin
 
 - Provider write-back has a separate technical plan, confirmation model, and test strategy.
 
-### 3. Continue Mission Control Follow-Up Polish
+### 4. Continue Mission Control Follow-Up Polish
 
 **GOAL**
 
@@ -175,7 +201,7 @@ Keep non-blocking Mission Control layout and copy issues moving behind the unifi
 - Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
 - Any AI Review launcher path preserves no-write behavior.
 
-### 4. Plan Checklist Grouping And Context-Memory Redesign
+### 5. Plan Checklist Grouping And Context-Memory Redesign
 
 **GOAL**
 
@@ -191,7 +217,7 @@ Keep checklist grouping and context-memory redesign visible as follow-up work af
 
 - The redesign has a scoped plan and does not distract from the active calendar/time-blocking work.
 
-### 5. Plan V1.1 Persistent Presence After AI Review
+### 6. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
 
@@ -216,7 +242,7 @@ Define how PRAXIS should live as a persistent Windows assistant after the AI rev
 
 - V1.1 has a follow-on persistent-presence plan that depends on the AI review context packet rather than replacing it.
 
-### 6. Keep Future Intelligence And Capture Tracks Execution-Focused
+### 7. Keep Future Intelligence And Capture Tracks Execution-Focused
 
 **GOAL**
 

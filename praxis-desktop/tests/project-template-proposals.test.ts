@@ -1,8 +1,11 @@
 import { strict as assert } from "node:assert";
 import {
   buildProjectTemplateProposals,
+  filterEligibleProjectTemplateProposals,
   normalizeProjectTemplateTaskTitle,
   projectTemplateTaskSlug,
+  recordProjectTemplateProposalShownState,
+  type ProjectTemplateProposalState,
 } from "../shared/projectTemplateProposals";
 import type { ProjectRecord, TodoRecord, WorkPriority, WorkStatus } from "../shared/workModel";
 
@@ -163,6 +166,102 @@ const repeatedEngineeringProposal = buildProjectTemplateProposals({
 
 assert.equal(repeatedEngineeringProposal.proposalFingerprint, engineeringProposal.proposalFingerprint);
 assert.equal(repeatedEngineeringProposal.materialChangeHash, engineeringProposal.materialChangeHash);
+
+const firstShownState = recordProjectTemplateProposalShownState({
+  proposal: engineeringProposal,
+  shownAt: "2026-05-09T13:00:00.000Z",
+});
+assert.equal(firstShownState.status, "draft");
+assert.equal(firstShownState.shownCount, 1);
+assert.equal(firstShownState.lastShownAt, "2026-05-09T13:00:00.000Z");
+
+const secondShownState = recordProjectTemplateProposalShownState({
+  proposal: engineeringProposal,
+  existingState: firstShownState,
+  shownAt: "2026-05-09T14:00:00.000Z",
+});
+assert.equal(secondShownState.shownCount, 2);
+assert.equal(secondShownState.status, "draft");
+
+const stateFor = (
+  overrides: Partial<ProjectTemplateProposalState> = {}
+): ProjectTemplateProposalState => ({
+  ...firstShownState,
+  ...overrides,
+});
+
+const dismissedState = stateFor({
+  status: "dismissed",
+  dismissalReason: "later",
+  updatedAt: "2026-05-09T15:00:00.000Z",
+});
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([engineeringProposal], [dismissedState], {
+    now: "2026-05-10T15:00:00.000Z",
+  }),
+  []
+);
+
+const materiallyChangedProposal = {
+  ...engineeringProposal,
+  proposalFingerprint: `${engineeringProposal.proposalFingerprint}:changed`,
+  materialChangeHash: `${engineeringProposal.materialChangeHash}:changed`,
+};
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([materiallyChangedProposal], [dismissedState], {
+    now: "2026-05-10T15:00:00.000Z",
+  }).map((proposal) => proposal.proposalFingerprint),
+  [materiallyChangedProposal.proposalFingerprint]
+);
+
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals(
+    [engineeringProposal],
+    [
+      stateFor({
+        fingerprint: "snoozed-other-fingerprint",
+        status: "snoozed",
+        snoozeUntil: "2026-06-01T00:00:00.000Z",
+      }),
+    ],
+    {
+      now: "2026-05-10T15:00:00.000Z",
+    }
+  ),
+  []
+);
+
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([engineeringProposal], [
+    stateFor({
+      status: "rejected",
+    }),
+  ]),
+  []
+);
+
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([materiallyChangedProposal], [
+    stateFor({
+      fingerprint: "never-other-fingerprint",
+      status: "never",
+    }),
+  ]),
+  []
+);
+
+const acceptedState = stateFor({
+  status: "accepted",
+  acceptedTemplateSlug: "engineering-project",
+  acceptedTemplatePath: "templates/project-task-templates/engineering-project.md",
+});
+assert.deepEqual(filterEligibleProjectTemplateProposals([engineeringProposal], [acceptedState]), []);
+assert.equal(acceptedState.acceptedTemplateSlug, "engineering-project");
+assert.equal(
+  acceptedState.acceptedTemplatePath,
+  "templates/project-task-templates/engineering-project.md"
+);
+assert.equal(engineeringProposal.markdownDraft.includes("source: ai_proposal"), true);
 
 assert.deepEqual(
   buildProjectTemplateProposals({

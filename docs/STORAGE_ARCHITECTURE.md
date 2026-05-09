@@ -33,6 +33,7 @@ Use SQLite for:
 - reminder state
 - resolver state
 - suggestion history
+- project-template proposal state
 - settings
 - document indexes
 - encrypted secret metadata
@@ -58,8 +59,12 @@ Use markdown for:
 - planning notes
 - summaries the operator may want to read or edit directly
 - durable external brain records
+- accepted saved project templates
 
 Markdown should preserve narrative and context, not replace the database.
+
+Saved project templates in markdown are canonical only after an explicit save. They are creation-time
+seeds for future projects; existing projects do not auto-mutate when template markdown changes.
 
 ### Filesystem
 
@@ -152,6 +157,21 @@ The operator still needs a readable mission document.
 ### Suggestion Contexts
 
 - Primary: SQLite
+
+### Project Template Proposals
+
+- Primary: SQLite
+- Mirror: none before explicit template save
+
+Reason:
+Proposal detection is no-write logic. SQLite stores operational proposal state after detection so
+Praxis can filter eligible Review Inbox candidates, remember dismissed or stale proposals, and avoid
+repeatedly nagging the operator. This state should stay high-level and must not store or expose raw
+provider payloads, tokens, encrypted values, `secure_secrets`, or unnecessary external identifiers.
+
+Accepted proposal state is not itself a saved template. A later explicit confirmation flow may create
+or update a markdown project template, and that markdown file is then the canonical accepted template.
+Templates seed future project creation only; they do not backfill or mutate existing projects.
 
 ### Integration Secrets
 
@@ -293,6 +313,7 @@ Current indexed tables:
 - `deadlines`
 - `memory_documents`
 - `suggestion_contexts`
+- project-template proposal state tables when implemented
 - `calendar_connections`
 - `email_connections`
 - `email_messages`

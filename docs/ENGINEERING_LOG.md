@@ -1,5 +1,38 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - AI Project Template Proposal Persistence And Filtering
+
+### Closed
+
+- Added SQLite schema v13 proposal-state table and cluster/status indexes.
+- Added proposal state repository actions for listing, recording shown state, dismissing, rejecting, snoozing, marking never/do-not-suggest-again, and accepting with optional template slug/path.
+- Added pure eligibility filtering against persisted proposal state, including dismissed cooldown, snoozed cluster suppression, exact rejected/accepted suppression, cluster-level never suppression, and material-change reappearance.
+- Added shown-state helper behavior for draft insertion, shown-count incrementing, and last-shown timestamp updates while preserving terminal states.
+- Preserved the no-write proposal boundary: no Review Inbox UI, markdown writes, AI calls, provider writes, or project/todo/template mutations.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- Focused project-template proposal tests passed.
+- `npm run test:assistant` passed.
+- `git diff --check` passed with CRLF warnings only.
+
+## 2026-05-09 - AI Project Template Proposal Planning Reconciliation
+
+### Closed
+
+- Reconciled the active queue after the AI project template proposal planning work.
+- Promoted proposal persistence/filtering and anti-nagging as the next implementation slice before Review Inbox UI wiring.
+- Recorded that `docs/AI_PROJECT_TEMPLATE_PROPOSAL_PERSISTENCE.md` is an untracked planning artifact for SQLite-first proposal persistence, material-change filtering, and anti-nagging.
+- Recorded that `docs/AI_PROJECT_TEMPLATE_PROPOSAL_DISMISSAL_UX.md` is an untracked planning artifact, and Quinn reviewed the dismissal UX direction as sufficient.
+- Kept provider calendar write-back, markdown template writes, Review Inbox UI wiring, and persistent presence/Rainmeter as later explicit tracks.
+
+### Verification
+
+- Documentation-only reconciliation.
+- No source files, staging, commits, or `memory/` files were touched.
+
 ## 2026-05-09 - AI Project Template Proposal Slice 1
 
 ### Closed

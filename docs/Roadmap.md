@@ -122,6 +122,14 @@
 - [ ] Add signing implementation after certificate storage, signing location, and timestamp server are chosen
 
 ## Stage 6 - AI Task Review and ADHD Reset Mode
+- [x] Add pure/no-write AI project template proposal detector for identifying projects that may benefit from reusable templates
+- [x] Document persistence and anti-nagging plan for project template proposals
+- [x] Add SQLite proposal state and filtering so accepted, dismissed, snoozed, and do-not-suggest-again choices suppress repeat nags before any Review Inbox UI work
+- [ ] Add Review Inbox UI for project template proposals after proposal state exists
+- [ ] Add explicit markdown template save after Review Inbox confirmation
+- [ ] Add proposal editor for reviewing and adjusting suggested template content before save
+- [ ] Add template revision proposals for existing markdown templates
+- [ ] Add apply-template flow for existing projects, behind explicit review and confirmation
 - [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health
 - [ ] Add natural-language review intents such as `reset me`, `what am I missing?`, `what should I do next?`, `what changed since yesterday?`, and `what is stale?`
 - [ ] Route model review through a local-first Ollama provider with configurable local model settings

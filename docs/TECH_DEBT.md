@@ -74,6 +74,34 @@
 - Likely Fix: Route write-like model suggestions into Review Inbox candidates, staged drafts, or explicit confirmation commands, with rule-based ranking as the safety net and no silent task graph mutations.
 - Related: `docs/ARCHITECTURE.md`, `praxis-desktop/electron/assistantRouter.ts`, `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/shared/assistantContextResolver.ts`
 
+### Project Template Review Inbox UI Is Missing
+
+- Priority: High
+- Impact: Template proposals have no user-facing review surface yet, so the operator cannot inspect, accept, dismiss, snooze, or revise proposal candidates in the app.
+- Likely Fix: Build the Review Inbox UI only after proposal persistence exists, using explicit actions and preserving no automatic writes from detection.
+- Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
+
+### Template Save Confirmation Flow Is Missing
+
+- Priority: High
+- Impact: Even after proposals are visible, markdown template creation needs an explicit save-confirmation path so PRAXIS does not imply or perform automatic template writes.
+- Likely Fix: Add a reviewed draft/save-confirmation flow that writes markdown templates only after operator approval and records the result in proposal state.
+- Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
+
+### Template Management Is Deferred
+
+- Priority: Medium
+- Impact: Proposal editor, markdown template listing/editing, template revision proposals, and applying templates to existing projects remain later work, so accepted templates may be hard to manage without additional surfaces.
+- Likely Fix: Add template management after the initial Review Inbox and save-confirmation path, including revision proposals and explicit apply-template actions for existing projects.
+- Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
+
+### Do-Not-Suggest-Again Reversal Is Undefined
+
+- Priority: Medium
+- Impact: A do-not-suggest-again action is useful for anti-nagging, but the operator may later need to reverse it if a project pattern becomes relevant again.
+- Likely Fix: Store suppressions in SQLite with enough metadata to show and reverse them in a future template management or settings surface.
+- Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`
+
 ### Persistent Presence Depends On AI Review
 
 - Priority: Medium
@@ -177,6 +205,11 @@
 - Related: `praxis-desktop/electron/slackAdapter.ts`, `praxis-desktop/vite.config.ts`
 
 ## Resolved Debt
+
+### Project Template Proposal State Was Not Persisted
+
+- Resolved: 2026-05-09
+- Resolution: Added SQLite schema v13 proposal-state table/indexes, repository state actions, pure eligibility filtering, shown-state helper behavior, and regression coverage. Review Inbox UI and markdown template save confirmation remain separate later slices.
 
 ### Stale Tauri Direction
 

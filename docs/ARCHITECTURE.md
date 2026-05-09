@@ -156,6 +156,37 @@ operator-controlled, and governed by an AI reliance policy. The policy is:
   assistant command handlers
 - every write-like suggestion must be inspectable before it changes local state
 
+## AI Project Template Proposals
+
+AI project template discovery is a staged architecture, not a direct write path.
+
+The required boundary is:
+
+1. Pure detector
+2. Proposal state and filtering service
+3. Review Inbox UI
+4. Explicit accepted-template markdown save
+
+The detector is pure, deterministic, and no-write. It may inspect local structured context and return
+candidate project-template proposals, but it must not insert database rows, write markdown, create
+providers, call AI/API providers, or mutate app state.
+
+Proposal state belongs to SQLite-first service logic after detection. Its purpose is to remember
+proposal identity, review status, eligibility, and anti-nagging signals so the operator is not shown
+the same ineligible or dismissed proposal repeatedly. This state is operational and filterable; it is
+not a saved project template.
+
+The Review Inbox should receive only proposals that pass the service's eligibility filters. Raw
+provider payloads, tokens, encrypted values, `secure_secrets`, and unnecessary external identifiers
+must not be exposed through proposal packets or review UI surfaces.
+
+Accepting a proposal in Review Inbox should not immediately write markdown. Accepted proposals become
+eligible for a later explicit confirmation slice that saves a canonical markdown project template.
+Until that confirmation happens, the accepted state remains proposal state, not a durable template.
+
+Saved project templates are creation-time seeds. They may help initialize future projects, but
+existing projects do not auto-mutate when a template is added, accepted, edited, or removed.
+
 ## Definitions
 
 - Idea: a captured possibility that has not yet been committed to

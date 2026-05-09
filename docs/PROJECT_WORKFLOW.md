@@ -41,3 +41,11 @@ Current implementation work should keep room for the agreed PRAXIS direction:
 - trusted companion and remote surfaces
 - release packaging, signing, and update readiness
 - broader integrations after the core assistant workflow is stable
+
+## Current AI Proposal Track
+
+The AI project template proposal detector is complete as a pure/no-write detector. The next work should add SQLite proposal state and filtering before UI, so accepted, dismissed, snoozed, and do-not-suggest-again choices prevent repeat nags.
+
+Review Inbox UI comes after persistence. Explicit markdown template save comes after the Review Inbox confirmation path. Proposal editing, template management, template revision proposals, and applying templates to existing projects remain later follow-ups.
+
+Provider calendar write-back and persistent presence/Rainmeter remain separate later tracks.
