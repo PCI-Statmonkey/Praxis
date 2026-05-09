@@ -10,6 +10,7 @@ const testFiles = [
   "daily-brief-builder.test.ts",
   "focus-report-follow-up.test.ts",
   "person-lookup-engine.test.ts",
+  "project-template-proposals.test.ts",
   "work-lookup-actions.test.ts",
   "waiting-on-assignment.test.ts",
 ];

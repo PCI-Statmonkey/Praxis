@@ -1,0 +1,224 @@
+import { strict as assert } from "node:assert";
+import {
+  buildProjectTemplateProposals,
+  normalizeProjectTemplateTaskTitle,
+  projectTemplateTaskSlug,
+} from "../shared/projectTemplateProposals";
+import type { ProjectRecord, TodoRecord, WorkPriority, WorkStatus } from "../shared/workModel";
+
+const timestamp = "2026-05-09T12:00:00.000Z";
+
+const project = (id: string, title: string): ProjectRecord => ({
+  id,
+  missionId: null,
+  slug: id,
+  title,
+  summary: null,
+  status: "active",
+  dueAt: null,
+  markdownPath: null,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+
+const todo = (
+  projectId: string,
+  title: string,
+  overrides: Partial<{
+    id: string;
+    priority: WorkPriority;
+    status: WorkStatus;
+  }> = {}
+): TodoRecord => ({
+  id: overrides.id ?? `${projectId}-${projectTemplateTaskSlug(title)}`,
+  projectId,
+  title,
+  status: overrides.status ?? "active",
+  priority: overrides.priority ?? "normal",
+  dueAt: null,
+  moneyRelated: false,
+  quickAction: false,
+  estimatedMinutes: null,
+  waitingOnPersonId: null,
+  sourceKind: null,
+  sourceRef: null,
+  notes: null,
+  createdAt: timestamp,
+  updatedAt: timestamp,
+});
+
+const engineeringTasks = [
+  "Contract",
+  "Billing initial payment",
+  "Electrical",
+  "Mechanical",
+  "Plumbing",
+  "Grease separator",
+  "Sign and seal",
+  "Sent to client",
+  "Billing final payment",
+  "Under building department review",
+];
+
+const marketingTasks = [
+  "Discovery call",
+  "Audience notes",
+  "Creative brief",
+  "Landing page copy",
+  "Campaign launch",
+];
+
+const todosFor = (projectId: string, taskTitles: string[]) =>
+  taskTitles.map((title) => todo(projectId, title));
+
+assert.equal(normalizeProjectTemplateTaskTitle("The Sign & Seal"), "sign and seal");
+assert.equal(projectTemplateTaskSlug("Grease separator"), "grease-separator");
+assert.equal(
+  projectTemplateTaskSlug("Under building department review"),
+  "under-building-department-review"
+);
+
+const belowThresholdProjects = [
+  project("engineering-a", "Engineering project A"),
+  project("engineering-b", "Engineering project B"),
+];
+assert.deepEqual(
+  buildProjectTemplateProposals({
+    projects: belowThresholdProjects,
+    todos: belowThresholdProjects.flatMap((candidate) => todosFor(candidate.id, engineeringTasks)),
+  }),
+  []
+);
+
+const engineeringProjects = [
+  project("engineering-a", "Engineering project A"),
+  project("engineering-b", "Engineering project B"),
+  project("engineering-c", "Engineering project C"),
+];
+const [engineeringProposal] = buildProjectTemplateProposals({
+  projects: engineeringProjects,
+  todos: engineeringProjects.flatMap((candidate, index) =>
+    todosFor(candidate.id, [
+      ...engineeringTasks.slice(0, 6),
+      index === 0 ? "Sign & Seal" : "Sign and seal",
+      ...engineeringTasks.slice(7),
+    ])
+  ),
+});
+
+assert.equal(engineeringProposal.proposedSlug, "engineering-project");
+assert.equal(engineeringProposal.proposedLabel, "Engineering Project");
+assert.deepEqual(engineeringProposal.basedOnProjectIds, [
+  "engineering-a",
+  "engineering-b",
+  "engineering-c",
+]);
+assert.equal(engineeringProposal.matchedProjectCount, 3);
+assert.deepEqual(engineeringProposal.matchedProjectTitles, [
+  "Engineering project A",
+  "Engineering project B",
+  "Engineering project C",
+]);
+assert.equal(engineeringProposal.recurringTaskCount, 10);
+assert.equal(engineeringProposal.taskOverlapPercent, 100);
+assert.equal(engineeringProposal.evidenceSummary, "10 tasks repeated across 3 projects");
+assert.match(engineeringProposal.clusterId, /^project-template-cluster:/);
+assert.match(engineeringProposal.proposalFingerprint, /^project-template-fingerprint:/);
+assert.match(engineeringProposal.materialChangeHash, /^[a-z0-9]+$/);
+assert.deepEqual(engineeringProposal.writeBoundary, {
+  saved: false,
+  writesOnConfirmOnly: true,
+  existingProjectsChange: false,
+  providerWrites: false,
+});
+assert.equal(engineeringProposal.evidence.length, 10);
+assert.equal(
+  engineeringProposal.evidence.every((item) => item.projectCount === 3),
+  true
+);
+assert.equal(
+  engineeringProposal.evidence.some((item) => item.taskSlug === "sign-and-seal"),
+  true
+);
+assert.equal(
+  engineeringProposal.evidence.some((item) => item.taskSlug === "grease-separator"),
+  true
+);
+assert.match(engineeringProposal.explanation, /10 tasks repeated across 3 projects/);
+assert.equal(
+  engineeringProposal.markdownDraft,
+  `---\nkind: project_task_template\nslug: engineering-project\nlabel: Engineering Project\nversion: 1\nstatus: active\nsource: ai_proposal\n---\n\n# Engineering Project\n\n## Tasks\n\n- [ ] Billing final payment\n- [ ] Billing initial payment\n- [ ] Contract\n- [ ] Electrical\n- [ ] Grease separator\n- [ ] Mechanical\n- [ ] Plumbing\n- [ ] Sent to client\n- [ ] Sign and seal\n- [ ] Under building department review\n`
+);
+
+const repeatedEngineeringProposal = buildProjectTemplateProposals({
+  projects: engineeringProjects,
+  todos: engineeringProjects.flatMap((candidate, index) =>
+    todosFor(candidate.id, [
+      ...engineeringTasks.slice(0, 6),
+      index === 0 ? "Sign & Seal" : "Sign and seal",
+      ...engineeringTasks.slice(7),
+    ])
+  ),
+})[0];
+
+assert.equal(repeatedEngineeringProposal.proposalFingerprint, engineeringProposal.proposalFingerprint);
+assert.equal(repeatedEngineeringProposal.materialChangeHash, engineeringProposal.materialChangeHash);
+
+assert.deepEqual(
+  buildProjectTemplateProposals({
+    projects: engineeringProjects,
+    todos: engineeringProjects.flatMap((candidate) => todosFor(candidate.id, engineeringTasks)),
+    existingTemplates: [
+      {
+        slug: "engineering-project",
+        status: "active",
+        items: engineeringTasks.map((title) => ({ title })),
+      },
+    ],
+  }),
+  []
+);
+
+assert.deepEqual(
+  buildProjectTemplateProposals({
+    projects: engineeringProjects,
+    todos: engineeringProjects.flatMap((candidate) => todosFor(candidate.id, engineeringTasks)),
+    existingTemplates: [
+      {
+        slug: "permitting-project",
+        status: "active",
+        items: engineeringTasks.slice(0, 8).map((title) => ({ title })),
+      },
+    ],
+  }),
+  []
+);
+
+const mixedProjects = [
+  ...engineeringProjects,
+  project("marketing-a", "Marketing campaign A"),
+  project("marketing-b", "Marketing campaign B"),
+  project("marketing-c", "Marketing campaign C"),
+];
+const mixedProposals = buildProjectTemplateProposals({
+  projects: mixedProjects,
+  todos: [
+    ...engineeringProjects.flatMap((candidate) => todosFor(candidate.id, engineeringTasks)),
+    ...mixedProjects
+      .filter((candidate) => candidate.id.startsWith("marketing-"))
+      .flatMap((candidate) => todosFor(candidate.id, marketingTasks)),
+  ],
+});
+
+assert.deepEqual(
+  mixedProposals.map((proposal) => proposal.proposedSlug).sort(),
+  ["engineering-project", "marketing-campaign"]
+);
+assert.equal(
+  mixedProposals.every((proposal) =>
+    proposal.basedOnProjectIds.every((projectId) =>
+      projectId.startsWith(proposal.proposedSlug === "engineering-project" ? "engineering-" : "marketing-")
+    )
+  ),
+  true
+);

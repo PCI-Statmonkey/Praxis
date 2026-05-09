@@ -1,5 +1,23 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - AI Project Template Proposal Slice 1
+
+### Closed
+
+- Added pure no-write AI project template proposal detector/builder.
+- Detector uses local projects/todos and existing template metadata only.
+- No UI wiring, DB writes, markdown writes, provider writes, or AI/API calls were added.
+- Conservative threshold logic covers similar project clusters, recurring tasks, overlap threshold, and equivalent existing template suppression.
+- Output includes draft proposal metadata, matched project counts/titles, recurring task count, overlap percent, evidence summary, per-task evidence with project count, stable cluster/fingerprint/material-change hashes, explicit no-write boundary, and a markdown draft string for future review/confirmation.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- Focused project-template-proposals test passed.
+- `npm run test:assistant` passed.
+- `git diff --check` passed.
+
 ## 2026-05-09 - Checklist Grouping Slice 1
 
 ### Closed
