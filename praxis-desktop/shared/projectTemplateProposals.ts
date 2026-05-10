@@ -1,17 +1,28 @@
 import {
   parseProjectTaskTemplateMarkdown,
   PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT,
+  PROJECT_TASK_TEMPLATE_SOURCE_KIND,
+  type ProjectTaskTemplateDefinition,
   type ProjectRecord,
   type TodoRecord,
+  type WorkPriority,
 } from "./workModel";
 
 export type ExistingProjectTemplateMetadata = {
   slug: string;
   label?: string | null;
+  version?: 1 | number | null;
   status?: "active" | "draft" | "archived" | string | null;
+  path?: string | null;
+  source?: string | null;
   items?: Array<{
     title: string;
     taskSlug?: string | null;
+    priority?: WorkPriority;
+    moneyRelated?: boolean;
+    quickAction?: boolean;
+    estimatedMinutes?: number | null;
+    notes?: string | null;
   }>;
 };
 
@@ -30,17 +41,28 @@ export type ProjectTemplateProposalWriteBoundary = {
   providerWrites: false;
 };
 
-export type ProjectTemplateProposal = {
+export type ProjectTemplateProposalType = "new_template" | "template_revision";
+
+export type ProjectTemplateRevisionChange =
+  | {
+      kind: "add_task";
+      taskSlug: string;
+      title: string;
+      evidenceProjectIds: string[];
+    }
+  | {
+      kind: "keep_task";
+      taskSlug: string;
+      title: string;
+    };
+
+type ProjectTemplateProposalBase = {
   id: string;
   status: "draft";
-  proposedSlug: string;
-  proposedLabel: string;
-  proposedVersion: 1;
   source: "ai_proposal";
   basedOnProjectIds: string[];
   matchedProjectCount: number;
   matchedProjectTitles: string[];
-  recurringTaskCount: number;
   taskOverlapPercent: number;
   evidenceSummary: string;
   clusterId: string;
@@ -52,6 +74,30 @@ export type ProjectTemplateProposal = {
   explanation: string;
 };
 
+export type NewProjectTemplateProposal = ProjectTemplateProposalBase & {
+  proposalType: "new_template";
+  proposedSlug: string;
+  proposedLabel: string;
+  proposedVersion: 1;
+  recurringTaskCount: number;
+};
+
+export type ProjectTemplateRevisionProposal = ProjectTemplateProposalBase & {
+  proposalType: "template_revision";
+  templateSlug: string;
+  templatePath: string;
+  currentVersion: 1;
+  proposedVersion: 1;
+  proposedSlug: string;
+  proposedLabel: string;
+  recurringTaskCount: number;
+  changes: ProjectTemplateRevisionChange[];
+};
+
+export type ProjectTemplateProposal =
+  | NewProjectTemplateProposal
+  | ProjectTemplateRevisionProposal;
+
 export type ProjectTemplateProposalStateStatus =
   | "draft"
   | "dismissed"
@@ -62,6 +108,7 @@ export type ProjectTemplateProposalStateStatus =
 
 export type ProjectTemplateProposalState = {
   fingerprint: string;
+  proposalType: ProjectTemplateProposalType;
   clusterId: string;
   materialChangeHash: string;
   status: ProjectTemplateProposalStateStatus;
@@ -69,8 +116,11 @@ export type ProjectTemplateProposalState = {
   lastShownAt: string | null;
   dismissalReason: string | null;
   snoozeUntil: string | null;
+  templateSlug: string | null;
+  templatePath: string | null;
   acceptedTemplateSlug: string | null;
   acceptedTemplatePath: string | null;
+  acceptedTemplateVersion: number | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -81,6 +131,7 @@ export type ProjectTemplateProposalSnapshot = {
 
 export type ProjectTemplateProposalActionInput = {
   fingerprint: string;
+  proposalType?: ProjectTemplateProposalType;
   clusterId: string;
   materialChangeHash: string;
 };
@@ -157,6 +208,48 @@ export type BuildProjectTemplateProposalsInput = {
   minProjectOverlap?: number;
 };
 
+export type BuildProjectTemplateRevisionProposalsInput = {
+  projects: ProjectRecord[];
+  todos: TodoRecord[];
+  existingTemplates: ExistingProjectTemplateMetadata[];
+  minSimilarProjects?: number;
+  minRepeatedNewTasks?: number;
+  minTemplateOverlap?: number;
+};
+
+export type ProjectTemplateApplyPreviewInput = {
+  template: ProjectTaskTemplateDefinition;
+  projects: ProjectRecord[];
+  todos: TodoRecord[];
+  projectIds: string[];
+};
+
+export type ProjectTemplateApplyPreview = {
+  templateSlug: string;
+  templateVersion: number;
+  projectPreviews: Array<{
+    projectId: string;
+    projectTitle: string;
+    missingTasks: Array<{
+      taskSlug: string;
+      title: string;
+      priority: WorkPriority;
+      sourceRef: string;
+    }>;
+    duplicateWarnings: Array<{
+      templateTaskSlug: string;
+      existingTodoId: string;
+      existingTitle: string;
+    }>;
+  }>;
+  writeBoundary: {
+    createsTodos: false;
+    writesOnConfirmOnly: true;
+    editsExistingTodos: false;
+    providerWrites: false;
+  };
+};
+
 type ProjectTaskProfile = {
   project: ProjectRecord;
   taskSlugs: Set<string>;
@@ -166,6 +259,8 @@ type ProjectTaskProfile = {
 const DEFAULT_MIN_SIMILAR_PROJECTS = 3;
 const DEFAULT_MIN_RECURRING_TASKS = 5;
 const DEFAULT_MIN_PROJECT_OVERLAP = 0.6;
+const DEFAULT_MIN_REPEATED_NEW_TASKS = 1;
+const DEFAULT_MIN_TEMPLATE_OVERLAP = 0.55;
 const DEFAULT_DISMISSED_COOLDOWN_DAYS = 30;
 const MAX_PROJECT_TEMPLATE_PROPOSAL_MARKDOWN_LENGTH = 50_000;
 
@@ -205,6 +300,14 @@ export const normalizeProjectTemplateTaskTitle = (title: string) =>
 
 export const projectTemplateTaskSlug = (title: string) =>
   normalizeProjectTemplateTaskTitle(title)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+export const canonicalProjectTemplateTaskSlug = (value: string) =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/^\d{1,3}-+/, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
@@ -332,6 +435,41 @@ const buildProfiles = (projects: ProjectRecord[], todos: TodoRecord[]): ProjectT
   });
 
   return [...profileByProjectId.values()].filter((profile) => profile.taskSlugs.size > 0);
+};
+
+const templateTaskSlugSet = (template: ExistingProjectTemplateMetadata) =>
+  new Set(
+    (template.items ?? [])
+      .map((item) => canonicalProjectTemplateTaskSlug(item.taskSlug ?? projectTemplateTaskSlug(item.title)))
+      .filter(Boolean)
+  );
+
+const profileMatchesTemplate = (
+  profile: ProjectTaskProfile,
+  template: ExistingProjectTemplateMetadata,
+  todos: TodoRecord[],
+  minTemplateOverlap: number
+) => {
+  const templateSlugs = templateTaskSlugSet(template);
+  if (templateSlugs.size === 0) {
+    return false;
+  }
+
+  if (
+    todos.some(
+      (todo) =>
+        todo.projectId === profile.project.id &&
+        todo.sourceKind === PROJECT_TASK_TEMPLATE_SOURCE_KIND &&
+        Boolean(todo.sourceRef?.startsWith(`${template.slug}:v`))
+    )
+  ) {
+    return true;
+  }
+
+  const canonicalProfileSlugs = new Set(
+    [...profile.taskSlugs].map(canonicalProjectTemplateTaskSlug).filter(Boolean)
+  );
+  return jaccardSimilarity(canonicalProfileSlugs, templateSlugs) >= minTemplateOverlap;
 };
 
 const findSimilarComponents = (profiles: ProjectTaskProfile[], minOverlap: number) => {
@@ -471,6 +609,34 @@ const markdownForProposal = (
   "",
 ].join("\n");
 
+const markdownForRevisionProposal = (
+  template: ExistingProjectTemplateMetadata,
+  changes: ProjectTemplateRevisionChange[]
+) => {
+  const label = template.label ?? template.slug;
+  const source = template.source ?? "markdown";
+  const tasks = changes
+    .filter((change) => change.kind === "keep_task" || change.kind === "add_task")
+    .map((change) => change.title);
+  return [
+    "---",
+    "kind: project_task_template",
+    `slug: ${template.slug}`,
+    `label: ${label}`,
+    "version: 1",
+    "status: active",
+    `source: ${source}`,
+    "---",
+    "",
+    `# ${label}`,
+    "",
+    "## Tasks",
+    "",
+    ...tasks.map((title) => `- [ ] ${title}`),
+    "",
+  ].join("\n");
+};
+
 export const projectTemplateProposalMarkdownPathForSlug = (slug: string) =>
   `${PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT}/${slug}.md`;
 
@@ -509,7 +675,7 @@ export const buildProjectTemplateProposals = ({
   minSimilarProjects = DEFAULT_MIN_SIMILAR_PROJECTS,
   minRecurringTasks = DEFAULT_MIN_RECURRING_TASKS,
   minProjectOverlap = DEFAULT_MIN_PROJECT_OVERLAP,
-}: BuildProjectTemplateProposalsInput): ProjectTemplateProposal[] => {
+}: BuildProjectTemplateProposalsInput): NewProjectTemplateProposal[] => {
   const profiles = buildProfiles(projects, todos).filter(
     (profile) => profile.taskSlugs.size >= minRecurringTasks
   );
@@ -551,6 +717,7 @@ export const buildProjectTemplateProposals = ({
       const evidenceSummary = `${evidence.length} tasks repeated across ${basedOnProjectIds.length} projects`;
       return {
         id: `project-template-proposal:${proposalHash}`,
+        proposalType: "new_template" as const,
         status: "draft" as const,
         proposedSlug,
         proposedLabel,
@@ -576,7 +743,149 @@ export const buildProjectTemplateProposals = ({
         explanation: `Detected ${evidenceSummary}.`,
       };
     })
-    .filter((proposal): proposal is ProjectTemplateProposal => proposal !== null)
+    .filter((proposal): proposal is NewProjectTemplateProposal => proposal !== null)
+    .sort((left, right) => left.proposedLabel.localeCompare(right.proposedLabel));
+};
+
+export const buildProjectTemplateRevisionProposals = ({
+  projects,
+  todos,
+  existingTemplates,
+  minSimilarProjects = DEFAULT_MIN_SIMILAR_PROJECTS,
+  minRepeatedNewTasks = DEFAULT_MIN_REPEATED_NEW_TASKS,
+  minTemplateOverlap = DEFAULT_MIN_TEMPLATE_OVERLAP,
+}: BuildProjectTemplateRevisionProposalsInput): ProjectTemplateRevisionProposal[] => {
+  const activeTemplates = existingTemplates.filter(
+    (template) =>
+      (!template.status || template.status === "active") &&
+      template.source !== "built_in" &&
+      (template.items?.length ?? 0) > 0
+  );
+  if (activeTemplates.length === 0) {
+    return [];
+  }
+
+  const profiles = buildProfiles(projects, todos);
+  const todosByProjectId = new Map<string, TodoRecord[]>();
+  todos.forEach((todo) => {
+    if (!todo.projectId) {
+      return;
+    }
+    todosByProjectId.set(todo.projectId, [...(todosByProjectId.get(todo.projectId) ?? []), todo]);
+  });
+
+  return activeTemplates
+    .map((template) => {
+      const templateSlugs = templateTaskSlugSet(template);
+      const matchingProfiles = profiles.filter((profile) =>
+        profileMatchesTemplate(profile, template, todos, minTemplateOverlap)
+      );
+      if (matchingProfiles.length < minSimilarProjects) {
+        return null;
+      }
+
+      const candidateProjectIdsByTaskSlug = new Map<string, Set<string>>();
+      const candidateTitlesByTaskSlug = new Map<string, string[]>();
+      matchingProfiles.forEach((profile) => {
+        profile.taskSlugs.forEach((taskSlug) => {
+          const canonicalSlug = canonicalProjectTemplateTaskSlug(taskSlug);
+          if (!canonicalSlug || templateSlugs.has(canonicalSlug)) {
+            return;
+          }
+          candidateProjectIdsByTaskSlug.set(
+            canonicalSlug,
+            candidateProjectIdsByTaskSlug.get(canonicalSlug) ?? new Set<string>()
+          );
+          candidateProjectIdsByTaskSlug.get(canonicalSlug)?.add(profile.project.id);
+          candidateTitlesByTaskSlug.set(canonicalSlug, [
+            ...(candidateTitlesByTaskSlug.get(canonicalSlug) ?? []),
+            ...(profile.taskTitlesBySlug.get(taskSlug) ?? []),
+          ]);
+        });
+      });
+
+      const addedEvidence = [...candidateProjectIdsByTaskSlug.entries()]
+        .filter(([, projectIds]) => projectIds.size >= minSimilarProjects)
+        .map(([taskSlug, projectIds]) => ({
+          taskSlug,
+          title: mostCommonTitle(candidateTitlesByTaskSlug.get(taskSlug) ?? [taskSlug]),
+          projectIds: [...projectIds].sort(),
+          projectCount: projectIds.size,
+          occurrenceCount: projectIds.size,
+        }))
+        .sort(
+          (left, right) =>
+            right.occurrenceCount - left.occurrenceCount ||
+            left.title.localeCompare(right.title) ||
+            left.taskSlug.localeCompare(right.taskSlug)
+        );
+
+      if (addedEvidence.length < minRepeatedNewTasks) {
+        return null;
+      }
+
+      const basedOnProjectIds = matchingProfiles.map((profile) => profile.project.id).sort();
+      const matchedProjectTitles = matchingProfiles
+        .sort((left, right) => left.project.id.localeCompare(right.project.id))
+        .map((profile) => profile.project.title);
+      const keepChanges: ProjectTemplateRevisionChange[] = (template.items ?? []).map((item) => ({
+        kind: "keep_task" as const,
+        taskSlug: canonicalProjectTemplateTaskSlug(item.taskSlug ?? projectTemplateTaskSlug(item.title)),
+        title: item.title,
+      }));
+      const addChanges: ProjectTemplateRevisionChange[] = addedEvidence.map((item) => ({
+        kind: "add_task" as const,
+        taskSlug: item.taskSlug,
+        title: item.title,
+        evidenceProjectIds: item.projectIds,
+      }));
+      const changes = [...keepChanges, ...addChanges];
+      const materialChangeHash = stableHash(
+        addedEvidence
+          .map((item) => `${item.taskSlug}:${item.projectIds.join(",")}:${item.projectCount}`)
+          .join("|")
+      );
+      const proposalHash = stableHash(
+        `${template.slug}:${basedOnProjectIds.join(":")}:${materialChangeHash}`
+      );
+      const evidenceSummary = `${addedEvidence.length} possible template update${
+        addedEvidence.length === 1 ? "" : "s"
+      } repeated across ${basedOnProjectIds.length} projects`;
+      const averageOverlap = averagePairwiseOverlap(matchingProfiles);
+      return {
+        id: `project-template-revision:${proposalHash}`,
+        proposalType: "template_revision" as const,
+        status: "draft" as const,
+        templateSlug: template.slug,
+        templatePath:
+          template.path ?? projectTemplateProposalMarkdownPathForSlug(template.slug),
+        currentVersion: 1 as const,
+        proposedVersion: 1 as const,
+        proposedSlug: template.slug,
+        proposedLabel: template.label ?? template.slug,
+        source: "ai_proposal" as const,
+        basedOnProjectIds,
+        matchedProjectCount: basedOnProjectIds.length,
+        matchedProjectTitles,
+        recurringTaskCount: addedEvidence.length,
+        taskOverlapPercent: Math.round(averageOverlap * 100),
+        evidenceSummary,
+        clusterId: `project-template-revision-cluster:${template.slug}`,
+        proposalFingerprint: `project-template-revision-fingerprint:${proposalHash}`,
+        materialChangeHash,
+        writeBoundary: {
+          saved: false,
+          writesOnConfirmOnly: true,
+          existingProjectsChange: false,
+          providerWrites: false,
+        },
+        evidence: addedEvidence,
+        changes,
+        markdownDraft: markdownForRevisionProposal(template, changes),
+        explanation: `Detected ${evidenceSummary} for ${template.label ?? template.slug}.`,
+      };
+    })
+    .filter((proposal): proposal is ProjectTemplateRevisionProposal => proposal !== null)
     .sort((left, right) => left.proposedLabel.localeCompare(right.proposedLabel));
 };
 
@@ -596,12 +905,19 @@ export const filterEligibleProjectTemplateProposals = (
 
   return proposals.filter((proposal) => {
     const clusterStates = statesByCluster.get(proposal.clusterId) ?? [];
-    if (clusterStates.some((state) => state.status === "never")) {
+    if (
+      clusterStates.some(
+        (state) => state.proposalType === proposal.proposalType && state.status === "never"
+      )
+    ) {
       return false;
     }
 
     if (
       clusterStates.some((state) => {
+        if (state.proposalType !== proposal.proposalType) {
+          return false;
+        }
         if (state.status !== "snoozed") {
           return false;
         }
@@ -648,6 +964,7 @@ export const recordProjectTemplateProposalShownState = ({
   shownAt,
 }: RecordProjectTemplateProposalShownStateInput): ProjectTemplateProposalState => ({
   fingerprint: proposal.proposalFingerprint,
+  proposalType: proposal.proposalType,
   clusterId: proposal.clusterId,
   materialChangeHash: proposal.materialChangeHash,
   status: existingState?.status === "never" ? "never" : "draft",
@@ -655,8 +972,89 @@ export const recordProjectTemplateProposalShownState = ({
   lastShownAt: shownAt,
   dismissalReason: existingState?.status === "never" ? existingState.dismissalReason : null,
   snoozeUntil: null,
+  templateSlug: proposal.proposalType === "template_revision" ? proposal.templateSlug : null,
+  templatePath: proposal.proposalType === "template_revision" ? proposal.templatePath : null,
   acceptedTemplateSlug: null,
   acceptedTemplatePath: null,
+  acceptedTemplateVersion: null,
   createdAt: existingState?.createdAt ?? shownAt,
   updatedAt: shownAt,
 });
+
+const sourceRefTaskSlug = (sourceRef: string | null) => {
+  if (!sourceRef) {
+    return null;
+  }
+  const [, , taskSlug] = sourceRef.split(":");
+  return taskSlug ? canonicalProjectTemplateTaskSlug(taskSlug) : null;
+};
+
+export const buildProjectTemplateApplyPreview = ({
+  template,
+  projects,
+  todos,
+  projectIds,
+}: ProjectTemplateApplyPreviewInput): ProjectTemplateApplyPreview => {
+  const selectedProjectIds = new Set(projectIds.map((id) => id.trim()).filter(Boolean));
+  const todosByProjectId = new Map<string, TodoRecord[]>();
+  todos.forEach((todo) => {
+    if (!todo.projectId) {
+      return;
+    }
+    todosByProjectId.set(todo.projectId, [...(todosByProjectId.get(todo.projectId) ?? []), todo]);
+  });
+
+  return {
+    templateSlug: template.slug,
+    templateVersion: template.version,
+    projectPreviews: projects
+      .filter((project) => selectedProjectIds.has(project.id))
+      .map((project) => {
+        const projectTodos = todosByProjectId.get(project.id) ?? [];
+        const existingCanonicalSlugs = new Map<string, TodoRecord>();
+        projectTodos.forEach((todo) => {
+          const slugFromSource = sourceRefTaskSlug(todo.sourceRef);
+          const normalizedSlug = canonicalProjectTemplateTaskSlug(projectTemplateTaskSlug(todo.title));
+          const canonicalSlug = slugFromSource ?? normalizedSlug;
+          if (canonicalSlug && !existingCanonicalSlugs.has(canonicalSlug)) {
+            existingCanonicalSlugs.set(canonicalSlug, todo);
+          }
+        });
+
+        const duplicateWarnings: ProjectTemplateApplyPreview["projectPreviews"][number]["duplicateWarnings"] = [];
+        const missingTasks: ProjectTemplateApplyPreview["projectPreviews"][number]["missingTasks"] = [];
+
+        template.items.forEach((item) => {
+          const canonicalSlug = canonicalProjectTemplateTaskSlug(item.taskSlug);
+          const existingTodo = existingCanonicalSlugs.get(canonicalSlug);
+          if (existingTodo) {
+            duplicateWarnings.push({
+              templateTaskSlug: item.taskSlug,
+              existingTodoId: existingTodo.id,
+              existingTitle: existingTodo.title,
+            });
+            return;
+          }
+          missingTasks.push({
+            taskSlug: item.taskSlug,
+            title: item.title,
+            priority: item.priority,
+            sourceRef: `${template.slug}:v${template.version}:${item.taskSlug}`,
+          });
+        });
+
+        return {
+          projectId: project.id,
+          projectTitle: project.title,
+          missingTasks,
+          duplicateWarnings,
+        };
+      }),
+    writeBoundary: {
+      createsTodos: false,
+      writesOnConfirmOnly: true,
+      editsExistingTodos: false,
+      providerWrites: false,
+    },
+  };
+};

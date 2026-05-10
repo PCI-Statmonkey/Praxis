@@ -17,7 +17,10 @@ import {
 } from "../shared/personContactSuggestion";
 import type { SlackAdapterStatus } from "../shared/slackAdapter";
 import type { StorageOverview } from "../shared/storage/hybridStorage";
-import type { ProjectTemplateManagementSnapshot } from "../shared/projectTemplateProposals";
+import type {
+  ProjectTemplateApplyPreview,
+  ProjectTemplateManagementSnapshot,
+} from "../shared/projectTemplateProposals";
 import {
   DEFAULT_AI_SETTINGS,
   DEFAULT_UI_SETTINGS,
@@ -314,6 +317,10 @@ export default function SettingsApp() {
   const [editingTodo, setEditingTodo] = useState<TodoRecord | null>(null);
   const [editingPerson, setEditingPerson] = useState<PersonRecord | null>(null);
   const [editingAppointment, setEditingAppointment] = useState<AppointmentRecord | null>(null);
+  const [applyTemplateSlug, setApplyTemplateSlug] = useState("");
+  const [applyProjectIds, setApplyProjectIds] = useState<string[]>([]);
+  const [applyPreview, setApplyPreview] = useState<ProjectTemplateApplyPreview | null>(null);
+  const [applyPreviewLoading, setApplyPreviewLoading] = useState(false);
 
   const loadSettingsModel = useCallback(async () => {
     const [
@@ -954,6 +961,22 @@ export default function SettingsApp() {
 
   const projectById = new Map(snapshot.projects.map((project) => [project.id, project]));
   const missionById = new Map(snapshot.missions.map((mission) => [mission.id, mission]));
+  const selectableProjects = snapshot.projects.filter((project) => project.status !== "completed");
+  const selectedApplyTemplateSlug =
+    projectTemplateManagement.templates.some((template) => template.slug === applyTemplateSlug)
+      ? applyTemplateSlug
+      : projectTemplateManagement.templates[0]?.slug || "";
+  const selectedApplyTemplate = projectTemplateManagement.templates.find(
+    (template) => template.slug === selectedApplyTemplateSlug
+  );
+  const toggleApplyProject = (projectId: string) => {
+    setApplyPreview(null);
+    setApplyProjectIds((currentProjectIds) =>
+      currentProjectIds.includes(projectId)
+        ? currentProjectIds.filter((candidate) => candidate !== projectId)
+        : [...currentProjectIds, projectId]
+    );
+  };
   const renderTodoContextBadges = (projectId: string | null) => {
     if (!projectId) {
       return <span className="badge">quick</span>;
@@ -1114,6 +1137,30 @@ export default function SettingsApp() {
       setStatus(result.message);
     } catch {
       setStatus("Praxis could not clear that project template proposal state.");
+    }
+  };
+
+  const previewApplyProjectTemplate = async () => {
+    if (!selectedApplyTemplateSlug || applyProjectIds.length === 0) {
+      setStatus("Select a template and at least one project before previewing.");
+      return;
+    }
+
+    setApplyPreviewLoading(true);
+    setApplyPreview(null);
+    try {
+      const result = await window.praxis.projectTemplates.previewApply({
+        templateSlug: selectedApplyTemplateSlug,
+        projectIds: applyProjectIds,
+      });
+      setApplyPreview(result);
+      setStatus(
+        `Preview ready: ${result.projectPreviews.length} selected projects, no todos created.`
+      );
+    } catch {
+      setStatus("Praxis could not build the project template apply preview.");
+    } finally {
+      setApplyPreviewLoading(false);
     }
   };
 
@@ -1423,6 +1470,100 @@ export default function SettingsApp() {
             </article>
 
             <article className="brief-card">
+              <h3>Apply Preview</h3>
+              <p className="brief-path">
+                Preview missing template tasks for selected existing projects. This does not create
+                todos or update connected providers.
+              </p>
+              {projectTemplateManagement.templates.length > 0 && selectableProjects.length > 0 ? (
+                <>
+                  <label>
+                    Template
+                    <select
+                      value={selectedApplyTemplateSlug}
+                      onChange={(event) => {
+                        setApplyTemplateSlug(event.target.value);
+                        setApplyPreview(null);
+                      }}
+                    >
+                      {projectTemplateManagement.templates.map((template) => (
+                        <option key={template.slug} value={template.slug}>
+                          {template.label} ({template.taskCount})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {selectedApplyTemplate ? (
+                    <p className="brief-path">
+                      {selectedApplyTemplate.path}; {selectedApplyTemplate.taskCount} tasks.
+                    </p>
+                  ) : null}
+                  <ol className="review-inbox-list">
+                    {selectableProjects.map((project) => (
+                      <li key={project.id} className="review-inbox-item">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={applyProjectIds.includes(project.id)}
+                            onChange={() => toggleApplyProject(project.id)}
+                          />{" "}
+                          {project.title}
+                        </label>
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="filter-actions">
+                    <button
+                      type="button"
+                      onClick={() => void previewApplyProjectTemplate()}
+                      disabled={applyPreviewLoading || applyProjectIds.length === 0}
+                    >
+                      {applyPreviewLoading ? "Previewing..." : "Preview Missing Tasks"}
+                    </button>
+                  </div>
+                  {applyPreview ? (
+                    <ol className="review-inbox-list">
+                      {applyPreview.projectPreviews.map((projectPreview) => (
+                        <li key={projectPreview.projectId} className="review-inbox-item">
+                          <div className="review-inbox-header">
+                            <div>
+                              <strong>{projectPreview.projectTitle}</strong>
+                              <p>{projectPreview.projectId}</p>
+                            </div>
+                            <span className="badge">
+                              {projectPreview.missingTasks.length} missing
+                            </span>
+                          </div>
+                          {projectPreview.missingTasks.length > 0 ? (
+                            <ul className="project-template-change-list">
+                              {projectPreview.missingTasks.map((task) => (
+                                <li key={task.taskSlug}>
+                                  {task.title} <span className="badge">{task.priority}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p>No missing tasks for this template.</p>
+                          )}
+                          {projectPreview.duplicateWarnings.length > 0 ? (
+                            <p className="brief-path">
+                              Skipped likely duplicates:{" "}
+                              {projectPreview.duplicateWarnings
+                                .map((warning) => warning.existingTitle)
+                                .join(", ")}
+                            </p>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : null}
+                </>
+              ) : (
+                <p>Preview is available after at least one template and one project exist.</p>
+              )}
+            </article>
+
+            <article className="brief-card">
               <h3>Hidden Proposal Patterns</h3>
               <p className="brief-path">
                 Allow suggestions again for dismissed, snoozed, rejected, or do-not-suggest-again
@@ -1440,12 +1581,16 @@ export default function SettingsApp() {
                         <span className="badge">{state.shownCount} shown</span>
                       </div>
                       <div className="review-inbox-badges">
+                        <span className="badge">{state.proposalType.replace("_", " ")}</span>
                         <span className="badge">updated {formatDateTime(state.updatedAt)}</span>
                         {state.snoozeUntil ? (
                           <span className="badge">snoozed until {formatDateTime(state.snoozeUntil)}</span>
                         ) : null}
                         {state.acceptedTemplateSlug ? (
                           <span className="badge">template: {state.acceptedTemplateSlug}</span>
+                        ) : null}
+                        {state.templateSlug ? (
+                          <span className="badge">target: {state.templateSlug}</span>
                         ) : null}
                       </div>
                       <p className="brief-path">{state.fingerprint}</p>

@@ -58,6 +58,7 @@ import {
   getProjectTemplateManagementSnapshot,
   getProjectTemplateProposalSnapshot,
   neverSuggestProjectTemplateProposalForReview,
+  previewApplyProjectTemplateForReview,
   recordProjectTemplateProposalsShownForReview,
   rejectProjectTemplateProposalForReview,
   saveProjectTemplateProposalForReview,
@@ -826,6 +827,10 @@ app.whenReady().then(() => {
     'projectTemplates:saveProposal',
     async (_event, input: ProjectTemplateProposalSaveInput) =>
       saveProjectTemplateProposalForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:previewApply',
+    async (_event, input: unknown) => previewApplyProjectTemplateForReview(input)
   )
   ipcMain.handle('calendar:getGoogleOAuthReadiness', async () => getGoogleCalendarOAuthReadiness())
   ipcMain.handle('calendar:getOutlookOAuthReadiness', async () => getOutlookCalendarOAuthReadiness())

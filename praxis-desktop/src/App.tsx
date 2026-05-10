@@ -413,7 +413,7 @@ export default function App() {
 
   useEffect(() => {
     const proposalsToRecord = projectTemplateProposalSnapshot.proposals.filter((proposal) => {
-      const shownKey = `${proposal.proposalFingerprint}:${proposal.materialChangeHash}`;
+      const shownKey = `${proposal.proposalType}:${proposal.proposalFingerprint}:${proposal.materialChangeHash}`;
       if (recordedProjectTemplateProposalShows.current.has(shownKey)) {
         return false;
       }
@@ -429,6 +429,7 @@ export default function App() {
       .recordShown({
         proposals: proposalsToRecord.map((proposal) => ({
           fingerprint: proposal.proposalFingerprint,
+          proposalType: proposal.proposalType,
           clusterId: proposal.clusterId,
           materialChangeHash: proposal.materialChangeHash,
         })),
@@ -915,7 +916,7 @@ export default function App() {
   const saveProjectTemplateProposal = async (input: ProjectTemplateProposalSaveInput) => {
     const result = await window.praxis.projectTemplates.saveProposal(input);
     setProjectTemplateProposalSnapshot(result.snapshot);
-    setStatus(`${result.message} Saved to ${result.template.path}.`);
+    setStatus(`${result.message} Markdown path: ${result.template.path}.`);
   };
 
   const importManualChatSnippet = async (event: FormEvent<HTMLFormElement>) => {

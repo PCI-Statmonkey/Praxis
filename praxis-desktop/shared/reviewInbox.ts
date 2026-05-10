@@ -1,6 +1,9 @@
 import type { ChatSuggestionRecord } from "./chatImport";
 import type { EmailSuggestionRecord } from "./emailModel";
-import type { ProjectTemplateProposal } from "./projectTemplateProposals";
+import type {
+  ProjectTemplateProposal,
+  ProjectTemplateRevisionChange,
+} from "./projectTemplateProposals";
 
 export type ReviewInboxSourceKind = "email" | "slack" | "chat_import" | "project_template_proposal";
 
@@ -22,10 +25,13 @@ export type ReviewInboxRecommendation =
 
 export type ReviewInboxProjectTemplateProposalDetails = {
   fingerprint: string;
+  proposalType: ProjectTemplateProposal["proposalType"];
   clusterId: string;
   materialChangeHash: string;
   proposedSlug: string;
   proposedLabel: string;
+  templateSlug: string | null;
+  templatePath: string | null;
   evidenceSummary: string;
   matchedProjectCount: number;
   matchedProjectTitles: string[];
@@ -38,6 +44,7 @@ export type ReviewInboxProjectTemplateProposalDetails = {
     taskSlug: string;
     projectCount: number;
   }>;
+  changes?: ProjectTemplateRevisionChange[];
 };
 
 export type ReviewInboxItem = {
@@ -266,10 +273,13 @@ const projectTemplateProposalDetails = (
   proposal: ProjectTemplateProposal
 ): ReviewInboxProjectTemplateProposalDetails => ({
   fingerprint: proposal.proposalFingerprint,
+  proposalType: proposal.proposalType,
   clusterId: proposal.clusterId,
   materialChangeHash: proposal.materialChangeHash,
   proposedSlug: proposal.proposedSlug,
   proposedLabel: proposal.proposedLabel,
+  templateSlug: proposal.proposalType === "template_revision" ? proposal.templateSlug : null,
+  templatePath: proposal.proposalType === "template_revision" ? proposal.templatePath : null,
   evidenceSummary: proposal.evidenceSummary,
   matchedProjectCount: proposal.matchedProjectCount,
   matchedProjectTitles: proposal.matchedProjectTitles,
@@ -282,6 +292,7 @@ const projectTemplateProposalDetails = (
     taskSlug: item.taskSlug,
     projectCount: item.projectCount,
   })),
+  changes: proposal.proposalType === "template_revision" ? proposal.changes : undefined,
 });
 
 export const buildReviewInboxFromProjectTemplateProposals = (
@@ -293,7 +304,10 @@ export const buildReviewInboxFromProjectTemplateProposals = (
     sourceSystem: "praxis",
     sourceLabel: "PRAXIS",
     sourceRecordId: proposal.proposalFingerprint,
-    title: "Reusable project template found",
+    title:
+      proposal.proposalType === "template_revision"
+        ? "Project template revision found"
+        : "Reusable project template found",
     suggestedActionKind: "project_template" as const,
     confidence: Math.max(0, Math.min(1, proposal.taskOverlapPercent / 100)),
     status: "pending" as const,
@@ -305,7 +319,9 @@ export const buildReviewInboxFromProjectTemplateProposals = (
     subject: proposal.proposedLabel,
     snippet: proposal.evidenceSummary,
     reason:
-      "PRAXIS noticed a repeated project checklist. Edit the draft if needed, then confirm before saving a markdown template.",
+      proposal.proposalType === "template_revision"
+        ? "PRAXIS noticed repeated project tasks that may belong in an existing template. Review the draft before updating markdown."
+        : "PRAXIS noticed a repeated project checklist. Edit the draft if needed, then confirm before saving a markdown template.",
     recommendedDecision: "review" as const,
     recommendationReason:
       "Existing projects will not change. No connected providers will be updated.",

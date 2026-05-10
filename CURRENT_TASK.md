@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, and safe template revision/apply planning are complete. The immediate implementation queue is pure read-only template revision proposal detection and tests, followed later by revision proposal state/schema work, Review Inbox surfacing, confirmed markdown revision, and selected-project apply preview. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, and selected-project apply preview are complete. The immediate implementation queue is the confirmed apply-template-to-existing-projects path, still behind explicit preview and confirmation. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
 
 ## CURRENT STATE
 
@@ -137,7 +137,12 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Safe template revision/apply planning is complete in `docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`.
 - Revision proposals are defined as a separate track from new-template proposals and must not overwrite markdown until explicit confirmation.
 - Apply-template-to-existing-projects is defined as a separate selected-project preview flow before any todo creation path.
-- The next template implementation should start with pure read-only revision proposal detection and tests.
+- Template revision proposals are implemented as a separate `template_revision` proposal type from new-template proposals.
+- Revision proposal state/schema now stores proposal type, target template slug/path, and accepted template version metadata.
+- Review Inbox can surface revision proposals as editable read-only drafts with dismiss, snooze, reject, never-suggest, and confirmed update actions.
+- Confirmed revision updates validate markdown, preserve supported `version: 1`, write only the selected template markdown path, refresh the memory index, and mark the revision accepted.
+- Settings Templates now includes a selected-project apply preview that computes missing template tasks and duplicate warnings without creating todos, editing existing todos, or writing providers.
+- Revision/apply verification passed for TypeScript, lint, assistant regression tests, app build, and diff whitespace checks.
 
 ## NEXT STEPS
 
@@ -149,24 +154,9 @@ Complete. See `docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`.
 
 ### 2. Add Pure Template Revision Proposal Detection
 
-**GOAL**
+**STATUS**
 
-Detect when an existing saved markdown project task template may need an update, without writing
-markdown or mutating projects.
-
-**DIRECTION**
-
-- Add separate revision proposal types and fingerprints from new-template proposals.
-- Compare active markdown templates against repeated local project/task evidence.
-- Start with addition/rename/reorder suggestions only; do not generate removal writes.
-- Define revision fingerprints/material-change hashes, but leave persisted anti-nagging/filtering for the follow-up schema/API slice.
-- Do not add Review Inbox UI or markdown update writes in this first implementation slice unless deliberately scoped later.
-
-**DONE WHEN**
-
-- Pure detector returns stable read-only revision proposal drafts.
-- Tests cover material change, suppression, already-covered templates, and no-write behavior.
-- Existing projects, todos, markdown templates, and providers remain unchanged by snapshot reads.
+Complete. Revision proposals are now separate from new-template proposals, have stable fingerprints/material-change hashes, participate in proposal state filtering, appear in Review Inbox, and can update only the selected markdown template after explicit confirmation.
 
 ### 3. Wire AI Draft Planning From Schedule Review
 
@@ -189,6 +179,29 @@ Keep external calendar write-back as an explicit later track after local plannin
 **DONE WHEN**
 
 - Provider write-back has a separate technical plan, confirmation model, and test strategy.
+
+### 4A. Add Confirmed Apply-Template Path For Existing Projects
+
+**GOAL**
+
+Turn the selected-project apply preview into a confirmed todo creation flow for only selected missing
+template tasks.
+
+**DIRECTION**
+
+- Start from the existing Settings Templates apply preview.
+- Let the operator review/select missing tasks per selected project before confirmation.
+- Create only selected missing project-linked todos.
+- Preserve existing todos, including completed, blocked, paused, waiting-on, and manually created items.
+- Set `sourceKind = "project_template"` and stable template `sourceRef` on created todos.
+- Do not delete, rename, reorder, complete, or mutate existing todos.
+- Do not write Google/Outlook calendars or connected providers.
+
+**DONE WHEN**
+
+- The preview remains read-only until an explicit confirmation action.
+- Confirmed apply returns created/skipped/project counts.
+- Regression tests cover duplicate skipping, selected-task creation, source identity, and no provider writes.
 
 ### 5. Continue Mission Control Follow-Up Polish
 

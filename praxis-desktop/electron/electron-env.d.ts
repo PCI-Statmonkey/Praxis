@@ -99,6 +99,7 @@ import type {
   ProjectTemplateProposalShownInput,
   ProjectTemplateProposalShownResult,
   ProjectTemplateProposalSnapshot,
+  ProjectTemplateApplyPreview,
 } from "../shared/projectTemplateProposals";
 import type {
   CalendarConnectionRecord,
@@ -330,6 +331,10 @@ declare global {
         saveProposal: (
           input: ProjectTemplateProposalSaveInput
         ) => Promise<ProjectTemplateProposalSaveResult>;
+        previewApply: (input: {
+          templateSlug: string;
+          projectIds: string[];
+        }) => Promise<ProjectTemplateApplyPreview>;
       };
       calendar: {
         importEvents: (input: ImportCalendarEventsInput) => Promise<CalendarImportResult>;

@@ -17,10 +17,13 @@ Already implemented:
   `memory/templates/project-task-templates/`.
 - Settings can list saved/built-in templates and clear reversible hidden proposal states.
 - Project creation can explicitly select a saved active template and seed future project todos.
+- Revision proposals can detect repeated missing tasks for active templates, appear in Review Inbox,
+  and update the selected markdown template only after explicit confirmation.
+- Settings Templates can preview missing template tasks and duplicate warnings for selected existing
+  projects without creating todos.
 
 Still out of scope until a later explicit confirmation slice:
 
-- Automatic edits to existing markdown templates.
 - Automatic task creation on existing projects.
 - Bulk project mutation.
 - Provider writes or provider calendar write-back.
@@ -264,13 +267,13 @@ UI tests or QA:
 
 ## Recommended Implementation Order
 
-1. Add pure revision proposal types, detector, and tests. No UI, no persisted filtering, and no
-   writes.
-2. Add schema/API support for revision proposal state, including `proposalType`, revision template
-   identity, and accepted revision metadata.
-3. Surface revision proposals in Review Inbox as read-only drafts with dismiss/snooze/reject/never.
-4. Add template parser/project creation support for template versions greater than 1, or keep
-   confirmed revisions at `version: 1`.
-5. Add explicit revision editor and confirmed markdown update path.
-6. Add apply-template preview for selected existing projects. No todo creation.
+1. Complete: add pure revision proposal types, detector, and tests.
+2. Complete: add schema/API support for revision proposal state, including `proposalType`,
+   revision template identity, and accepted revision metadata.
+3. Complete: surface revision proposals in Review Inbox as read-only drafts with
+   dismiss/snooze/reject/never.
+4. Complete for now: keep confirmed revisions at `version: 1` while the parser supports only
+   version 1.
+5. Complete: add explicit revision editor and confirmed markdown update path.
+6. Complete: add apply-template preview for selected existing projects. No todo creation.
 7. Add confirmed apply path for selected missing tasks only.

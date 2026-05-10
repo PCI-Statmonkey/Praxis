@@ -1,6 +1,9 @@
 import { strict as assert } from "node:assert";
 import {
+  buildProjectTemplateApplyPreview,
   buildProjectTemplateProposals,
+  buildProjectTemplateRevisionProposals,
+  canonicalProjectTemplateTaskSlug,
   filterEligibleProjectTemplateProposals,
   normalizeProjectTemplateTaskTitle,
   projectTemplateProposalMarkdownPathForSlug,
@@ -9,7 +12,16 @@ import {
   validateProjectTemplateProposalMarkdownDraft,
   type ProjectTemplateProposalState,
 } from "../shared/projectTemplateProposals";
-import type { ProjectRecord, TodoRecord, WorkPriority, WorkStatus } from "../shared/workModel";
+import {
+  parseProjectTaskTemplateMarkdown,
+  PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT,
+  PROJECT_TASK_TEMPLATE_SOURCE_KIND,
+  type ProjectRecord,
+  type ProjectTaskTemplateDefinition,
+  type TodoRecord,
+  type WorkPriority,
+  type WorkStatus,
+} from "../shared/workModel";
 
 const timestamp = "2026-05-09T12:00:00.000Z";
 
@@ -33,6 +45,8 @@ const todo = (
     id: string;
     priority: WorkPriority;
     status: WorkStatus;
+    sourceKind: string | null;
+    sourceRef: string | null;
   }> = {}
 ): TodoRecord => ({
   id: overrides.id ?? `${projectId}-${projectTemplateTaskSlug(title)}`,
@@ -45,8 +59,8 @@ const todo = (
   quickAction: false,
   estimatedMinutes: null,
   waitingOnPersonId: null,
-  sourceKind: null,
-  sourceRef: null,
+  sourceKind: overrides.sourceKind ?? null,
+  sourceRef: overrides.sourceRef ?? null,
   notes: null,
   createdAt: timestamp,
   updatedAt: timestamp,
@@ -78,6 +92,7 @@ const todosFor = (projectId: string, taskTitles: string[]) =>
 
 assert.equal(normalizeProjectTemplateTaskTitle("The Sign & Seal"), "sign and seal");
 assert.equal(projectTemplateTaskSlug("Grease separator"), "grease-separator");
+assert.equal(canonicalProjectTemplateTaskSlug("01-Grease separator"), "grease-separator");
 assert.equal(
   projectTemplateTaskSlug("Under building department review"),
   "under-building-department-review"
@@ -111,6 +126,7 @@ const [engineeringProposal] = buildProjectTemplateProposals({
   ),
 });
 
+assert.equal(engineeringProposal.proposalType, "new_template");
 assert.equal(engineeringProposal.proposedSlug, "engineering-project");
 assert.equal(engineeringProposal.proposedLabel, "Engineering Project");
 assert.deepEqual(engineeringProposal.basedOnProjectIds, [
@@ -174,6 +190,8 @@ const firstShownState = recordProjectTemplateProposalShownState({
   shownAt: "2026-05-09T13:00:00.000Z",
 });
 assert.equal(firstShownState.status, "draft");
+assert.equal(firstShownState.proposalType, "new_template");
+assert.equal(firstShownState.templateSlug, null);
 assert.equal(firstShownState.shownCount, 1);
 assert.equal(firstShownState.lastShownAt, "2026-05-09T13:00:00.000Z");
 
@@ -281,6 +299,17 @@ assert.deepEqual(
   []
 );
 
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([materiallyChangedProposal], [
+    stateFor({
+      fingerprint: "never-other-type-fingerprint",
+      proposalType: "template_revision",
+      status: "never",
+    }),
+  ]).map((proposal) => proposal.proposalFingerprint),
+  [materiallyChangedProposal.proposalFingerprint]
+);
+
 const acceptedState = stateFor({
   status: "accepted",
   acceptedTemplateSlug: "engineering-project",
@@ -375,4 +404,165 @@ assert.equal(
     )
   ),
   true
+);
+
+const revisionTemplateMarkdown = `---
+kind: project_task_template
+slug: engineering-project
+label: Engineering Project
+version: 1
+status: active
+source: markdown
+---
+
+# Engineering Project
+
+## Tasks
+
+- [ ] Contract
+- [ ] Billing initial payment
+- [ ] Electrical
+- [ ] Mechanical
+`;
+
+const revisionTemplate = parseProjectTaskTemplateMarkdown(
+  revisionTemplateMarkdown,
+  `${PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT}/engineering-project.md`
+);
+
+const templateMetadata = (template: ProjectTaskTemplateDefinition) => ({
+  slug: template.slug,
+  label: template.label,
+  version: template.version,
+  status: template.status,
+  path: template.markdownPath,
+  source: template.source,
+  items: template.items,
+});
+
+const templateTodosFor = (projectId: string, template: ProjectTaskTemplateDefinition) =>
+  template.items.map((item) =>
+    todo(projectId, item.title, {
+      id: `${projectId}-${item.taskSlug}`,
+      sourceKind: PROJECT_TASK_TEMPLATE_SOURCE_KIND,
+      sourceRef: `${template.slug}:v${template.version}:${item.taskSlug}`,
+    })
+  );
+
+const revisionProjects = [
+  project("revision-a", "Engineering revision A"),
+  project("revision-b", "Engineering revision B"),
+  project("revision-c", "Engineering revision C"),
+];
+const revisionTodos = revisionProjects.flatMap((candidate) => [
+  ...templateTodosFor(candidate.id, revisionTemplate),
+  todo(candidate.id, "Permit closeout"),
+]);
+const [revisionProposal] = buildProjectTemplateRevisionProposals({
+  projects: revisionProjects,
+  todos: revisionTodos,
+  existingTemplates: [templateMetadata(revisionTemplate)],
+});
+
+assert.equal(revisionProposal.proposalType, "template_revision");
+assert.equal(revisionProposal.templateSlug, "engineering-project");
+assert.equal(revisionProposal.templatePath, `${PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT}/engineering-project.md`);
+assert.equal(revisionProposal.currentVersion, 1);
+assert.equal(revisionProposal.proposedVersion, 1);
+assert.equal(revisionProposal.recurringTaskCount, 1);
+assert.equal(revisionProposal.evidenceSummary, "1 possible template update repeated across 3 projects");
+assert.equal(
+  revisionProposal.changes.some(
+    (change) => change.kind === "add_task" && change.taskSlug === "permit-closeout"
+  ),
+  true
+);
+assert.equal(
+  revisionProposal.changes.some(
+    (change) => change.kind === "keep_task" && change.taskSlug === "contract"
+  ),
+  true
+);
+assert.deepEqual(revisionProposal.writeBoundary, {
+  saved: false,
+  writesOnConfirmOnly: true,
+  existingProjectsChange: false,
+  providerWrites: false,
+});
+assert.match(revisionProposal.proposalFingerprint, /^project-template-revision-fingerprint:/);
+assert.match(revisionProposal.markdownDraft, /version: 1/);
+assert.match(revisionProposal.markdownDraft, /- \[ \] Permit closeout/);
+
+const repeatedRevisionProposal = buildProjectTemplateRevisionProposals({
+  projects: revisionProjects,
+  todos: revisionTodos,
+  existingTemplates: [templateMetadata(revisionTemplate)],
+})[0];
+assert.equal(repeatedRevisionProposal.proposalFingerprint, revisionProposal.proposalFingerprint);
+assert.equal(repeatedRevisionProposal.materialChangeHash, revisionProposal.materialChangeHash);
+
+const revisionShownState = recordProjectTemplateProposalShownState({
+  proposal: revisionProposal,
+  shownAt: "2026-05-09T16:00:00.000Z",
+});
+assert.equal(revisionShownState.proposalType, "template_revision");
+assert.equal(revisionShownState.templateSlug, "engineering-project");
+assert.equal(revisionShownState.templatePath, `${PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT}/engineering-project.md`);
+
+assert.deepEqual(
+  buildProjectTemplateRevisionProposals({
+    projects: revisionProjects,
+    todos: revisionProjects.flatMap((candidate) => templateTodosFor(candidate.id, revisionTemplate)),
+    existingTemplates: [templateMetadata(revisionTemplate)],
+  }),
+  []
+);
+
+assert.deepEqual(
+  filterEligibleProjectTemplateProposals([revisionProposal], [
+    stateFor({
+      fingerprint: "never-new-template-fingerprint",
+      clusterId: revisionProposal.clusterId,
+      proposalType: "new_template",
+      status: "never",
+    }),
+  ]).map((proposal) => proposal.proposalFingerprint),
+  [revisionProposal.proposalFingerprint]
+);
+
+const previewProject = project("apply-a", "Apply target A");
+const preview = buildProjectTemplateApplyPreview({
+  template: revisionTemplate,
+  projects: [previewProject],
+  projectIds: [previewProject.id],
+  todos: [
+    todo(previewProject.id, "Contract", {
+      id: "apply-a-contract",
+      sourceKind: PROJECT_TASK_TEMPLATE_SOURCE_KIND,
+      sourceRef: "engineering-project:v1:01-contract",
+    }),
+    todo(previewProject.id, "Billing initial payment", {
+      id: "apply-a-manual-billing",
+    }),
+  ],
+});
+
+assert.deepEqual(preview.writeBoundary, {
+  createsTodos: false,
+  writesOnConfirmOnly: true,
+  editsExistingTodos: false,
+  providerWrites: false,
+});
+assert.equal(preview.projectPreviews.length, 1);
+assert.deepEqual(
+  preview.projectPreviews[0].duplicateWarnings.map((warning) => warning.existingTodoId).sort(),
+  ["apply-a-contract", "apply-a-manual-billing"]
+);
+assert.deepEqual(
+  preview.projectPreviews[0].missingTasks.map((task) => task.taskSlug),
+  ["03-electrical", "04-mechanical"]
+);
+assert.deepEqual(
+  preview.projectPreviews[0].missingTasks.map((task) => task.sourceRef),
+  ["engineering-project:v1:03-electrical", "engineering-project:v1:04-mechanical"]
 );

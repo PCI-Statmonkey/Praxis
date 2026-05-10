@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Template Revision And Apply Preview
+
+### Closed
+
+- Added `new_template` versus `template_revision` proposal identity across shared contracts, state, Review Inbox details, and action inputs.
+- Added read-only template revision proposal detection for active templates when repeated project behavior suggests missing template tasks.
+- Added proposal-state schema support for proposal type, target template slug/path, and accepted template version metadata.
+- Surfaced revision proposals in Review Inbox with revision-specific copy, change summaries, edit draft, dismiss, snooze, reject, never-suggest, and confirmed update actions.
+- Added confirmed revision markdown update behavior that validates before and after writing, preserves supported `version: 1`, writes only the target markdown template file, refreshes the memory index, and marks the revision accepted.
+- Added selected-project apply preview support and a Settings Templates preview surface that reports missing tasks and likely duplicates without creating todos or writing providers.
+- Kept existing projects, existing todos, external calendars, and connected providers unchanged until a future confirmed apply/write-back slice.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Add a confirmed apply-template-to-existing-projects flow that creates only selected missing tasks after preview and explicit confirmation.
+
 ## 2026-05-09 - Template Revision And Apply Planning
 
 ### Closed

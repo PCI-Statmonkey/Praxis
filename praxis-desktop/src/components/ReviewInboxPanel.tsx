@@ -73,11 +73,12 @@ export function ReviewInboxPanel({
     item: ReviewInboxItem
   ): ProjectTemplateProposalActionInput | null =>
     item.projectTemplateProposal
-      ? {
-          fingerprint: item.projectTemplateProposal.fingerprint,
-          clusterId: item.projectTemplateProposal.clusterId,
-          materialChangeHash: item.projectTemplateProposal.materialChangeHash,
-        }
+        ? {
+            fingerprint: item.projectTemplateProposal.fingerprint,
+            proposalType: item.projectTemplateProposal.proposalType,
+            clusterId: item.projectTemplateProposal.clusterId,
+            materialChangeHash: item.projectTemplateProposal.materialChangeHash,
+          }
       : null;
   const proposalDraftFor = (item: ReviewInboxItem) =>
     projectTemplateProposalDrafts[item.id] ??
@@ -196,7 +197,9 @@ export function ReviewInboxPanel({
                             )
                           }
                         >
-                          Edit draft
+                          {item.projectTemplateProposal?.proposalType === "template_revision"
+                            ? "Edit revision"
+                            : "Edit draft"}
                         </button>
                         <button
                           type="button"
@@ -232,7 +235,9 @@ export function ReviewInboxPanel({
                             )
                           }
                         >
-                          Not this template
+                          {item.projectTemplateProposal?.proposalType === "template_revision"
+                            ? "Not this revision"
+                            : "Not this template"}
                         </button>
                         <button
                           type="button"
@@ -287,10 +292,33 @@ export function ReviewInboxPanel({
                     <p>
                       Projects: {item.projectTemplateProposal.matchedProjectTitles.join(", ")}
                     </p>
+                    {item.projectTemplateProposal.proposalType === "template_revision" ? (
+                      <>
+                        <p>
+                          Template: {item.projectTemplateProposal.proposedLabel} (
+                          {item.projectTemplateProposal.templateSlug})
+                        </p>
+                        {item.projectTemplateProposal.changes ? (
+                          <ol className="project-template-change-list">
+                            {item.projectTemplateProposal.changes
+                              .filter((change) => change.kind === "add_task")
+                              .map((change) => (
+                                <li key={change.taskSlug}>
+                                  Add task: <strong>{change.title}</strong>
+                                </li>
+                              ))}
+                          </ol>
+                        ) : null}
+                      </>
+                    ) : null}
                     {openProjectTemplateProposalId === item.id ? (
                       <>
                         <p>
-                          Edit the markdown if needed. Nothing is written until you confirm save.
+                          Edit the markdown if needed. Nothing is written until you confirm{" "}
+                          {item.projectTemplateProposal.proposalType === "template_revision"
+                            ? "update"
+                            : "save"}
+                          .
                         </p>
                         <textarea
                           className="project-template-draft-editor"
@@ -308,7 +336,9 @@ export function ReviewInboxPanel({
                               setConfirmingProjectTemplateProposalSaveId(item.id)
                             }
                           >
-                            Save template
+                            {item.projectTemplateProposal.proposalType === "template_revision"
+                              ? "Update template"
+                              : "Save template"}
                           </button>
                           <button
                             type="button"
@@ -327,8 +357,12 @@ export function ReviewInboxPanel({
                         {confirmingProjectTemplateProposalSaveId === item.id ? (
                           <div className="capture-confirmation project-template-save-confirmation">
                             <p>
-                              Confirm save writes one markdown template file under memory templates.
-                              Existing projects and connected providers will not change.
+                              Confirm{" "}
+                              {item.projectTemplateProposal.proposalType === "template_revision"
+                                ? "update"
+                                : "save"}{" "}
+                              writes one markdown template file under memory templates. Existing
+                              projects and connected providers will not change.
                             </p>
                             <div className="capture-confirmation-actions">
                               <button
@@ -336,7 +370,9 @@ export function ReviewInboxPanel({
                                 disabled={pendingProjectTemplateProposalActionId === item.id}
                                 onClick={() => void runProjectTemplateProposalSave(item)}
                               >
-                                Confirm save
+                                {item.projectTemplateProposal.proposalType === "template_revision"
+                                  ? "Confirm update"
+                                  : "Confirm save"}
                               </button>
                               <button
                                 type="button"

@@ -122,6 +122,7 @@ assert.equal(combined.some((item) => item.sourceKind === "chat_import"), true);
 
 const proposal: ProjectTemplateProposal = {
   id: "project-template-proposal:engineering",
+  proposalType: "new_template",
   status: "draft",
   proposedSlug: "engineering-project",
   proposedLabel: "Engineering Project",
@@ -171,9 +172,57 @@ assert.equal(
 assert.equal(proposalItems[0].receivedAt, "1970-01-01T00:00:00.000Z");
 assert.equal(proposalItems[0].recommendedDecision, "review");
 assert.equal(proposalItems[0].suggestedActionKind, "project_template");
+assert.equal(proposalItems[0].projectTemplateProposal?.proposalType, "new_template");
 assert.equal(proposalItems[0].projectTemplateProposal?.writeBoundary.saved, false);
 assert.equal(proposalItems[0].projectTemplateProposal?.writeBoundary.providerWrites, false);
 assert.equal(proposalItems[0].projectTemplateProposal?.markdownDraft, proposal.markdownDraft);
+
+const revisionProposal: ProjectTemplateProposal = {
+  ...proposal,
+  id: "project-template-revision:engineering",
+  proposalType: "template_revision",
+  templateSlug: "engineering-project",
+  templatePath: "templates/project-task-templates/engineering-project.md",
+  currentVersion: 1,
+  proposedVersion: 1,
+  recurringTaskCount: 1,
+  evidenceSummary: "1 possible template update repeated across 3 projects",
+  clusterId: "project-template-revision-cluster:engineering-project",
+  proposalFingerprint: "project-template-revision-fingerprint:engineering",
+  materialChangeHash: "engineeringrevisionhash",
+  changes: [
+    {
+      kind: "keep_task",
+      taskSlug: "contract",
+      title: "Contract",
+    },
+    {
+      kind: "add_task",
+      taskSlug: "permit-closeout",
+      title: "Permit closeout",
+      evidenceProjectIds: ["project-a", "project-b", "project-c"],
+    },
+  ],
+  markdownDraft:
+    "---\nkind: project_task_template\nslug: engineering-project\nlabel: Engineering Project\nversion: 1\nstatus: active\nsource: markdown\n---\n\n# Engineering Project\n\n## Tasks\n\n- [ ] Contract\n- [ ] Permit closeout\n",
+  explanation: "Detected 1 possible template update repeated across 3 projects for Engineering Project.",
+};
+
+const revisionItems = buildReviewInboxFromProjectTemplateProposals([revisionProposal]);
+assert.equal(revisionItems.length, 1);
+assert.equal(revisionItems[0].title, "Project template revision found");
+assert.equal(
+  revisionItems[0].reason,
+  "PRAXIS noticed repeated project tasks that may belong in an existing template. Review the draft before updating markdown."
+);
+assert.equal(revisionItems[0].projectTemplateProposal?.proposalType, "template_revision");
+assert.equal(revisionItems[0].projectTemplateProposal?.templateSlug, "engineering-project");
+assert.equal(
+  revisionItems[0].projectTemplateProposal?.changes?.some(
+    (change) => change.kind === "add_task" && change.taskSlug === "permit-closeout"
+  ),
+  true
+);
 
 const combinedWithProposal = sortReviewInboxItems([...items, ...chatItems, ...proposalItems]);
 assert.equal(combinedWithProposal[0].sourceRecordId, "overdue");

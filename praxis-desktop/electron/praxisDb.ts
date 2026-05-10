@@ -14,7 +14,7 @@ const BetterSqlite3 = require("better-sqlite3") as typeof import("better-sqlite3
 type DatabaseHandle = import("better-sqlite3").Database;
 
 const DATABASE_FILENAME = "praxis.sqlite";
-const SCHEMA_VERSION = 13;
+const SCHEMA_VERSION = 14;
 
 let database: DatabaseHandle | null = null;
 
@@ -355,6 +355,7 @@ const migrateSchema = (db: DatabaseHandle) => {
 
     CREATE TABLE IF NOT EXISTS project_template_proposal_states (
       fingerprint TEXT PRIMARY KEY,
+      proposal_type TEXT NOT NULL DEFAULT 'new_template',
       cluster_id TEXT NOT NULL,
       material_change_hash TEXT NOT NULL,
       status TEXT NOT NULL,
@@ -362,8 +363,11 @@ const migrateSchema = (db: DatabaseHandle) => {
       last_shown_at TEXT,
       dismissal_reason TEXT,
       snooze_until TEXT,
+      template_slug TEXT,
+      template_path TEXT,
       accepted_template_slug TEXT,
       accepted_template_path TEXT,
+      accepted_template_version INTEGER,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
@@ -396,6 +400,8 @@ const migrateSchema = (db: DatabaseHandle) => {
       ON project_template_proposal_states(cluster_id);
     CREATE INDEX IF NOT EXISTS project_template_proposal_states_status_idx
       ON project_template_proposal_states(status);
+    CREATE INDEX IF NOT EXISTS project_template_proposal_states_type_idx
+      ON project_template_proposal_states(proposal_type, status);
   `);
 
   const todoColumns = db.pragma("table_info(todos)") as Array<{ name: string }>;
@@ -412,6 +418,22 @@ const migrateSchema = (db: DatabaseHandle) => {
     timeBlockColumns.some((column) => column.name === name);
   if (!hasTimeBlockColumn("actual_minutes")) {
     db.exec("ALTER TABLE time_blocks ADD COLUMN actual_minutes INTEGER");
+  }
+
+  const proposalStateColumns = db.pragma("table_info(project_template_proposal_states)") as Array<{ name: string }>;
+  const hasProposalStateColumn = (name: string) =>
+    proposalStateColumns.some((column) => column.name === name);
+  if (!hasProposalStateColumn("proposal_type")) {
+    db.exec("ALTER TABLE project_template_proposal_states ADD COLUMN proposal_type TEXT NOT NULL DEFAULT 'new_template'");
+  }
+  if (!hasProposalStateColumn("template_slug")) {
+    db.exec("ALTER TABLE project_template_proposal_states ADD COLUMN template_slug TEXT");
+  }
+  if (!hasProposalStateColumn("template_path")) {
+    db.exec("ALTER TABLE project_template_proposal_states ADD COLUMN template_path TEXT");
+  }
+  if (!hasProposalStateColumn("accepted_template_version")) {
+    db.exec("ALTER TABLE project_template_proposal_states ADD COLUMN accepted_template_version INTEGER");
   }
 
   const personColumns = db.pragma("table_info(people)") as Array<{ name: string }>;
