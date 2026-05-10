@@ -11,7 +11,7 @@ separate publish step creates provider events.
 
 Already implemented:
 
-- Google and Outlook calendar OAuth use read-only calendar scopes.
+- Google and Outlook calendar OAuth request read plus write-back scopes for explicit block publish.
 - Provider events import into local appointment records with source/external identity.
 - Local time blocks are `source=local` and can be created, edited, completed, canceled, and deleted
   without provider writes.
@@ -20,13 +20,18 @@ Already implemented:
 - Backend foundation: `time_block_publishes` stores safe publish identity, shared preview/confirm
   contracts exist, and Electron IPC can build previews/confirm requests while production provider
   writes remain blocked until write scopes/adapters are added.
+- Focused Plan has a publish section that previews selected planned local blocks and confirms
+  create-only provider publication.
+- Google OAuth now requests calendar read plus event-write scopes; Outlook OAuth requests
+  `Calendars.ReadWrite`.
+- Google/Outlook create-only event adapters exist behind explicit confirmation and store PRAXIS
+  local time block identity markers on created events.
 
 Still out of scope until implementation:
 
-- Requesting provider write scopes.
-- Creating, updating, or deleting Google/Outlook events.
-- Visible Plan publish UI.
-- Two-way sync for PRAXIS-created provider events.
+- Updating or deleting Google/Outlook events.
+- Two-way sync/reconciliation for PRAXIS-created provider events.
+- Publish-state badges/retry UI in Plan.
 - Automatic publish based on AI/deterministic planning suggestions.
 
 ## Required Confirmation Model

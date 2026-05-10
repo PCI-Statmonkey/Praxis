@@ -355,7 +355,8 @@ export function EmailSettingsPanel({
                       </li>
                       <li>
                         Add Microsoft Graph permission <code>Mail.Read</code>. Add{" "}
-                        <code>Calendars.Read</code> only if you also want Outlook calendar sync.
+                        <code>Calendars.ReadWrite</code> only if you also want Outlook calendar
+                        sync and confirmed local block publishing.
                       </li>
                     </ol>
                   </div>

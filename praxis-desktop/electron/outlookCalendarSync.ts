@@ -13,10 +13,13 @@ import { isSecretReadError, readSecret, storeSecret } from "./secretRepository";
 import { getOutlookOAuthClientConfig } from "./settingsRepository";
 import { normalizeOutlookSyncError } from "./outlookErrorHelpers";
 import { fetchJsonWithRetry, recoverableSyncMessage } from "./syncRecovery";
+import { OUTLOOK_CALENDAR_SCOPES } from "./outlookCalendarOAuth";
+import type { ProviderEventDraft } from "../shared/calendarWriteback";
 
 const MICROSOFT_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
 const MICROSOFT_GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0";
-const OUTLOOK_SCOPES = ["offline_access", "https://graph.microsoft.com/Calendars.Read"];
+const OUTLOOK_SCOPES = OUTLOOK_CALENDAR_SCOPES;
+const OUTLOOK_CALENDAR_WRITE_SCOPE = "Calendars.ReadWrite";
 const SYNC_WINDOW_PAST_DAYS = 1;
 const SYNC_WINDOW_FUTURE_DAYS = 90;
 
@@ -35,6 +38,14 @@ type OutlookTokenSecret = {
 type OutlookCalendarViewResponse = {
   value?: OutlookCalendarSourceEvent[];
   "@odata.nextLink"?: string;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
+type OutlookCreateEventResponse = {
+  id?: string;
   error?: {
     code?: string;
     message?: string;
@@ -236,6 +247,33 @@ const ensureAccessToken = async (connectionId: string): Promise<string> => {
   return usableSecret.token.access_token;
 };
 
+const tokenScopes = (secret: OutlookTokenSecret | null) =>
+  new Set(
+    (secret?.token.scope ?? "")
+      .split(/\s+/)
+      .map((scope) => scope.replace(/^https:\/\/graph\.microsoft\.com\//, ""))
+      .filter(Boolean)
+  );
+
+export const outlookCalendarHasWriteScope = (connectionId: string) => {
+  try {
+    const scopes = tokenScopes(parseTokenSecret(connectionId));
+    return scopes.has(OUTLOOK_CALENDAR_WRITE_SCOPE);
+  } catch {
+    return false;
+  }
+};
+
+const ensureWriteScope = (connectionId: string) => {
+  if (!outlookCalendarHasWriteScope(connectionId)) {
+    throw new OutlookCalendarSyncError(
+      "Outlook Calendar write access is missing. Refresh sign-in for this calendar before publishing local blocks.",
+      "needs_credentials",
+      "blocked"
+    );
+  }
+};
+
 const fetchOutlookEvents = async (accessToken: string, calendarId: string) => {
   const timeMin = new Date(Date.now() - SYNC_WINDOW_PAST_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const timeMax = new Date(Date.now() + SYNC_WINDOW_FUTURE_DAYS * 24 * 60 * 60 * 1000).toISOString();
@@ -367,4 +405,97 @@ export const syncOutlookCalendar = async (
       skipped: 0,
     };
   }
+};
+
+export const createOutlookCalendarEvent = async ({
+  connectionId,
+  calendarId,
+  event,
+}: {
+  connectionId: string;
+  calendarId: string;
+  event: ProviderEventDraft;
+}): Promise<{ providerEventId: string }> => {
+  const connection = getOutlookConnection(connectionId);
+  if (!connection) {
+    throw new OutlookCalendarSyncError(
+      "Choose a saved Outlook calendar connection before publishing.",
+      "needs_credentials",
+      "blocked"
+    );
+  }
+
+  ensureWriteScope(connectionId);
+  const accessToken = await ensureAccessToken(connectionId);
+  const targetCalendarId = calendarId.trim() || connection.account_ref?.trim() || "primary";
+  const calendarPath =
+    targetCalendarId === "primary"
+      ? "/me/events"
+      : `/me/calendars/${encodeURIComponent(targetCalendarId)}/events`;
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const { response, payload } = await fetchJsonWithRetry<OutlookCreateEventResponse>(
+    new URL(`${MICROSOFT_GRAPH_BASE_URL}${calendarPath}`),
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        Prefer: `outlook.timezone="${timeZone}"`,
+      },
+      body: JSON.stringify({
+        subject: event.title,
+        body: {
+          contentType: "text",
+          content: event.body,
+        },
+        start: {
+          dateTime: event.startsAt,
+          timeZone,
+        },
+        end: {
+          dateTime: event.endsAt,
+          timeZone,
+        },
+        singleValueExtendedProperties: [
+          {
+            id: "String {00020329-0000-0000-C000-000000000046} Name PRAXIS-TimeBlockId",
+            value: event.localTimeBlockId,
+          },
+        ],
+      }),
+    },
+    "Outlook Calendar event create"
+  );
+
+  if (!response.ok || !payload.id) {
+    if (response.status === 401) {
+      throw new OutlookCalendarSyncError(
+        "Outlook authorization is no longer valid. Reconnect this calendar.",
+        "needs_credentials",
+        "blocked"
+      );
+    }
+    if (response.status === 403) {
+      throw new OutlookCalendarSyncError(
+        normalizeOutlookSyncError(
+          "Outlook Calendar write access was denied. Refresh sign-in for this calendar.",
+          "Calendars.ReadWrite",
+          "calendar"
+        ),
+        "error",
+        "error"
+      );
+    }
+    throw new OutlookCalendarSyncError(
+      normalizeOutlookSyncError(
+        payload.error?.message ?? "Outlook Calendar could not create the event.",
+        "Calendars.ReadWrite",
+        "calendar"
+      ),
+      "error",
+      "error"
+    );
+  }
+
+  return { providerEventId: payload.id };
 };

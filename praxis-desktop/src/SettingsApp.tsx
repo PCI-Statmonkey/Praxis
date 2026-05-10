@@ -144,7 +144,10 @@ const EMPTY_GOOGLE_OAUTH_READINESS: CalendarOAuthReadiness = {
   ready: false,
   missing: [],
   redirectUri: "http://127.0.0.1:47841/oauth/google/callback",
-  scopes: ["https://www.googleapis.com/auth/calendar.readonly"],
+  scopes: [
+    "https://www.googleapis.com/auth/calendar.readonly",
+    "https://www.googleapis.com/auth/calendar.events",
+  ],
   message: "Google OAuth readiness has not loaded yet.",
 };
 
@@ -153,7 +156,7 @@ const EMPTY_OUTLOOK_OAUTH_READINESS: CalendarOAuthReadiness = {
   ready: false,
   missing: [],
   redirectUri: "http://127.0.0.1:47842/oauth/outlook/callback",
-  scopes: ["offline_access", "https://graph.microsoft.com/Calendars.Read"],
+  scopes: ["offline_access", "https://graph.microsoft.com/Calendars.ReadWrite"],
   message: "Outlook OAuth readiness has not loaded yet.",
 };
 

@@ -13,7 +13,10 @@ import {
   startGoogleOAuthFlow,
 } from "./googleOAuthShared";
 
-const GOOGLE_CALENDAR_SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"];
+export const GOOGLE_CALENDAR_SCOPES = [
+  "https://www.googleapis.com/auth/calendar.readonly",
+  "https://www.googleapis.com/auth/calendar.events",
+];
 
 const GOOGLE_CALLBACK_SUCCESS_HTML =
   "<h1>Praxis connected Google Calendar.</h1><p>You can close this browser tab.</p>";
@@ -124,7 +127,7 @@ export const prepareGoogleCalendarOAuth = async (
         emitGoogleOAuthUpdate({
           connectionId,
           ok: true,
-          message: "Google Calendar connected. Praxis will auto-sync events.",
+        message: "Google Calendar connected. Praxis can sync events and publish confirmed local blocks.",
         });
       },
       onError: ({ connectionId, message }) => {

@@ -342,6 +342,10 @@ export function ConnectedServiceSettingsPanel({
                 {primaryCalendarGuidance ? (
                   <p className="setup-muted">{primaryCalendarGuidance}</p>
                 ) : null}
+                <p className="setup-muted">
+                  Calendar publish uses explicit confirmation and requires write-back scope. Use
+                  Refresh Sign-In if this source was connected before publish support was added.
+                </p>
                 <div className="settings-next-action-buttons">
                   <button
                     type="button"
@@ -526,8 +530,8 @@ export function ConnectedServiceSettingsPanel({
                     </li>
                     <li>
                       Open API permissions, choose Add a permission, Microsoft Graph, Delegated
-                      permissions, then add <code>Mail.Read</code>, <code>Calendars.Read</code>,
-                      and <code>offline_access</code>.
+                      permissions, then add <code>Mail.Read</code>,{" "}
+                      <code>Calendars.ReadWrite</code>, and <code>offline_access</code>.
                     </li>
                     <li>
                       Save the client ID below, leave the client secret blank unless Entra requires

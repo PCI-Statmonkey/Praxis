@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Calendar Write-Back UI And Provider Adapters
+
+### Closed
+
+- Added focused Plan publish UI for selecting planned local blocks, choosing a Google/Outlook calendar source, previewing publish readiness, and confirming create-only publication.
+- Updated Google Calendar OAuth scopes to include event creation and Outlook Calendar OAuth scopes to use `Calendars.ReadWrite`.
+- Added Settings guidance telling operators to refresh sign-in when an existing calendar source predates write-back support.
+- Added Google and Outlook create-only event adapters behind the existing explicit-confirmation publish service.
+- Provider events include PRAXIS/local time block identity markers for later reconciliation.
+- Publish preview now blocks missing write-scope tokens with reconnect guidance before a provider write is attempted.
+- Confirmed publish still skips non-ready preview items, stores safe provider event identity only on successful creates, and does not update/delete provider events.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run live provider QA after explicit reconnect/consent, then add publish-state badges and failure-state polish in Plan.
+
 ## 2026-05-10 - Calendar Write-Back Foundation And API Settings
 
 ### Closed

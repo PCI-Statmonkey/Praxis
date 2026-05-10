@@ -12,7 +12,18 @@ import type {
   TimeBlockEntityKind,
   UpdateTimeBlockInput,
 } from "../../shared/timeBlocking";
-import { formatPraxisTime, type UiTimeFormat } from "../../shared/settingsModel";
+import {
+  formatPraxisTime,
+  type CalendarConnectionRecord,
+  type UiTimeFormat,
+} from "../../shared/settingsModel";
+import type {
+  ConfirmTimeBlockPublishResult,
+  TimeBlockPublishConfirmRequest,
+  TimeBlockPublishPreview,
+  TimeBlockPublishPreviewRequest,
+  TimeBlockPublishProvider,
+} from "../../shared/calendarWriteback";
 import type { MissionRecord, ProjectRecord } from "../../shared/workModel";
 import { EmptyState } from "./EmptyState";
 
@@ -31,6 +42,13 @@ type PlanSurfacePanelProps = {
   updateTimeBlock: (input: UpdateTimeBlockInput) => Promise<void>;
   deleteTimeBlock: (id: string) => Promise<void>;
   generateDraftPlan: (input: GenerateDraftPlanRequest) => Promise<GenerateDraftPlanResult>;
+  calendarConnections: CalendarConnectionRecord[];
+  previewTimeBlockPublish: (
+    input: TimeBlockPublishPreviewRequest
+  ) => Promise<TimeBlockPublishPreview>;
+  confirmTimeBlockPublish: (
+    input: TimeBlockPublishConfirmRequest
+  ) => Promise<ConfirmTimeBlockPublishResult>;
   onPlanningDateChange: (date: string) => void;
   onResetPlanningDate: () => void;
   variant?: "full" | "compact";
@@ -259,6 +277,9 @@ export function PlanSurfacePanel({
   updateTimeBlock,
   deleteTimeBlock,
   generateDraftPlan,
+  calendarConnections,
+  previewTimeBlockPublish,
+  confirmTimeBlockPublish,
   onPlanningDateChange,
   onResetPlanningDate,
   variant = "full",
@@ -283,6 +304,13 @@ export function PlanSurfacePanel({
   const [draftPlanResult, setDraftPlanResult] = useState<GenerateDraftPlanResult | null>(null);
   const [draftPlanLoading, setDraftPlanLoading] = useState(false);
   const [draftPlanError, setDraftPlanError] = useState("");
+  const [publishProvider, setPublishProvider] = useState<TimeBlockPublishProvider>("google");
+  const [publishConnectionId, setPublishConnectionId] = useState("");
+  const [selectedPublishBlockIds, setSelectedPublishBlockIds] = useState<string[]>([]);
+  const [publishPreview, setPublishPreview] = useState<TimeBlockPublishPreview | null>(null);
+  const [publishResult, setPublishResult] = useState<ConfirmTimeBlockPublishResult | null>(null);
+  const [publishLoading, setPublishLoading] = useState(false);
+  const [publishError, setPublishError] = useState("");
   const draftRequestIdRef = useRef(0);
   const today = formatDateInput(new Date().toISOString());
   const now = new Date();
@@ -348,6 +376,95 @@ export function PlanSurfacePanel({
     const endTime = new Date(block.endsAt).getTime();
     return endTime >= now.getTime() || block.status === "planned";
   });
+  const publishConnections = calendarConnections.filter(
+    (connection) => connection.provider === publishProvider && connection.enabled
+  );
+  const selectedPublishConnection =
+    publishConnections.find((connection) => connection.id === publishConnectionId) ??
+    publishConnections[0] ??
+    null;
+  const publishableBlocks = planningDay.timeBlocks.filter((block) => block.status === "planned");
+  const publishPreviewReadyItems =
+    publishPreview?.items.filter((item) => item.status === "ready") ?? [];
+
+  const setPublishProviderSelection = (provider: TimeBlockPublishProvider) => {
+    setPublishProvider(provider);
+    setPublishConnectionId("");
+    setPublishPreview(null);
+    setPublishResult(null);
+    setPublishError("");
+  };
+
+  const togglePublishBlock = (id: string) => {
+    setSelectedPublishBlockIds((current) =>
+      current.includes(id) ? current.filter((candidate) => candidate !== id) : [...current, id]
+    );
+    setPublishPreview(null);
+    setPublishResult(null);
+  };
+
+  const publishRequestInput = (): TimeBlockPublishPreviewRequest | null => {
+    if (!selectedPublishConnection) {
+      setPublishError("Choose a ready Google or Outlook calendar source before previewing publish.");
+      return null;
+    }
+    if (selectedPublishBlockIds.length === 0) {
+      setPublishError("Select at least one planned local block to publish.");
+      return null;
+    }
+    return {
+      selectedTimeBlockIds: selectedPublishBlockIds,
+      provider: publishProvider,
+      calendarConnectionId: selectedPublishConnection.id,
+      providerCalendarId: selectedPublishConnection.accountRef,
+    };
+  };
+
+  const requestPublishPreview = async () => {
+    const input = publishRequestInput();
+    if (!input) {
+      return;
+    }
+    setPublishLoading(true);
+    setPublishError("");
+    setPublishResult(null);
+    try {
+      const preview = await previewTimeBlockPublish(input);
+      setPublishPreview(preview);
+    } catch (error) {
+      setPublishError(
+        error instanceof Error ? error.message : "Praxis could not build a publish preview."
+      );
+    } finally {
+      setPublishLoading(false);
+    }
+  };
+
+  const confirmPublishPreview = async () => {
+    const input = publishRequestInput();
+    if (!input || !publishPreview) {
+      return;
+    }
+    const confirmedTimeBlockIds = publishPreviewReadyItems.map((item) => item.timeBlockId);
+    if (confirmedTimeBlockIds.length === 0) {
+      setPublishError("No preview-ready blocks are available to publish.");
+      return;
+    }
+    setPublishLoading(true);
+    setPublishError("");
+    try {
+      const result = await confirmTimeBlockPublish({
+        ...input,
+        confirmedTimeBlockIds,
+      });
+      setPublishResult(result);
+      setPublishPreview(null);
+    } catch (error) {
+      setPublishError(error instanceof Error ? error.message : "Praxis could not publish blocks.");
+    } finally {
+      setPublishLoading(false);
+    }
+  };
 
   const openManualBlock = () => {
     setFormError("");
@@ -449,6 +566,9 @@ export function PlanSurfacePanel({
     setFormError("");
     setCompletionPrompt(null);
     setTimeBlockForm(null);
+    setPublishPreview(null);
+    setPublishResult(null);
+    setPublishError("");
     onPlanningDateChange(addDaysToDate(planningDay.targetDate, dayCount));
   };
 
@@ -1001,6 +1121,132 @@ export function PlanSurfacePanel({
               <p className="brief-path">The draft did not find a safe block to stage.</p>
             )}
           </div>
+        ) : null}
+      </section>
+
+      <section className="plan-review-section" aria-label="Calendar publish">
+        <div className="plan-review-header">
+          <div>
+            <span className="recommended-label">Publish</span>
+            <h3>Provider calendar write-back</h3>
+            <p>
+              Publish selected planned local blocks to Google or Outlook after preview and
+              confirmation.
+            </p>
+          </div>
+          <div className="plan-review-load">
+            <span className="badge waiting-badge">Create-only</span>
+            <strong>{publishPreview ? `${publishPreview.readyCount} ready` : "not previewed"}</strong>
+            <span>No update or delete write-back.</span>
+          </div>
+        </div>
+
+        <div className="settings-field-grid">
+          <label className="field-label">
+            <span>Provider</span>
+            <select
+              value={publishProvider}
+              onChange={(event) =>
+                setPublishProviderSelection(event.currentTarget.value as TimeBlockPublishProvider)
+              }
+            >
+              <option value="google">Google Calendar</option>
+              <option value="outlook">Outlook Calendar</option>
+            </select>
+          </label>
+          <label className="field-label">
+            <span>Destination calendar</span>
+            <select
+              value={selectedPublishConnection?.id ?? ""}
+              onChange={(event) => {
+                setPublishConnectionId(event.currentTarget.value);
+                setPublishPreview(null);
+                setPublishResult(null);
+              }}
+            >
+              {publishConnections.length === 0 ? (
+                <option value="">No enabled {publishProvider} calendar source</option>
+              ) : null}
+              {publishConnections.map((connection) => (
+                <option key={connection.id} value={connection.id}>
+                  {connection.label} ({connection.authStatus})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {publishableBlocks.length > 0 ? (
+          <ol className="plan-review-list">
+            {publishableBlocks.slice(0, reviewItemLimit).map((block) => (
+              <li key={block.id} className="plan-review-item">
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={selectedPublishBlockIds.includes(block.id)}
+                    onChange={() => togglePublishBlock(block.id)}
+                  />
+                  <span>
+                    <strong>{block.title}</strong>
+                    <br />
+                    {blockRangeLabel(block, formatDateTime, timeFormat)}
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="brief-path">No planned local blocks are available to publish.</p>
+        )}
+
+        <div className="plan-draft-actions">
+          <button
+            type="button"
+            disabled={publishLoading || publishableBlocks.length === 0}
+            onClick={() => void requestPublishPreview()}
+          >
+            {publishLoading ? "Checking..." : "Preview publish"}
+          </button>
+          <button
+            type="button"
+            disabled={publishLoading || publishPreviewReadyItems.length === 0}
+            onClick={() => void confirmPublishPreview()}
+          >
+            Confirm publish
+          </button>
+          {publishPreview ? (
+            <span className="badge">
+              {publishPreview.readyCount} ready / {publishPreview.blockedCount} blocked
+            </span>
+          ) : null}
+        </div>
+        {publishError ? <p className="form-error">{publishError}</p> : null}
+
+        {publishPreview ? (
+          <ol className="plan-marker-list">
+            {publishPreview.items.map((item) => (
+              <li key={item.timeBlockId} className="plan-marker-item">
+                <strong>{item.title}</strong>
+                <span className={item.status === "ready" ? "badge" : "badge waiting-badge"}>
+                  {item.status.replace(/_/g, " ")}
+                </span>
+                <p>{item.reason}</p>
+                {item.conflictIds.length > 0 ? (
+                  <p className="plan-conflict-copy">
+                    {item.conflictIds.length} imported appointment conflict
+                    {item.conflictIds.length === 1 ? "" : "s"}.
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ol>
+        ) : null}
+
+        {publishResult ? (
+          <p className="brief-path">
+            Publish result: {publishResult.publishedCount} created, {publishResult.skippedCount}{" "}
+            skipped, {publishResult.failedCount} failed.
+          </p>
         ) : null}
       </section>
 

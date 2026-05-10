@@ -31,7 +31,7 @@ export const normalizeOutlookOAuthError = (raw: string, redirectUri: string, sur
 
 export const normalizeOutlookSyncError = (
   raw: string,
-  scopeName: "Mail.Read" | "Calendars.Read",
+  scopeName: "Mail.Read" | "Calendars.Read" | "Calendars.ReadWrite",
   surface: "mail" | "calendar"
 ) => {
   const target = surface === "mail" ? "Outlook inbox sync" : "Outlook calendar sync";

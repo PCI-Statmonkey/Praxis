@@ -26,6 +26,10 @@ import type {
   ProjectTemplateProposalSaveInput,
   ProjectTemplateProposalSnapshot,
 } from "../shared/projectTemplateProposals";
+import type {
+  TimeBlockPublishConfirmRequest,
+  TimeBlockPublishPreviewRequest,
+} from "../shared/calendarWriteback";
 import {
   buildPlanningDayView,
   buildScheduleReview,
@@ -789,6 +793,22 @@ export default function App() {
     return result;
   };
 
+  const previewTimeBlockPublish = async (input: TimeBlockPublishPreviewRequest) => {
+    const preview = await window.praxis.calendar.previewTimeBlockPublish(input);
+    setStatus(
+      `Built calendar publish preview: ${preview.readyCount} ready, ${preview.blockedCount} blocked. No provider calendar was changed.`
+    );
+    return preview;
+  };
+
+  const confirmTimeBlockPublish = async (input: TimeBlockPublishConfirmRequest) => {
+    const result = await window.praxis.calendar.confirmTimeBlockPublish(input);
+    setStatus(
+      `Calendar publish finished: ${result.publishedCount} created, ${result.skippedCount} skipped, ${result.failedCount} failed.`
+    );
+    return result;
+  };
+
   const upcomingDeadlines = selectUpcomingDeadlines(snapshot.deadlines);
   const upcomingAppointments = selectUpcomingAppointments(snapshot.appointments);
   const reviewInboxItems = selectReviewInboxItems(
@@ -1054,6 +1074,9 @@ export default function App() {
         updateTimeBlock={updateTimeBlock}
         deleteTimeBlock={deleteTimeBlock}
         generateDraftPlan={generateDraftPlan}
+        calendarConnections={serviceSnapshot.settings?.calendarConnections ?? []}
+        previewTimeBlockPublish={previewTimeBlockPublish}
+        confirmTimeBlockPublish={confirmTimeBlockPublish}
         onPlanningDateChange={setPlanningDateOverride}
         onResetPlanningDate={() => setPlanningDateOverride(null)}
         variant={activePanel === "command" ? "compact" : "full"}

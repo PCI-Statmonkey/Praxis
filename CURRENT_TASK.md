@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, and optional API provider settings are complete. The next active product track is the visible Plan publish UI plus provider scope/adapter implementation for create-only calendar write-back. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, and create-only Google/Outlook publish adapters are complete. The next active product track is provider write-back QA/polish and publish-state visibility. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -157,6 +157,10 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Production provider writes remain intentionally blocked until Google/Outlook write scopes and provider adapters are wired; current confirm IPC preserves the explicit-confirmation boundary and cannot silently publish.
 - AI Settings now has optional OpenAI-compatible API provider fields for base URL, model name, and encrypted API key storage/clear. API keys are stored through `secure_secrets`, not plain settings JSON.
 - Calendar write-back foundation/API settings verification passed: `npx tsc --noEmit`, `npm run lint`, `npm run test:assistant`, `npm run test:sync`, `npm run build:app`, and `git diff --check` with CRLF warnings only.
+- Focused Plan now includes a provider publish section that selects planned local blocks, chooses a Google or Outlook calendar source, builds a preview, and confirms create-only publish.
+- Google Calendar OAuth now requests Calendar read plus event-write scopes; Outlook Calendar OAuth now requests `Calendars.ReadWrite`; Settings copy tells existing users to refresh sign-in for publish support.
+- Confirmed provider publish uses create-only Google/Outlook event adapters, writes PRAXIS markers/local time block identity into created events, stores safe publish identity on success, and does not update/delete provider events.
+- Publish preview blocks missing write-scope tokens with reconnect guidance, blocks completed/canceled blocks, flags duplicate existing publishes, and blocks imported appointment conflicts before confirmation.
 
 ## NEXT STEPS
 
@@ -258,11 +262,28 @@ Expose the create-only publish preview in Plan and add real Google/Outlook provi
 - Implement provider event creation adapters that write only confirmed preview-ready blocks.
 - Keep update/delete/reconcile out of the first real provider adapter slice.
 
+**STATUS**
+
+Complete for the first create-only path. Focused Plan can preview and confirm selected planned local blocks, Google/Outlook adapters create events only after confirmation, and reconnect guidance appears when write scopes are missing. Follow-up remains QA/polish and better publish-state visibility in Plan.
+
+### 5E. Provider Write-Back QA And Publish-State Visibility
+
+**GOAL**
+
+Validate the real provider publish path carefully and make published/failed state visible enough that the operator can trust it.
+
+**DIRECTION**
+
+- Run manual Google/Outlook write-scope reconnect and create-only publish QA when the user is ready for live provider writes.
+- Add visible publish-state badges on local blocks once `time_block_publishes` has records.
+- Keep update/delete/reconcile provider writes out of this pass.
+- Add retry/recover UI for `publish_failed` only after failure-state display is clear.
+
 **DONE WHEN**
 
-- Operator can publish selected local blocks to one provider only after preview and confirmation.
-- Provider errors remain sanitized and raw payloads/tokens/secrets never surface.
-- Regression coverage proves blocked, duplicate, conflict, and provider-error paths.
+- Live QA confirms one Google and/or Outlook event can be created only after explicit preview/confirm.
+- Published blocks clearly show their provider state.
+- Failed/blocked states are understandable without exposing tokens, raw payloads, or encrypted values.
 
 ### 6. Plan Checklist Grouping And Context-Memory Redesign
 

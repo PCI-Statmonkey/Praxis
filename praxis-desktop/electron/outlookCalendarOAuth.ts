@@ -15,9 +15,9 @@ import { normalizeOutlookOAuthError } from "./outlookErrorHelpers";
 
 const MICROSOFT_AUTHORIZE_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 const MICROSOFT_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token";
-const OUTLOOK_CALENDAR_SCOPES = [
+export const OUTLOOK_CALENDAR_SCOPES = [
   "offline_access",
-  "https://graph.microsoft.com/Calendars.Read",
+  "https://graph.microsoft.com/Calendars.ReadWrite",
 ];
 const DEFAULT_REDIRECT_URI = "http://127.0.0.1:47842/oauth/outlook/callback";
 const OUTLOOK_CALLBACK_SUCCESS_HTML =
@@ -238,7 +238,7 @@ const handleCallback = async (request: http.IncomingMessage, response: http.Serv
     emitOutlookOAuthUpdate({
       connectionId: pending.connectionId,
       ok: true,
-      message: "Outlook Calendar connected. Praxis will auto-sync events.",
+    message: "Outlook Calendar connected. Praxis can sync events and publish confirmed local blocks.",
     });
     respondHtml(response, 200, OUTLOOK_CALLBACK_SUCCESS_HTML);
   } catch (exchangeError) {

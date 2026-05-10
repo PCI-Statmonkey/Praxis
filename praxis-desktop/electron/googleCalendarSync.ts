@@ -12,9 +12,12 @@ import { getPraxisDatabase } from "./praxisDb";
 import { isSecretReadError, readSecret, storeSecret } from "./secretRepository";
 import { getGoogleOAuthClientConfig } from "./settingsRepository";
 import { fetchJsonWithRetry, recoverableSyncMessage } from "./syncRecovery";
+import { GOOGLE_CALENDAR_SCOPES } from "./googleCalendarOAuth";
+import type { ProviderEventDraft } from "../shared/calendarWriteback";
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_EVENTS_BASE_URL = "https://www.googleapis.com/calendar/v3/calendars";
+const GOOGLE_CALENDAR_EVENTS_SCOPE = "https://www.googleapis.com/auth/calendar.events";
 const SYNC_WINDOW_PAST_DAYS = 1;
 const SYNC_WINDOW_FUTURE_DAYS = 90;
 
@@ -33,6 +36,16 @@ type GoogleTokenSecret = {
 type GoogleEventsResponse = {
   items?: GoogleCalendarSourceEvent[];
   nextPageToken?: string;
+  error?: {
+    code?: number;
+    message?: string;
+    status?: string;
+    errors?: Array<{ reason?: string; message?: string }>;
+  };
+};
+
+type GoogleCreateEventResponse = {
+  id?: string;
   error?: {
     code?: number;
     message?: string;
@@ -222,6 +235,28 @@ const ensureAccessToken = async (connectionId: string): Promise<string> => {
   return usableSecret.token.access_token;
 };
 
+const tokenScopes = (secret: GoogleTokenSecret | null) =>
+  new Set((secret?.token.scope ?? "").split(/\s+/).filter(Boolean));
+
+export const googleCalendarHasWriteScope = (connectionId: string) => {
+  try {
+    const scopes = tokenScopes(parseTokenSecret(connectionId));
+    return scopes.has(GOOGLE_CALENDAR_EVENTS_SCOPE) || scopes.has("https://www.googleapis.com/auth/calendar");
+  } catch {
+    return false;
+  }
+};
+
+const ensureWriteScope = (connectionId: string) => {
+  if (!googleCalendarHasWriteScope(connectionId)) {
+    throw new GoogleCalendarSyncError(
+      "Google Calendar write access is missing. Refresh sign-in for this calendar before publishing local blocks.",
+      "needs_credentials",
+      "blocked"
+    );
+  }
+};
+
 const fetchGoogleEvents = async (accessToken: string, calendarId: string) => {
   const timeMin = new Date(Date.now() - SYNC_WINDOW_PAST_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const timeMax = new Date(Date.now() + SYNC_WINDOW_FUTURE_DAYS * 24 * 60 * 60 * 1000).toISOString();
@@ -345,3 +380,79 @@ export const syncGoogleCalendar = async (
     };
   }
 };
+
+export const createGoogleCalendarEvent = async ({
+  connectionId,
+  calendarId,
+  event,
+}: {
+  connectionId: string;
+  calendarId: string;
+  event: ProviderEventDraft;
+}): Promise<{ providerEventId: string }> => {
+  const connection = getGoogleConnection(connectionId);
+  if (!connection) {
+    throw new GoogleCalendarSyncError(
+      "Choose a saved Google calendar connection before publishing.",
+      "needs_credentials",
+      "blocked"
+    );
+  }
+
+  ensureWriteScope(connectionId);
+  const accessToken = await ensureAccessToken(connectionId);
+  const targetCalendarId = calendarId.trim() || connection.account_ref?.trim() || "primary";
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const url = new URL(`${GOOGLE_EVENTS_BASE_URL}/${encodeURIComponent(targetCalendarId)}/events`);
+  const { response, payload } = await fetchJsonWithRetry<GoogleCreateEventResponse>(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      summary: event.title,
+      description: event.body,
+      start: {
+        dateTime: event.startsAt,
+        timeZone,
+      },
+      end: {
+        dateTime: event.endsAt,
+        timeZone,
+      },
+      extendedProperties: {
+        private: {
+          praxisTimeBlockId: event.localTimeBlockId,
+          praxisCreated: "true",
+        },
+      },
+    }),
+  }, "Google Calendar event create");
+
+  if (!response.ok || !payload.id) {
+    if (response.status === 401) {
+      throw new GoogleCalendarSyncError(
+        "Google authorization is no longer valid. Reconnect this calendar.",
+        "needs_credentials",
+        "blocked"
+      );
+    }
+    if (response.status === 403) {
+      throw new GoogleCalendarSyncError(
+        "Google Calendar write access was denied. Refresh sign-in for this calendar.",
+        "error",
+        "error"
+      );
+    }
+    throw new GoogleCalendarSyncError(
+      payload.error?.message ?? "Google Calendar could not create the event.",
+      "error",
+      "error"
+    );
+  }
+
+  return { providerEventId: payload.id };
+};
+
+export const googleCalendarWriteScopes = GOOGLE_CALENDAR_SCOPES;
