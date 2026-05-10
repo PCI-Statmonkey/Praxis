@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Calendar Write-Back Foundation And API Settings
+
+### Closed
+
+- Added schema v15 `time_block_publishes` storage for provider publish identity without changing imported appointment ownership.
+- Added shared calendar write-back preview/confirm contracts for create-only publication of selected local time blocks.
+- Publish previews now exclude completed/canceled blocks, flag already-published blocks, flag imported-appointment conflicts, and preserve a `requires_user_confirmation` boundary.
+- Confirmed publish handling uses an injected provider writer, records only successful publish metadata through the repository, and sanitizes provider errors before returning them.
+- Exposed Electron IPC/preload typings for publish preview and confirm while leaving production provider writes blocked until write scopes/adapters are explicitly implemented.
+- Added calendar write-back regression tests covering ready previews, blocked previews, conflict handling, skipped confirms, successful injected publish metadata, and sanitized provider errors.
+- Added optional OpenAI-compatible API provider settings: base URL, model name, encrypted API key save/clear, and safe configured/not-configured display.
+- API keys now use `secure_secrets` via the existing secret repository pattern and are excluded from plain settings JSON.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Add the visible Plan publish preview UI and then wire Google/Outlook create-only provider adapters after write-scope readiness is explicit.
+
 ## 2026-05-10 - AI Task Review Packet And Natural Intents
 
 ### Closed

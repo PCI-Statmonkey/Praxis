@@ -1,6 +1,6 @@
 export type SecretOwnerKind = "calendar_connection" | "email_connection" | "integration_config";
 
-export type SecretKind = "oauth_token" | "oauth_client_secret";
+export type SecretKind = "oauth_token" | "oauth_client_secret" | "api_key";
 
 export type StoreSecretInput = {
   ownerKind: SecretOwnerKind;

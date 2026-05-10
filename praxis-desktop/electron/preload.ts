@@ -142,6 +142,8 @@ contextBridge.exposeInMainWorld('praxis', {
   },
   calendar: {
     importEvents: (input: unknown) => ipcRenderer.invoke('calendar:importEvents', input),
+    previewTimeBlockPublish: (input: unknown) => ipcRenderer.invoke('calendar:previewTimeBlockPublish', input),
+    confirmTimeBlockPublish: (input: unknown) => ipcRenderer.invoke('calendar:confirmTimeBlockPublish', input),
     getGoogleOAuthReadiness: () => ipcRenderer.invoke('calendar:getGoogleOAuthReadiness'),
     getOutlookOAuthReadiness: () => ipcRenderer.invoke('calendar:getOutlookOAuthReadiness'),
     prepareGoogleOAuth: (input: unknown) => ipcRenderer.invoke('calendar:prepareGoogleOAuth', input),

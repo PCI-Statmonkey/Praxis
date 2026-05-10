@@ -17,11 +17,15 @@ Already implemented:
   without provider writes.
 - Schedule Review and AI Draft Plan can stage local block suggestions but do not auto-create or
   publish anything.
+- Backend foundation: `time_block_publishes` stores safe publish identity, shared preview/confirm
+  contracts exist, and Electron IPC can build previews/confirm requests while production provider
+  writes remain blocked until write scopes/adapters are added.
 
 Still out of scope until implementation:
 
 - Requesting provider write scopes.
 - Creating, updating, or deleting Google/Outlook events.
+- Visible Plan publish UI.
 - Two-way sync for PRAXIS-created provider events.
 - Automatic publish based on AI/deterministic planning suggestions.
 

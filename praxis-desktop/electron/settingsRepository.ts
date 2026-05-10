@@ -74,6 +74,7 @@ const nowIso = () => new Date().toISOString();
 const slackSettingsKey = "slack";
 const calendarAutoSyncSettingsKey = "calendar_auto_sync";
 const aiSettingsKey = "ai_model_policy";
+const aiApiIntegrationOwnerId = "ai_api";
 const uiSettingsKey = "ui";
 const googleOAuthSettingsKey = "google_oauth";
 const googleOAuthIntegrationOwnerId = "google_calendar";
@@ -185,13 +186,22 @@ export const getAiSettings = (): AiSettings => {
     .prepare("SELECT value_json FROM settings WHERE key = ?")
     .get(aiSettingsKey) as { value_json: string } | undefined;
   if (!row) {
-    return normalizeAiSettings();
+    return {
+      ...normalizeAiSettings(),
+      apiKeyConfigured: hasSecret("integration_config", aiApiIntegrationOwnerId, "api_key"),
+    };
   }
 
   try {
-    return normalizeAiSettings(JSON.parse(row.value_json) as Partial<AiSettings>);
+    return {
+      ...normalizeAiSettings(JSON.parse(row.value_json) as Partial<AiSettings>),
+      apiKeyConfigured: hasSecret("integration_config", aiApiIntegrationOwnerId, "api_key"),
+    };
   } catch {
-    return normalizeAiSettings();
+    return {
+      ...normalizeAiSettings(),
+      apiKeyConfigured: hasSecret("integration_config", aiApiIntegrationOwnerId, "api_key"),
+    };
   }
 };
 
@@ -505,7 +515,30 @@ export const updateAiSettings = (input: UpdateAiSettingsInput) => {
        VALUES (?, ?, ?)
        ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
     )
-    .run(aiSettingsKey, JSON.stringify(next), timestamp);
+    .run(
+      aiSettingsKey,
+      JSON.stringify({
+        localRuntime: next.localRuntime,
+        localModelName: next.localModelName,
+        reliancePolicy: next.reliancePolicy,
+        apiProvider: next.apiProvider,
+        apiBaseUrl: next.apiBaseUrl,
+        apiModelName: next.apiModelName,
+      }),
+      timestamp
+    );
+
+  const normalizedApiKey = input.apiKey?.trim();
+  if (normalizedApiKey) {
+    storeSecret({
+      ownerKind: "integration_config",
+      ownerId: aiApiIntegrationOwnerId,
+      secretKind: "api_key",
+      value: normalizedApiKey,
+    });
+  } else if (input.clearApiKey) {
+    deleteSecret("integration_config", aiApiIntegrationOwnerId, "api_key");
+  }
 
   return getSettingsSnapshot();
 };
@@ -630,6 +663,19 @@ export const getOutlookOAuthClientConfig = () => {
     clientSecret:
       process.env["PRAXIS_OUTLOOK_CLIENT_SECRET"]?.trim() ??
       readSecretOrNull("integration_config", outlookOAuthIntegrationOwnerId, "oauth_client_secret") ??
+      "",
+  };
+};
+
+export const getAiApiClientConfig = () => {
+  const settings = getAiSettings();
+  return {
+    provider: settings.apiProvider,
+    baseUrl: settings.apiBaseUrl ?? process.env["PRAXIS_AI_API_BASE_URL"]?.trim() ?? "",
+    modelName: settings.apiModelName ?? process.env["PRAXIS_AI_API_MODEL"]?.trim() ?? "",
+    apiKey:
+      process.env["PRAXIS_AI_API_KEY"]?.trim() ??
+      readSecretOrNull("integration_config", aiApiIntegrationOwnerId, "api_key") ??
       "",
   };
 };

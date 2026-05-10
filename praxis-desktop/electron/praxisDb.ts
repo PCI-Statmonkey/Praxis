@@ -14,7 +14,7 @@ const BetterSqlite3 = require("better-sqlite3") as typeof import("better-sqlite3
 type DatabaseHandle = import("better-sqlite3").Database;
 
 const DATABASE_FILENAME = "praxis.sqlite";
-const SCHEMA_VERSION = 14;
+const SCHEMA_VERSION = 15;
 
 let database: DatabaseHandle | null = null;
 
@@ -372,6 +372,20 @@ const migrateSchema = (db: DatabaseHandle) => {
       updated_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS time_block_publishes (
+      id TEXT PRIMARY KEY,
+      time_block_id TEXT NOT NULL REFERENCES time_blocks(id) ON DELETE CASCADE,
+      provider TEXT NOT NULL,
+      calendar_connection_id TEXT NOT NULL REFERENCES calendar_connections(id) ON DELETE CASCADE,
+      provider_calendar_id TEXT NOT NULL,
+      provider_event_id TEXT,
+      status TEXT NOT NULL,
+      last_published_at TEXT,
+      last_error TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE INDEX IF NOT EXISTS projects_mission_idx ON projects(mission_id);
     CREATE INDEX IF NOT EXISTS todos_project_idx ON todos(project_id);
     CREATE INDEX IF NOT EXISTS todos_due_idx ON todos(due_at);
@@ -396,6 +410,16 @@ const migrateSchema = (db: DatabaseHandle) => {
     CREATE INDEX IF NOT EXISTS time_blocks_start_idx ON time_blocks(starts_at);
     CREATE INDEX IF NOT EXISTS time_blocks_entity_idx ON time_blocks(entity_kind, entity_id);
     CREATE INDEX IF NOT EXISTS time_blocks_status_idx ON time_blocks(status);
+    CREATE UNIQUE INDEX IF NOT EXISTS time_block_publishes_provider_event_idx
+      ON time_block_publishes(provider, calendar_connection_id, provider_event_id)
+      WHERE provider_event_id IS NOT NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS time_block_publishes_active_time_block_idx
+      ON time_block_publishes(time_block_id, provider, calendar_connection_id)
+      WHERE status = 'published';
+    CREATE INDEX IF NOT EXISTS time_block_publishes_time_block_idx
+      ON time_block_publishes(time_block_id);
+    CREATE INDEX IF NOT EXISTS time_block_publishes_status_idx
+      ON time_block_publishes(status);
     CREATE INDEX IF NOT EXISTS project_template_proposal_states_cluster_idx
       ON project_template_proposal_states(cluster_id);
     CREATE INDEX IF NOT EXISTS project_template_proposal_states_status_idx

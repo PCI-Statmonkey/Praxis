@@ -46,10 +46,17 @@ const KNOWN_PERSON_LINK_ENTITY_KINDS = new Set(["mission", "project"]);
 const KNOWN_WORK_STATUSES = new Set(["active", "blocked", "completed", "paused"]);
 const KNOWN_WORK_PRIORITIES = new Set(["low", "normal", "high", "critical"]);
 const KNOWN_CALENDAR_PROVIDERS = new Set(["google", "outlook", "other"]);
+const KNOWN_TIME_BLOCK_PUBLISH_PROVIDERS = new Set(["google", "outlook"]);
 const KNOWN_EMAIL_PROVIDERS = new Set(["gmail", "outlook", "manual"]);
 const KNOWN_CHAT_IMPORT_SOURCES = new Set(["slack", "whatsapp", "sms", "manual", "unknown"]);
 const KNOWN_AUTH_STATUSES = new Set(["not_configured", "needs_credentials", "ready", "error"]);
 const KNOWN_SYNC_STATUSES = new Set(["manual_import_only", "blocked", "ready_to_sync", "syncing", "error"]);
+const KNOWN_TIME_BLOCK_PUBLISH_STATUSES = new Set([
+  "published",
+  "publish_failed",
+  "deleted_remote",
+  "stale_local",
+]);
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const issue = (
@@ -400,6 +407,9 @@ const validateOperationalFieldShapes = (issues: StorageIntegrityIssue[]) => {
     { table: "memory_documents", rowIdColumn: "id", valueColumn: "last_indexed_at", severity: "warning", allowNull: false },
     { table: "secure_secrets", rowIdColumn: "owner_id", valueColumn: "created_at", severity: "error", allowNull: false },
     { table: "secure_secrets", rowIdColumn: "owner_id", valueColumn: "updated_at", severity: "error", allowNull: false },
+    { table: "time_block_publishes", rowIdColumn: "id", valueColumn: "last_published_at", severity: "warning" },
+    { table: "time_block_publishes", rowIdColumn: "id", valueColumn: "created_at", severity: "error", allowNull: false },
+    { table: "time_block_publishes", rowIdColumn: "id", valueColumn: "updated_at", severity: "error", allowNull: false },
   ];
 
   for (const check of dateChecks) {
@@ -426,6 +436,8 @@ const validateOperationalFieldShapes = (issues: StorageIntegrityIssue[]) => {
   validateAllowedValueColumn(issues, "email_connections", "id", "auth_status", KNOWN_AUTH_STATUSES, "error");
   validateAllowedValueColumn(issues, "email_connections", "id", "sync_status", KNOWN_SYNC_STATUSES, "error");
   validateAllowedValueColumn(issues, "chat_imports", "id", "source_system", KNOWN_CHAT_IMPORT_SOURCES, "error");
+  validateAllowedValueColumn(issues, "time_block_publishes", "id", "status", KNOWN_TIME_BLOCK_PUBLISH_STATUSES, "error");
+  validateAllowedValueColumn(issues, "time_block_publishes", "id", "provider", KNOWN_TIME_BLOCK_PUBLISH_PROVIDERS, "error");
 
   validateBooleanColumn(issues, "todos", "id", "money_related");
   validateBooleanColumn(issues, "todos", "id", "quick_action");

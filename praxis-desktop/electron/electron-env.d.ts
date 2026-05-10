@@ -11,6 +11,12 @@ import type {
 } from "../shared/companionCommand";
 import type { CalendarImportResult, ImportCalendarEventsInput } from "../shared/calendarImport";
 import type {
+  ConfirmTimeBlockPublishResult,
+  TimeBlockPublishConfirmRequest,
+  TimeBlockPublishPreview,
+  TimeBlockPublishPreviewRequest,
+} from "../shared/calendarWriteback";
+import type {
   CalendarOAuthReadiness,
   GoogleOAuthUpdate,
   OutlookOAuthUpdate,
@@ -343,6 +349,12 @@ declare global {
       };
       calendar: {
         importEvents: (input: ImportCalendarEventsInput) => Promise<CalendarImportResult>;
+        previewTimeBlockPublish: (
+          input: TimeBlockPublishPreviewRequest
+        ) => Promise<TimeBlockPublishPreview>;
+        confirmTimeBlockPublish: (
+          input: TimeBlockPublishConfirmRequest
+        ) => Promise<ConfirmTimeBlockPublishResult>;
         getGoogleOAuthReadiness: () => Promise<CalendarOAuthReadiness>;
         getOutlookOAuthReadiness: () => Promise<CalendarOAuthReadiness>;
         prepareGoogleOAuth: (

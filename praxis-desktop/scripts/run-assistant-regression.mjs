@@ -7,6 +7,7 @@ const projectRoot = process.cwd();
 const outDir = path.join(projectRoot, ".assistant-test-dist");
 const testFiles = [
   "assistant-regression.test.ts",
+  "calendar-writeback.test.ts",
   "daily-brief-builder.test.ts",
   "focus-report-follow-up.test.ts",
   "person-lookup-engine.test.ts",

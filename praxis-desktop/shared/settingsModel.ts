@@ -204,6 +204,7 @@ export type OutlookOAuthSettings = {
 };
 
 export type AiLocalRuntime = "ollama";
+export type AiApiProvider = "openai_compatible";
 
 export type AiReliancePolicy =
   | "local_only"
@@ -216,6 +217,10 @@ export type AiSettings = {
   localRuntime: AiLocalRuntime;
   localModelName: string | null;
   reliancePolicy: AiReliancePolicy;
+  apiProvider: AiApiProvider;
+  apiBaseUrl: string | null;
+  apiModelName: string | null;
+  apiKeyConfigured: boolean;
 };
 
 export type UiTimeFormat = "standard" | "military";
@@ -228,6 +233,11 @@ export type UiSettings = {
 export type UpdateAiSettingsInput = {
   localModelName?: string | null;
   reliancePolicy?: AiReliancePolicy;
+  apiProvider?: AiApiProvider;
+  apiBaseUrl?: string | null;
+  apiModelName?: string | null;
+  apiKey?: string | null;
+  clearApiKey?: boolean;
 };
 
 export type UpdateUiSettingsInput = {
@@ -283,6 +293,10 @@ export const DEFAULT_AI_SETTINGS: AiSettings = {
   localRuntime: "ollama",
   localModelName: null,
   reliancePolicy: "prefer_local",
+  apiProvider: "openai_compatible",
+  apiBaseUrl: null,
+  apiModelName: null,
+  apiKeyConfigured: false,
 };
 
 export const UI_FONT_SCALE_MIN_PERCENT = 94;
@@ -353,9 +367,13 @@ const aiReliancePolicies = new Set<AiReliancePolicy>([
   "prefer_api",
   "api_only",
 ]);
+const aiApiProviders = new Set<AiApiProvider>(["openai_compatible"]);
 
 export const isAiReliancePolicy = (value: unknown): value is AiReliancePolicy =>
   typeof value === "string" && aiReliancePolicies.has(value as AiReliancePolicy);
+
+export const isAiApiProvider = (value: unknown): value is AiApiProvider =>
+  typeof value === "string" && aiApiProviders.has(value as AiApiProvider);
 
 export const normalizeAiSettings = (
   input: Partial<AiSettings | UpdateAiSettingsInput> = {},
@@ -368,6 +386,24 @@ export const normalizeAiSettings = (
         ? ""
         : fallback.localModelName ?? "";
   const localModelName = rawModelName.trim();
+  const rawApiBaseUrl =
+    typeof input.apiBaseUrl === "string"
+      ? input.apiBaseUrl
+      : input.apiBaseUrl === null
+        ? ""
+        : fallback.apiBaseUrl ?? "";
+  const apiBaseUrl = rawApiBaseUrl.trim();
+  const rawApiModelName =
+    typeof input.apiModelName === "string"
+      ? input.apiModelName
+      : input.apiModelName === null
+        ? ""
+        : fallback.apiModelName ?? "";
+  const apiModelName = rawApiModelName.trim();
+  const apiKeyConfigured =
+    "apiKeyConfigured" in input && typeof input.apiKeyConfigured === "boolean"
+      ? input.apiKeyConfigured
+      : fallback.apiKeyConfigured;
 
   return {
     localRuntime: "ollama",
@@ -375,6 +411,10 @@ export const normalizeAiSettings = (
     reliancePolicy: isAiReliancePolicy(input.reliancePolicy)
       ? input.reliancePolicy
       : fallback.reliancePolicy,
+    apiProvider: isAiApiProvider(input.apiProvider) ? input.apiProvider : fallback.apiProvider,
+    apiBaseUrl: apiBaseUrl.length > 0 ? apiBaseUrl : null,
+    apiModelName: apiModelName.length > 0 ? apiModelName : null,
+    apiKeyConfigured,
   };
 };
 

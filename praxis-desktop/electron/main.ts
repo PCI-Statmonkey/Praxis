@@ -5,6 +5,10 @@ import type { ChecklistEvent } from '../shared/persistence/checklistEvents'
 import type { MasterChecklistState } from '../shared/persistence/masterChecklistTypes'
 import type { ImportCalendarEventsInput } from '../shared/calendarImport'
 import type { StartCalendarOAuthInput } from '../shared/calendarOAuth'
+import type {
+  TimeBlockPublishConfirmRequest,
+  TimeBlockPublishPreviewRequest,
+} from '../shared/calendarWriteback'
 import type { StartEmailOAuthInput } from '../shared/emailOAuth'
 import type { SyncGoogleCalendarInput } from '../shared/googleCalendarSync'
 import type { SyncGmailEmailInput } from '../shared/gmailEmailSync'
@@ -128,6 +132,10 @@ import { generateLocalPlanDraft } from './planDraftService'
 import { generateDailyBrief, generateFocusReport } from './dailyBrief'
 import { generateAppointmentReport } from './appointmentReport'
 import { importCalendarEvents } from './calendarImport'
+import {
+  confirmTimeBlockPublishRequest,
+  previewTimeBlockPublish,
+} from './calendarWritebackService'
 import { captureNaturalLanguage, saveCaptureCandidate } from './naturalLanguageCapture'
 import {
   createCalendarConnection,
@@ -738,6 +746,12 @@ app.whenReady().then(() => {
   )
   ipcMain.handle('calendar:importEvents', async (_event, input: ImportCalendarEventsInput) =>
     importCalendarEvents(input)
+  )
+  ipcMain.handle('calendar:previewTimeBlockPublish', async (_event, input: TimeBlockPublishPreviewRequest) =>
+    previewTimeBlockPublish(input)
+  )
+  ipcMain.handle('calendar:confirmTimeBlockPublish', async (_event, input: TimeBlockPublishConfirmRequest) =>
+    confirmTimeBlockPublishRequest(input)
   )
   ipcMain.handle('email:getSnapshot', async () => getEmailSnapshot())
   ipcMain.handle('email:importMessages', async (_event, input: ImportEmailMessagesInput) =>

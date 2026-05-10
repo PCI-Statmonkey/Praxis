@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, and the AI Task Review factual context packet/natural-language intents are complete. Provider calendar write-back implementation remains explicitly later. The next active product track is the first create-only provider calendar write-back implementation slice behind explicit confirmation. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, and optional API provider settings are complete. The next active product track is the visible Plan publish UI plus provider scope/adapter implementation for create-only calendar write-back. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -152,6 +152,11 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Talk/AI review routing now recognizes `what should I do next?` as reset/next-move review and `what changed since yesterday?` / recent-change prompts as a read-only change review.
 - The `change_review` AI Review mode renders packet-backed recent movement without creating blocks, todos, calendar events, provider writes, or any other work graph mutation.
 - AI Task Review packet/intents verification passed: `npx tsc --noEmit`, `npm run lint`, `npm run test:assistant`, `npm run build:app`, and `git diff --check` with CRLF warnings only.
+- Provider calendar write-back foundation is in place: schema v15 adds `time_block_publishes`, shared preview/confirm contracts build create-only publish previews, and Electron exposes preview/confirm IPC.
+- The write-back foundation only treats `planned` local blocks as publishable, flags conflicts with imported appointments, skips already-published blocks, and sanitizes provider errors before returning them.
+- Production provider writes remain intentionally blocked until Google/Outlook write scopes and provider adapters are wired; current confirm IPC preserves the explicit-confirmation boundary and cannot silently publish.
+- AI Settings now has optional OpenAI-compatible API provider fields for base URL, model name, and encrypted API key storage/clear. API keys are stored through `secure_secrets`, not plain settings JSON.
+- Calendar write-back foundation/API settings verification passed: `npx tsc --noEmit`, `npm run lint`, `npm run test:assistant`, `npm run test:sync`, `npm run build:app`, and `git diff --check` with CRLF warnings only.
 
 ## NEXT STEPS
 
@@ -229,6 +234,35 @@ Implement the first safe provider calendar write-back slice for publishing opera
 - Provider write-back has a staged implementation path with regression coverage.
 - Any real provider write path is behind a clear operator confirmation boundary.
 - Google/Outlook sync behavior remains stable, and no existing local blocks are mutated unexpectedly.
+
+**STATUS**
+
+Complete for the backend foundation. The publish identity table, preview builder, confirm contract, safe provider-error handling, IPC surface, and regression tests exist. Real Google/Outlook create calls remain a follow-up until write scopes and adapters are added.
+
+### 5C. Add Optional API Provider Settings
+
+**STATUS**
+
+Complete for settings/storage. AI Settings now captures OpenAI-compatible API base URL, model name, and encrypted API key state behind explicit operator control. No API model caller is wired yet, and AI Review remains deterministic/Ollama-only unless a later slice adds an explicit API generation path.
+
+### 5D. Wire Calendar Publish UI And Provider Adapters
+
+**GOAL**
+
+Expose the create-only publish preview in Plan and add real Google/Outlook provider event creation only after write-scope readiness is explicit.
+
+**DIRECTION**
+
+- Add visible Plan publish controls that start from selected local planned blocks and show the preview before confirmation.
+- Add Google/Outlook write-scope readiness and reconnect guidance before enabling real publish.
+- Implement provider event creation adapters that write only confirmed preview-ready blocks.
+- Keep update/delete/reconcile out of the first real provider adapter slice.
+
+**DONE WHEN**
+
+- Operator can publish selected local blocks to one provider only after preview and confirmation.
+- Provider errors remain sanitized and raw payloads/tokens/secrets never surface.
+- Regression coverage proves blocked, duplicate, conflict, and provider-error paths.
 
 ### 6. Plan Checklist Grouping And Context-Memory Redesign
 

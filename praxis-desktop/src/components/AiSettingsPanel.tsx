@@ -88,7 +88,18 @@ export function AiSettingsPanel({
   const savedModelName = settings.localModelName ?? null;
   const modelChanged = draftModelName !== savedModelName;
   const policyChanged = selectedPolicy !== settings.reliancePolicy;
-  const hasUnsavedChanges = modelChanged || policyChanged;
+  const apiBaseUrl = form.apiBaseUrl ?? "";
+  const draftApiBaseUrl = normalizeDraftModelName(apiBaseUrl);
+  const savedApiBaseUrl = settings.apiBaseUrl ?? null;
+  const apiModelName = form.apiModelName ?? "";
+  const draftApiModelName = normalizeDraftModelName(apiModelName);
+  const savedApiModelName = settings.apiModelName ?? null;
+  const apiProviderChanged = (form.apiProvider ?? settings.apiProvider) !== settings.apiProvider;
+  const apiBaseUrlChanged = draftApiBaseUrl !== savedApiBaseUrl;
+  const apiModelChanged = draftApiModelName !== savedApiModelName;
+  const apiKeyChanged = Boolean(form.apiKey?.trim()) || Boolean(form.clearApiKey);
+  const hasUnsavedChanges =
+    modelChanged || policyChanged || apiProviderChanged || apiBaseUrlChanged || apiModelChanged || apiKeyChanged;
   const modelStatusLabel = draftModelName
     ? modelChanged
       ? `draft: ${draftModelName}`
@@ -138,7 +149,9 @@ export function AiSettingsPanel({
             <span className={hasUnsavedChanges ? "badge urgent-badge" : "badge"}>
               {hasUnsavedChanges ? "unsaved changes" : "saved"}
             </span>
-            <span className="badge">API fallback: planned</span>
+            <span className={settings.apiKeyConfigured ? "badge" : "badge waiting-badge"}>
+              API key: {settings.apiKeyConfigured ? "configured" : "not configured"}
+            </span>
           </div>
         </div>
 
@@ -212,24 +225,87 @@ export function AiSettingsPanel({
               <div className="settings-field-grid">
                 <label className="field-label">
                   <span>Provider</span>
-                  <select disabled value="">
-                    <option value="">Not configured</option>
-                    <option value="openai">OpenAI-compatible API</option>
-                    <option value="custom">Custom endpoint</option>
+                  <select
+                    value={form.apiProvider ?? settings.apiProvider}
+                    onChange={() =>
+                      setForm({
+                        ...form,
+                        apiProvider: "openai_compatible",
+                      })
+                    }
+                  >
+                    <option value="openai_compatible">OpenAI-compatible API</option>
                   </select>
                 </label>
                 <label className="field-label">
+                  <span>Base URL</span>
+                  <input
+                    value={apiBaseUrl}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        apiBaseUrl: event.target.value,
+                      })
+                    }
+                    placeholder="Optional API base URL"
+                  />
+                </label>
+                <label className="field-label">
+                  <span>API model name</span>
+                  <input
+                    value={apiModelName}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        apiModelName: event.target.value,
+                      })
+                    }
+                    placeholder="Model used when policy allows API routing"
+                  />
+                </label>
+                <label className="field-label">
                   <span>API key</span>
-                  <input disabled placeholder="Planned encrypted secret field" />
+                  <input
+                    type="password"
+                    value={form.apiKey ?? ""}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        apiKey: event.target.value,
+                        clearApiKey: false,
+                      })
+                    }
+                    placeholder={
+                      settings.apiKeyConfigured
+                        ? "Stored in encrypted secret storage"
+                        : "Paste API key to save encrypted"
+                    }
+                  />
                 </label>
               </div>
               <p className="brief-path">
-                API keys must use encrypted secret storage, matching the existing OAuth secret
-                pattern. They are not stored in plain settings JSON.
+                API key status: {settings.apiKeyConfigured ? "configured" : "not configured"}.
+                Keys use encrypted secret storage and are not saved in plain Settings JSON.
               </p>
+              {settings.apiKeyConfigured ? (
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form.clearApiKey)}
+                    onChange={(event) =>
+                      setForm({
+                        ...form,
+                        clearApiKey: event.target.checked,
+                        apiKey: "",
+                      })
+                    }
+                  />
+                  <span>Clear saved API key on save</span>
+                </label>
+              ) : null}
               <p className="brief-path">
-                Provider selection and API key entry stay disabled until encrypted provider-secret
-                storage and routing policy are implemented.
+                API policy still only selects routing eligibility. Model output remains read-only
+                unless a local confirmation surface accepts a write-like proposal.
               </p>
             </section>
           </article>

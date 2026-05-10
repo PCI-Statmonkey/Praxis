@@ -400,6 +400,19 @@ assert.deepEqual(
   }
 );
 assert.deepEqual(
+  normalizeAiSettings({
+    apiBaseUrl: "  https://api.example.test/v1  ",
+    apiModelName: "  praxis-review  ",
+    apiKeyConfigured: true,
+  }),
+  {
+    ...DEFAULT_AI_SETTINGS,
+    apiBaseUrl: "https://api.example.test/v1",
+    apiModelName: "praxis-review",
+    apiKeyConfigured: true,
+  }
+);
+assert.deepEqual(
   normalizeAiSettings(
     { reliancePolicy: "not-a-policy" as never },
     { ...DEFAULT_AI_SETTINGS, reliancePolicy: "local_only" }

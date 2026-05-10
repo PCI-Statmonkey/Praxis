@@ -139,7 +139,7 @@
 - [x] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health
 - [x] Add natural-language review intents such as `reset me`, `what am I missing?`, `what should I do next?`, `what changed since yesterday?`, and `what is stale?`
 - [ ] Route model review through a local-first Ollama provider with configurable local model settings
-- [ ] Add optional API provider settings behind explicit operator control
+- [x] Add optional API provider settings behind explicit operator control
 - [ ] Keep rule-based ranking as the deterministic fallback and safety net
 - [ ] Require Review Inbox, staged drafts, or explicit confirmation for write-like suggestions
 - [ ] Document and enforce an AI reliance policy: the model summarizes, prioritizes, explains, and suggests, but local services own state changes
