@@ -151,7 +151,7 @@
 - [x] Define a read-only, privacy-safe Rainmeter snapshot/export contract for ambient desktop display
 - [x] Keep Rainmeter and wallpaper display out of direct write paths
 - [x] Implement Windows tray/background lifetime and persisted pause/quiet presence state
-- [ ] Implement read-only Rainmeter snapshot export
+- [x] Implement read-only Rainmeter snapshot export
 
 ## Stage 8 - Voice and Arrival Ritual
 - [ ] Configurable wake phrase

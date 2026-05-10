@@ -118,9 +118,9 @@ Phase 2: Checklist UI
 
 Phase 3: Context-memory UI
 
-- Replace Today's simple memory document list with context lanes.
-- Add project/mission/person relevant document badges.
-- Keep reindex/repair controls in Settings > Storage.
+- Done: replace Today's simple memory document list with context lanes.
+- Done: add project/mission/person relevant document lanes.
+- Done: keep reindex/repair controls in Settings > Storage.
 
 Phase 4: AI Review tie-in
 

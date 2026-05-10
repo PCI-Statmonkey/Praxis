@@ -8,6 +8,7 @@ import {
   normalizeGoogleCalendarEvent,
   normalizeOutlookCalendarEvent,
 } from "../shared/calendarProviderNormalization";
+import { buildRainmeterSnapshot } from "../shared/rainmeterSnapshot";
 import {
   authLabel,
   canSyncConnection,
@@ -494,6 +495,112 @@ assert.deepEqual(
     updatedAt: null,
   }
 );
+const rainmeterSnapshot = buildRainmeterSnapshot({
+  now: "2026-04-24T14:30:00.000Z",
+  presence: {
+    mode: "quiet_until",
+    quietUntil: "2026-04-24T15:30:00.000Z",
+    updatedAt: null,
+  },
+  localBlocksToday: 3,
+  companionSnapshot: {
+    schemaVersion: "companion.snapshot.v1",
+    version: 1,
+    generatedAt: "2026-04-24T14:30:00.000Z",
+    localDate: "2026-04-24",
+    source: "praxis-home-node",
+    capability: {
+      readOnly: true,
+      commandsAccepted: true,
+      explicitCommandOnly: true,
+      directStorageAccess: false,
+      notes: "test",
+    },
+    summary: {
+      activeMissionCount: 1,
+      activeProjectCount: 1,
+      activeTodoCount: 2,
+      activeDeadlineCount: 1,
+      waitingOnCount: 1,
+      blockedCount: 0,
+      pausedCount: 0,
+      moneyRelatedCount: 1,
+      quickActionCount: 1,
+    },
+    topMove: {
+      id: "todo-1",
+      entityKind: "todo",
+      title: "  Review\npacket  ",
+      status: "active",
+      priority: "high",
+      dueAt: "2026-04-24T18:00:00.000Z",
+      reason: "Due today",
+      rank: 1,
+    },
+    today: {
+      appointments: [
+        {
+          id: "appointment-1",
+          entityKind: "appointment",
+          title: "Client\nreview",
+          startsAt: "2026-04-24T15:00:00.000Z",
+          endsAt: "2026-04-24T15:30:00.000Z",
+          allDay: false,
+          sourceSystem: "google",
+        },
+      ],
+      workItems: [
+        {
+          id: "todo-1",
+          entityKind: "todo",
+          title: "Review packet",
+          status: "active",
+          priority: "high",
+          dueAt: "2026-04-24T18:00:00.000Z",
+          reason: "Due today",
+          rank: 1,
+        },
+        {
+          id: "deadline-1",
+          entityKind: "deadline",
+          title: "Old deadline",
+          status: "active",
+          priority: "critical",
+          dueAt: "2026-04-23T18:00:00.000Z",
+          reason: "Overdue",
+          rank: 2,
+        },
+      ],
+    },
+    focusTargets: [],
+    people: { totalCount: 0, highlighted: [] },
+    inbox: { pendingEmailFollowUpCount: 2, latestEmailFollowUps: [] },
+    integrations: [
+      {
+        kind: "calendar",
+        id: "calendar-1",
+        provider: "google",
+        label: "Work",
+        enabled: true,
+        authStatus: "ready",
+        syncStatus: "ready_to_sync",
+        lastSyncedAt: null,
+      },
+    ],
+  },
+});
+assert.equal(rainmeterSnapshot.schemaVersion, "praxis.rainmeter.v1");
+assert.equal(rainmeterSnapshot.capability.readOnly, true);
+assert.equal(rainmeterSnapshot.capability.commandsAccepted, false);
+assert.equal(rainmeterSnapshot.presence.state, "quiet_until");
+assert.equal(rainmeterSnapshot.topMove?.title, "Review packet");
+assert.equal(rainmeterSnapshot.counts.reviewInbox, 2);
+assert.equal(rainmeterSnapshot.counts.overdue, 1);
+assert.equal(rainmeterSnapshot.counts.dueToday, 1);
+assert.equal(rainmeterSnapshot.counts.waiting, 1);
+assert.equal(rainmeterSnapshot.counts.localBlocksToday, 3);
+assert.equal(rainmeterSnapshot.calendar.nextAppointmentTitle, "Client review");
+assert.equal(rainmeterSnapshot.serviceHealth.state, "ready");
 
 assert.deepEqual(
   parseOllamaModelTags({

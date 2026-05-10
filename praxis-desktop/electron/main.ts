@@ -20,6 +20,7 @@ import { reindexMemoryDocuments } from './memoryReindex'
 import { checkStorageIntegrity } from './storageIntegrity'
 import { getSkillRegistrySnapshot } from './skillRegistry'
 import { getCompanionSnapshot } from './companionSnapshot'
+import { writeRainmeterSnapshot } from './rainmeterSnapshot'
 import { executeCompanionCommand } from './companionCommand'
 import type { CompanionCommandRequest } from '../shared/companionCommand'
 import type {
@@ -287,6 +288,7 @@ const isMemoryReindexMode = process.argv.includes('--memory-reindex')
 const isStorageCheckMode = process.argv.includes('--storage-check')
 const isSkillRegistryListMode = process.argv.includes('--skills-list')
 const isCompanionSnapshotMode = process.argv.includes('--companion-snapshot')
+const isRainmeterSnapshotMode = process.argv.includes('--rainmeter-snapshot')
 const companionCommandArgIndex = process.argv.indexOf('--companion-command')
 const isCompanionCommandMode = companionCommandArgIndex >= 0
 const emailAcceptSuggestionArgIndex = process.argv.indexOf('--email-accept-suggestion')
@@ -697,6 +699,13 @@ app.whenReady().then(() => {
     app.exit(0)
     return
   }
+  if (isRainmeterSnapshotMode) {
+    const result = writeRainmeterSnapshot()
+    console.log(JSON.stringify(result, null, 2))
+    closePraxisDatabase()
+    app.exit(0)
+    return
+  }
   if (isCompanionCommandMode) {
     const commandText = process.argv[companionCommandArgIndex + 1] ?? ''
     const command: CompanionCommandRequest = {
@@ -796,6 +805,7 @@ app.whenReady().then(() => {
   void autoSyncReadyEmailConnections('startup', broadcastEmailAutoSyncUpdate)
   startCalendarAutoSyncInterval()
   startEmailAutoSyncInterval()
+  writeRainmeterSnapshot()
 
   ipcMain.handle('checklist:loadState', async () => loadChecklistState())
   ipcMain.handle('checklist:appendEvent', async (_event, event: ChecklistEvent) => {
@@ -813,6 +823,7 @@ app.whenReady().then(() => {
   ipcMain.handle('storage:reindexMemory', async () => reindexMemoryDocuments())
   ipcMain.handle('skills:getRegistry', async () => getSkillRegistrySnapshot())
   ipcMain.handle('companion:getSnapshot', async () => getCompanionSnapshot())
+  ipcMain.handle('companion:writeRainmeterSnapshot', async () => writeRainmeterSnapshot())
   ipcMain.handle('companion:executeCommand', async (_event, input: CompanionCommandRequest) =>
     executeCompanionCommand(input)
   )
@@ -874,6 +885,7 @@ app.whenReady().then(() => {
     async (_event, input: UpdatePresenceSettingsInput) => {
       const snapshot = updatePresenceSettings(input)
       updateTrayMenu()
+      writeRainmeterSnapshot()
       return snapshot
     }
   )

@@ -5,6 +5,7 @@ import type { MasterChecklistState } from "../shared/persistence/masterChecklist
 import type { MemoryReindexReport, StorageOverview } from "../shared/storage/hybridStorage";
 import type { PraxisSkillRegistrySnapshot } from "../shared/skillRegistry";
 import type { CompanionSnapshot } from "../shared/companionSnapshot";
+import type { RainmeterSnapshotExportResult } from "../shared/rainmeterSnapshot";
 import type {
   CompanionCommandRequest,
   CompanionCommandResult,
@@ -220,6 +221,7 @@ declare global {
       };
       companion: {
         getSnapshot: () => Promise<CompanionSnapshot>;
+        writeRainmeterSnapshot: () => Promise<RainmeterSnapshotExportResult>;
         executeCommand: (input: CompanionCommandRequest) => Promise<CompanionCommandResult>;
       };
       slack: {

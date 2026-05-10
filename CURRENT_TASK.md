@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, create-only Google/Outlook publish adapters, publish-state visibility, failed-publish retry staging, provider live-QA runbook, provider reconciliation/update-delete planning, OpenAI-compatible AI Review generation, V1.1 persistent presence/Rainmeter planning, checklist/context-memory redesign planning, persistent presence Phase 1, checklist/context-memory selector Phase 1, checklist context UI, and persisted pause/quiet presence state are complete. The next active product track is still operator-present live provider write-back QA, then implementation can move to context-memory lanes in Today or read-only Rainmeter export. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 tracks, but they stay behind the AI review loop.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, create-only Google/Outlook publish adapters, publish-state visibility, failed-publish retry staging, provider live-QA runbook, provider reconciliation/update-delete planning, OpenAI-compatible AI Review generation, V1.1 persistent presence/Rainmeter planning, checklist/context-memory redesign planning, persistent presence Phase 1, checklist/context-memory selector Phase 1, checklist context UI, persisted pause/quiet presence state, Today context-memory lanes, and read-only Rainmeter snapshot export are complete. The next active product track is still operator-present live provider write-back QA, then implementation can move to Rainmeter snapshot polish, service-health presence integration, or richer context-memory badges. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -324,6 +324,8 @@ Selector Phase 1 is complete in `praxis-desktop/shared/contextSurfaces.ts`. Chec
 
 Checklist UI consumption is complete. `MasterChecklistPanel` now consumes shared context groups, exposes context filter lanes, preserves the existing quick/all filters, and keeps todo edit/status/delete actions intact.
 
+Context-memory lane UI is complete for Today/Command. The Today panel now uses shared memory context lanes grouped around daily, project, mission, person, template, and inbox context instead of a flat generic memory document list.
+
 ### 7. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
@@ -352,6 +354,8 @@ Complete as a planning artifact. `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md` de
 Tray/background Phase 1 is complete. Settings now exposes close-to-tray as a default-off operator choice, Windows tray lifetime can reopen PRAXIS, sync calendars, open Settings, or explicitly quit, and explicit quit shuts down background runtime. Pause/quiet and Rainmeter remain later phases.
 
 Pause/quiet presence state is now persisted in settings with `active`, `paused`, and `quiet_until` modes. Settings and the Windows tray can update the state, and the tray tooltip/menu reflects the effective state. Notifications/Rainmeter still remain later phases.
+
+Read-only Rainmeter snapshot export is complete. PRAXIS writes `memory/runtime/rainmeter/praxis-snapshot.json` from sanitized companion/presence context on startup, on demand through IPC, and through `npm run rainmeter:snapshot`. Rainmeter still cannot call back into PRAXIS or mutate work state.
 
 ### 8. Keep Future Intelligence And Capture Tracks Execution-Focused
 

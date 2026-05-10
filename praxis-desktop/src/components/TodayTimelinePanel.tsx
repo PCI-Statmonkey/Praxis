@@ -10,10 +10,13 @@ import type { ReviewInboxItem } from "../../shared/reviewInbox";
 import type {
   AppointmentRecord,
   DeadlineRecord,
+  MemoryDocumentSummary,
   MissionRecord,
+  PersonRecord,
   ProjectRecord,
   WorkStatus,
 } from "../../shared/workModel";
+import { buildMemoryContextLanes } from "../../shared/contextSurfaces";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
 import { AtRiskLane } from "./mission-control/AtRiskLane";
@@ -33,6 +36,7 @@ type TodayTimelinePanelProps = {
   focusSelection: string;
   missions: MissionRecord[];
   projects: ProjectRecord[];
+  people: PersonRecord[];
   proactiveSuggestion: ProactiveSuggestion | null;
   focusReport: FocusReport | null;
   dashboardReadiness: {
@@ -56,7 +60,7 @@ type TodayTimelinePanelProps = {
   reviewInboxItems: ReviewInboxItem[];
   upcomingAppointments: AppointmentRecord[];
   upcomingDeadlines: DeadlineRecord[];
-  memoryDocuments: Array<{ relativePath: string; docKind: string }>;
+  memoryDocuments: MemoryDocumentSummary[];
   formatDateTime: (value: string | null) => string;
   renderStatusActions: (
     entityKind: "mission" | "project" | "todo" | "deadline",
@@ -101,6 +105,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       focusSelection,
       missions,
       projects,
+      people,
       proactiveSuggestion,
       focusReport,
       dashboardReadiness,
@@ -161,6 +166,12 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
     const hasDegradedService = serviceHealthItems.some(
       (item) => item.state === "problem" || item.state === "setup" || item.state === "loading"
     );
+    const memoryContextLanes = buildMemoryContextLanes({
+      memoryDocuments,
+      projects,
+      missions,
+      people,
+    });
     return (
       <section ref={ref} className={`panel center${isActive ? " is-active-panel" : ""}`}>
         <div className="mission-control-root">
@@ -565,20 +576,29 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
           </EmptyState>
         )}
 
-        <h3>Memory-Backed Documents</h3>
-        {memoryDocuments.length > 0 ? (
-          <ul>
-            {memoryDocuments.slice(0, 8).map((document) => (
-              <li key={document.relativePath} className="item">
-                {document.relativePath}
-                <span className="badge">{document.docKind}</span>
-              </li>
+        <h3>Context Memory</h3>
+        {memoryContextLanes.length > 0 ? (
+          <div className="memory-context-lanes">
+            {memoryContextLanes.slice(0, 8).map((lane) => (
+              <section key={lane.id} className="memory-context-lane" aria-label={lane.label}>
+                <div className="checklist-group-header">
+                  <strong>{lane.label}</strong>
+                  <span className="badge">{lane.kind}</span>
+                </div>
+                <ul className="checklist-strip">
+                  {lane.documentPaths.slice(0, 4).map((documentPath) => (
+                    <li key={documentPath} className="item">
+                      memory/{documentPath}
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         ) : (
           <EmptyState
-            title="No indexed memory documents"
-            detail="Markdown memory appears here after startup indexing or a manual memory reindex."
+            title="No context memory lanes"
+            detail="Markdown memory appears here after startup indexing or a manual memory reindex links documents to active context."
           />
         )}
       </section>

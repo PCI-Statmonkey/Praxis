@@ -54,3 +54,6 @@ real calendar events.
 
 2026-05-10 update: still blocked on operator-present execution. This run must not be performed
 silently because it can refresh OAuth consent and create real Google/Outlook events.
+
+Later 2026-05-10 update: still blocked for the same reason. Code-only work continued on context
+memory lanes and read-only Rainmeter export without touching provider calendars.

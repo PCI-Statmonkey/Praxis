@@ -1,5 +1,33 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Context Memory Lanes And Rainmeter Export
+
+### Closed
+
+- Replaced Today's flat memory document list with shared context-memory lanes for daily, project, mission, person, template, and inbox context.
+- Added a read-only Rainmeter snapshot contract and builder that emits sanitized titles, counts, presence, top move, calendar headline, and aggregate service health only.
+- Added an overwrite-only Rainmeter export writer at `memory/runtime/rainmeter/praxis-snapshot.json`.
+- Added `npm run rainmeter:snapshot`, a main-process CLI flag, and an IPC hook for explicit snapshot export.
+- Kept Rainmeter read-only: no command endpoint, provider write path, raw provider payload, token, secret, database path, or memory-root path is included in the JSON contract.
+- Confirmed live Google/Outlook create-only publish QA remains blocked on operator-present OAuth/consent and real provider event verification.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `npm run rainmeter:snapshot` passed and wrote the ignored runtime JSON under `memory/runtime/rainmeter/`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA.
+- Add optional Rainmeter snapshot polish around service-health wording and skin-ready field names.
+- Add richer context-memory badges or AI Review lane highlights.
+
 ## 2026-05-10 - Checklist UI And Presence State
 
 ### Closed

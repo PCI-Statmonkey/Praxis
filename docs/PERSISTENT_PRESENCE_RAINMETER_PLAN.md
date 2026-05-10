@@ -15,7 +15,8 @@ surfaces are display-only outputs, not command surfaces.
 - AI Review can now explain priority/risk through deterministic, Ollama, or configured API model
   ranking while preserving the read-only boundary.
 - Pause/quiet state now persists in settings and appears in Settings plus the Windows tray.
-- Notification and Rainmeter export contracts remain planned but not implemented.
+- Read-only Rainmeter snapshot export is implemented.
+- Notification contracts remain planned but not implemented.
 
 ## Product Boundary
 
@@ -88,6 +89,9 @@ Suggested path:
 
 `memory/runtime/rainmeter/praxis-snapshot.json`
 
+Implementation status: done. PRAXIS writes this snapshot on startup, through
+`npm run rainmeter:snapshot`, and through an explicit IPC hook for app surfaces.
+
 Suggested shape:
 
 ```json
@@ -128,6 +132,8 @@ Privacy rules:
 - Export titles only after existing AI Review packet redaction rules are applied.
 - No notes, email bodies, provider account refs, raw sync errors, database paths, memory root paths,
   tokens, encrypted values, or `secure_secrets`.
+- Rainmeter receives no command endpoint and cannot mutate SQLite, markdown memory, provider events,
+  or settings.
 - Rainmeter snapshot is overwrite-only and read-only from PRAXIS perspective.
 - Rainmeter cannot call back into PRAXIS.
 

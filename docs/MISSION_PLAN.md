@@ -340,5 +340,5 @@ Initial remote access design should assume access from anywhere, not only same-h
 5. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
 6. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
 7. Implement Context/Memory and checklist grouping from `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md` when selected, starting with pure selectors
-8. Continue persistent presence and Rainmeter from `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md`, with tray/background lifetime and pause/quiet state complete and read-only Rainmeter export still pending
+8. Continue persistent presence and Rainmeter from `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md`, with tray/background lifetime, pause/quiet state, and read-only Rainmeter export complete while notifications remain pending
 9. Add voice wake and spoken output after the review and briefing logic are trustworthy

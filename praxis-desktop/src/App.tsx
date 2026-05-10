@@ -1118,6 +1118,7 @@ export default function App() {
         focusSelection={focusSelection}
         missions={snapshot.missions}
         projects={snapshot.projects}
+        people={snapshot.people}
         proactiveSuggestion={proactiveSuggestion}
         focusReport={focusReport}
         dashboardReadiness={dashboardReadiness}

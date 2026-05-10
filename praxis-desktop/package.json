@@ -24,6 +24,7 @@
     "storage:check": "npm run build:app && electron dist-electron/main.js --storage-check",
     "skills:list": "npm run build:app && electron dist-electron/main.js --skills-list",
     "companion:snapshot": "npm run build:app && electron dist-electron/main.js --companion-snapshot",
+    "rainmeter:snapshot": "npm run build:app && electron dist-electron/main.js --rainmeter-snapshot",
     "companion:command": "npm run build:app && electron dist-electron/main.js --companion-command \"what matters today\"",
     "repair:native": "electron-builder install-app-deps",
     "preview": "vite preview"

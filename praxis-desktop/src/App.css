@@ -2786,7 +2786,13 @@ ol {
   gap: 12px;
 }
 
-.checklist-group {
+.memory-context-lanes {
+  display: grid;
+  gap: 12px;
+}
+
+.checklist-group,
+.memory-context-lane {
   display: grid;
   gap: 7px;
   min-width: 0;

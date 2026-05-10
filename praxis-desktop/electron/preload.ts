@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('praxis', {
   },
   companion: {
     getSnapshot: () => ipcRenderer.invoke('companion:getSnapshot'),
+    writeRainmeterSnapshot: () => ipcRenderer.invoke('companion:writeRainmeterSnapshot'),
     executeCommand: (input: unknown) => ipcRenderer.invoke('companion:executeCommand', input),
   },
   slack: {
