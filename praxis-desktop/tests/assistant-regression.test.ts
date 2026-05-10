@@ -38,10 +38,12 @@ import type {
 import {
   aiReviewModeFromRouteKind,
   buildAIReviewResponse,
+  buildAIReviewResponseWithConfiguredModel,
   buildAIReviewResponseWithOllama,
   planAIReviewModelRoute,
   toAssistantAIReviewGenerateResult,
 } from "../electron/aiReviewService";
+import { generateAiApiReviewSummary } from "../electron/aiApiClient";
 import {
   buildOllamaAIReviewPrompt,
   generateOllamaReviewSummary,
@@ -1157,6 +1159,55 @@ assert.deepEqual(JSON.parse(ollamaGenerated.ok ? ollamaGenerated.text : "{}"), {
   coachLine: "Start here.",
 });
 
+let apiAuthHeader = "";
+const apiSuccessFetch: typeof fetch = async (input, init) => {
+  const url = String(input);
+  apiAuthHeader = init?.headers instanceof Headers
+    ? init.headers.get("Authorization") ?? ""
+    : typeof init?.headers === "object" && init.headers !== null && "Authorization" in init.headers
+      ? String(init.headers.Authorization)
+      : "";
+  assert.equal(url, "https://api.example.test/v1/chat/completions");
+  assert.doesNotMatch(String(init?.body ?? ""), /secret-api-key/);
+  return new Response(
+    JSON.stringify({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              schemaVersion: 1,
+              mode: "quick_wins",
+              priorityStableIds: ["todo:todo-3"],
+              emphasis: "quick_win",
+            }),
+          },
+        },
+      ],
+    }),
+    { status: 200 }
+  );
+};
+
+const apiGenerated = await generateAiApiReviewSummary(
+  {
+    config: {
+      provider: "openai_compatible",
+      baseUrl: "https://api.example.test/v1",
+      modelName: "praxis-review",
+      apiKey: "secret-api-key",
+    },
+    mode: "quick_wins",
+    packet: aiReviewPacket,
+  },
+  {
+    fetchFn: apiSuccessFetch,
+    timeoutMs: 1000,
+  }
+);
+assert.equal(apiAuthHeader, "Bearer secret-api-key");
+assert.equal(apiGenerated.ok, true);
+assert.equal(apiGenerated.ok ? apiGenerated.modelName : "", "praxis-review");
+
 const aiReviewOllamaSuccess = await buildAIReviewResponseWithOllama({
   mode: "quick_wins",
   packet: aiReviewPacket,
@@ -1187,6 +1238,58 @@ assert.doesNotMatch(aiReviewOllamaSuccess.message, /Start here\./);
 assert.doesNotMatch(aiReviewOllamaSuccess.message, /Recommended starting point/);
 assert.match(aiReviewOllamaSuccess.message, /No work has been changed/);
 assert.deepEqual(aiReviewOllamaSuccess.suggestedStableIds, ["todo:todo-3"]);
+
+const aiReviewApiSuccess = await buildAIReviewResponseWithConfiguredModel({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "prefer_api",
+    apiBaseUrl: "https://api.example.test/v1",
+    apiModelName: "praxis-review",
+    apiKeyConfigured: true,
+  },
+  apiConfig: {
+    provider: "openai_compatible",
+    baseUrl: "https://api.example.test/v1",
+    modelName: "praxis-review",
+    apiKey: "secret-api-key",
+  },
+  generateApiSummary: async () => ({
+    ok: true,
+    status: "ok",
+    modelName: "praxis-review",
+    text: JSON.stringify({
+      schemaVersion: 1,
+      mode: "quick_wins",
+      priorityStableIds: ["todo:todo-3"],
+      emphasis: "quick_win",
+    }),
+  }),
+});
+assert.equal(aiReviewApiSuccess.summarySource, "api");
+assert.equal(aiReviewApiSuccess.modelPlan.selectedProvider, "api");
+assert.equal(aiReviewApiSuccess.writeBoundary, "read_only");
+assert.match(aiReviewApiSuccess.message, /Take this win/);
+assert.match(aiReviewApiSuccess.message, /No work has been changed/);
+assert.deepEqual(aiReviewApiSuccess.suggestedStableIds, ["todo:todo-3"]);
+
+const aiReviewApiMissingConfig = await buildAIReviewResponseWithConfiguredModel({
+  mode: "quick_wins",
+  packet: aiReviewPacket,
+  settings: {
+    localRuntime: "ollama",
+    localModelName: null,
+    reliancePolicy: "api_only",
+    apiBaseUrl: "https://api.example.test/v1",
+    apiModelName: "praxis-review",
+    apiKeyConfigured: false,
+  },
+  apiConfig: null,
+});
+assert.equal(aiReviewApiMissingConfig.summarySource, "deterministic_fallback");
+assert.match(aiReviewApiMissingConfig.fallbackReason ?? "", /not fully configured/i);
 
 const aiReviewModeHeadingCases = [
   {

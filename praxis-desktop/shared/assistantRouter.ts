@@ -44,7 +44,7 @@ export type AssistantAIReviewMode =
   | "change_review";
 
 export type AssistantAIReviewModelPlan = {
-  selectedProvider: "deterministic_fallback";
+  selectedProvider: "deterministic_fallback" | "ollama" | "api";
   plannedProvider: "none" | "ollama" | "api";
   localRuntime: AiSettings["localRuntime"];
   localModelName: string | null;
@@ -76,7 +76,7 @@ export type AssistantAIReviewGenerateResult =
       ok: true;
       mode: AssistantAIReviewMode;
       message: string;
-      summarySource: "deterministic_fallback" | "ollama";
+      summarySource: "deterministic_fallback" | "ollama" | "api";
       fallbackReason: string | null;
       writeBoundary: "read_only";
       suggestedStableIds: string[];

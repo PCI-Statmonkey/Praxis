@@ -1,5 +1,31 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Provider QA Planning And API AI Review
+
+### Closed
+
+- Added `docs/PROVIDER_CALENDAR_LIVE_QA.md` with the operator-present create-only publish QA path, failure-state checks, and explicit no-go boundaries for update/delete, autopublish, and debug-port automation.
+- Added `docs/PROVIDER_CALENDAR_RECONCILIATION_PLAN.md` for later detect-only, confirmed update, and confirmed delete reconciliation of PRAXIS-created provider events only.
+- Added an OpenAI-compatible AI Review client that calls chat completions using the existing encrypted API provider settings or environment override.
+- Wired AI Review model selection so API-capable reliance policies can use the configured API provider while local-first policies still use Ollama or deterministic fallback.
+- Reused the existing packet/stable-ID validator for API output; API summaries can rank packet IDs but cannot create writes, invent stable IDs, or bypass read-only rendering.
+- Updated Talk AI Review source labeling to show API model output distinctly from Ollama and deterministic fallback.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run live Google/Outlook provider publish QA with the operator present.
+- After create-only publish is trusted, decide whether to implement detect-only reconciliation before any update/delete provider writes.
+
 ## 2026-05-10 - Calendar Write-Back Publish-State Polish
 
 ### Closed

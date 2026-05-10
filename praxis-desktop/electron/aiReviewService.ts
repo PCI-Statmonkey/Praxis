@@ -20,6 +20,11 @@ import {
   generateOllamaReviewSummary,
   type OllamaReviewGenerateResult,
 } from "./ollamaClient";
+import {
+  generateAiApiReviewSummary,
+  type AiApiClientConfig,
+  type AiApiReviewGenerateResult,
+} from "./aiApiClient";
 
 export type AIReviewResponse = {
   mode: AssistantAIReviewMode;
@@ -28,7 +33,7 @@ export type AIReviewResponse = {
   modelPlan: AssistantAIReviewModelPlan;
   writeBoundary: "read_only";
   suggestedStableIds: string[];
-  summarySource: "deterministic_fallback" | "ollama";
+  summarySource: "deterministic_fallback" | "ollama" | "api";
   fallbackReason: string | null;
 };
 
@@ -41,6 +46,12 @@ export type BuildAIReviewResponseInput = {
 
 export type BuildAIReviewResponseWithOllamaInput = BuildAIReviewResponseInput & {
   generateSummary?: typeof generateOllamaReviewSummary;
+};
+
+export type BuildAIReviewResponseWithConfiguredModelInput = BuildAIReviewResponseInput & {
+  apiConfig?: AiApiClientConfig | null;
+  generateOllamaSummary?: typeof generateOllamaReviewSummary;
+  generateApiSummary?: typeof generateAiApiReviewSummary;
 };
 
 export type BuildLocalAIReviewResponseSources = {
@@ -611,6 +622,17 @@ const parseAIReviewModelSelection = (
   };
 };
 
+const modelPlanWithSelectedProvider = (
+  settings: AiSettings,
+  providerSecretsAvailable: boolean,
+  selectedProvider: "ollama" | "api",
+  reason: string
+): AssistantAIReviewModelPlan => ({
+  ...planAIReviewModelRoute(settings, providerSecretsAvailable),
+  selectedProvider,
+  reason,
+});
+
 const modeSelectionSectionTitles: Record<AssistantAIReviewMode, string> = {
   reset: "Start here",
   quick_wins: "Take this win",
@@ -675,11 +697,143 @@ export const buildAIReviewResponseWithOllama = async ({
 
   return {
     ...buildAIReviewResponse(fallbackInput),
+    modelPlan: modelPlanWithSelectedProvider(
+      normalizedSettings,
+      providerSecretsAvailable,
+      "ollama",
+      "Ollama selected packet-backed AI Review stable IDs."
+    ),
     message: renderAIReviewModelSelection(mode, packet, selectionResult.selection),
     summarySource: "ollama",
     fallbackReason: null,
     suggestedStableIds: selectionResult.selection.priorityStableIds,
   };
+};
+
+const shouldPreferApi = (settings: AiSettings) =>
+  settings.reliancePolicy === "prefer_api" || settings.reliancePolicy === "api_only";
+
+const shouldUseApiForBalanced = (settings: AiSettings, apiConfig: AiApiClientConfig | null) =>
+  settings.reliancePolicy === "balanced" &&
+  Boolean(apiConfig?.baseUrl.trim() && apiConfig.modelName.trim() && apiConfig.apiKey.trim()) &&
+  !settings.localModelName;
+
+const apiFallbackWithReason = (
+  input: BuildAIReviewResponseInput,
+  reason: string
+): AIReviewResponse => fallbackWithReason(input, reason);
+
+const buildAIReviewResponseWithApi = async ({
+  mode,
+  packet,
+  settings,
+  apiConfig,
+  generateApiSummary,
+}: Required<Pick<BuildAIReviewResponseWithConfiguredModelInput, "mode" | "packet">> & {
+  settings: AiSettings;
+  apiConfig: AiApiClientConfig | null;
+  generateApiSummary: typeof generateAiApiReviewSummary;
+}): Promise<AIReviewResponse> => {
+  const fallbackInput = {
+    mode,
+    packet,
+    settings,
+    providerSecretsAvailable: Boolean(apiConfig?.apiKey.trim()),
+  };
+
+  if (!apiConfig?.baseUrl.trim() || !apiConfig.modelName.trim() || !apiConfig.apiKey.trim()) {
+    return apiFallbackWithReason(fallbackInput, "API provider is not fully configured.");
+  }
+
+  const generated: AiApiReviewGenerateResult = await generateApiSummary({
+    config: apiConfig,
+    mode,
+    packet,
+  });
+
+  if (!generated.ok) {
+    return apiFallbackWithReason(fallbackInput, generated.reason);
+  }
+
+  const selectionResult = parseAIReviewModelSelection(generated.text, mode, packet);
+  if (!selectionResult.ok) {
+    return apiFallbackWithReason(fallbackInput, selectionResult.reason);
+  }
+
+  return {
+    ...buildAIReviewResponse(fallbackInput),
+    modelPlan: modelPlanWithSelectedProvider(
+      settings,
+      true,
+      "api",
+      "API model selected packet-backed AI Review stable IDs."
+    ),
+    message: renderAIReviewModelSelection(mode, packet, selectionResult.selection),
+    summarySource: "api",
+    fallbackReason: null,
+    suggestedStableIds: selectionResult.selection.priorityStableIds,
+  };
+};
+
+export const buildAIReviewResponseWithConfiguredModel = async ({
+  mode,
+  packet,
+  settings = DEFAULT_AI_SETTINGS,
+  apiConfig = null,
+  providerSecretsAvailable = Boolean(apiConfig?.apiKey.trim()),
+  generateOllamaSummary = generateOllamaReviewSummary,
+  generateApiSummary = generateAiApiReviewSummary,
+}: BuildAIReviewResponseWithConfiguredModelInput): Promise<AIReviewResponse> => {
+  const normalizedSettings = normalizeAiSettings(settings, DEFAULT_AI_SETTINGS);
+  const apiConfigured = Boolean(
+    apiConfig?.baseUrl.trim() && apiConfig.modelName.trim() && apiConfig.apiKey.trim()
+  );
+
+  if (
+    shouldPreferApi(normalizedSettings) ||
+    shouldUseApiForBalanced(normalizedSettings, apiConfig)
+  ) {
+    return buildAIReviewResponseWithApi({
+      mode,
+      packet,
+      settings: normalizedSettings,
+      apiConfig,
+      generateApiSummary,
+    });
+  }
+
+  if (normalizedSettings.localModelName) {
+    return buildAIReviewResponseWithOllama({
+      mode,
+      packet,
+      settings: normalizedSettings,
+      providerSecretsAvailable: providerSecretsAvailable || apiConfigured,
+      generateSummary: generateOllamaSummary,
+    });
+  }
+
+  if (normalizedSettings.reliancePolicy === "balanced" && apiConfigured) {
+    return buildAIReviewResponseWithApi({
+      mode,
+      packet,
+      settings: normalizedSettings,
+      apiConfig,
+      generateApiSummary,
+    });
+  }
+
+  return fallbackWithReason(
+    {
+      mode,
+      packet,
+      settings: normalizedSettings,
+      providerSecretsAvailable: providerSecretsAvailable || apiConfigured,
+    },
+    normalizedSettings.reliancePolicy === "local_only" ||
+      normalizedSettings.reliancePolicy === "prefer_local"
+      ? "No saved Ollama model is selected."
+      : "No configured model provider is available."
+  );
 };
 
 export const toAssistantAIReviewGenerateResult = (
@@ -708,14 +862,15 @@ export const buildLocalAIReviewResponseFromSources = (
 export const buildLocalAIReviewResponse = async (
   mode: AssistantAIReviewMode
 ): Promise<AIReviewResponse> => {
-  const [{ buildLocalAIReviewContextPacket }, { getAiSettings }] = await Promise.all([
+  const [{ buildLocalAIReviewContextPacket }, { getAiSettings, getAiApiClientConfig }] = await Promise.all([
     import("./aiReviewContext"),
     import("./settingsRepository"),
   ]);
 
-  return buildAIReviewResponseWithOllama({
+  return buildAIReviewResponseWithConfiguredModel({
     mode,
     packet: buildLocalAIReviewContextPacket(),
     settings: getAiSettings(),
+    apiConfig: getAiApiClientConfig(),
   });
 };

@@ -138,11 +138,12 @@
 - [x] Add confirmed apply-template flow for existing projects, behind explicit review and confirmation
 - [x] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health
 - [x] Add natural-language review intents such as `reset me`, `what am I missing?`, `what should I do next?`, `what changed since yesterday?`, and `what is stale?`
-- [ ] Route model review through a local-first Ollama provider with configurable local model settings
+- [x] Route model review through a local-first Ollama provider with configurable local model settings
 - [x] Add optional API provider settings behind explicit operator control
-- [ ] Keep rule-based ranking as the deterministic fallback and safety net
-- [ ] Require Review Inbox, staged drafts, or explicit confirmation for write-like suggestions
-- [ ] Document and enforce an AI reliance policy: the model summarizes, prioritizes, explains, and suggests, but local services own state changes
+- [x] Add OpenAI-compatible API review generation behind explicit API-capable reliance policies
+- [x] Keep rule-based ranking as the deterministic fallback and safety net
+- [x] Require Review Inbox, staged drafts, or explicit confirmation for write-like suggestions
+- [x] Document and enforce an AI reliance policy: the model summarizes, prioritizes, explains, and suggests, but local services own state changes
 
 ## Stage 7 - Persistent Presence and Rainmeter
 - [ ] Define Windows tray/background behavior with close-to-tray, explicit quit, pause/quiet mode, and visible active status
@@ -158,9 +159,9 @@
 - [ ] Silent mode and display-first override
 
 ## Stage 9 - Local AI and Insight Loop
-- [ ] Local model routing via Ollama
-- [ ] Configurable local model selection
-- [ ] Optional API provider configuration and budget/reliance controls
+- [x] Local model routing via Ollama
+- [x] Configurable local model selection
+- [x] Optional API provider configuration and budget/reliance controls
 - [ ] Memory summarization
 - [ ] Signal detection
 - [ ] Insight generation

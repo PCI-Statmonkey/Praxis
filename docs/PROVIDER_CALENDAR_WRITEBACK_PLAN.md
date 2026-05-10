@@ -29,6 +29,9 @@ Already implemented:
 - Plan shows safe publish-state badges for local blocks once `time_block_publishes` records exist.
 - Sanitized `publish_failed` records are persisted and can be staged for a fresh preview/confirm
   retry without update/delete provider writes.
+- Operator-present live QA is documented in `docs/PROVIDER_CALENDAR_LIVE_QA.md`.
+- Later reconciliation/update/delete planning is documented in
+  `docs/PROVIDER_CALENDAR_RECONCILIATION_PLAN.md`.
 
 Still out of scope until implementation:
 

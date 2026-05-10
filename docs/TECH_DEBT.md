@@ -55,23 +55,23 @@
 
 ### AI Task Review Context Packet Is Not Implemented
 
-- Priority: High
-- Impact: PRAXIS has work graph, calendar, Review Inbox, closeout summaries, waiting-on, overdue, and quick-action signals, but there is not yet one factual context packet for natural-language AI Task Review / ADHD Reset Mode.
-- Likely Fix: Add a shared packet builder that gathers local structured facts, stable record ids, risk signals, recent changes, and allowable follow-up actions before any LLM call.
+- Priority: Closed
+- Impact: Closed. PRAXIS now builds a factual packet from work graph, calendar, Review Inbox, stale projects, waiting-on, overdue/due-soon, quick wins, recent changes, and service health.
+- Likely Fix: Closed. Future debt should target specific packet gaps rather than the packet foundation.
 - Related: `docs/ARCHITECTURE.md`, `docs/Roadmap.md`, `docs/MISSION_PLAN.md`, `praxis-desktop/electron/dailyBrief.ts`, `praxis-desktop/electron/assistantRouter.ts`
 
 ### AI Model Policy And Provider Settings Are Missing
 
-- Priority: Medium
-- Impact: Local-first Ollama is the intended direction, but there is not yet a configurable local model, optional API provider settings, or an explicit AI reliance policy in product settings.
-- Likely Fix: Add settings for local model selection, optional API provider configuration, and a clear policy that model output can summarize, prioritize, explain, and draft, while local services own writes.
+- Priority: Closed
+- Impact: Closed. AI Settings now includes configurable Ollama model selection, optional OpenAI-compatible API provider settings, encrypted API key storage, and reliance policy.
+- Likely Fix: Closed. Future debt should target budget controls, provider health probes, or model-specific quality checks.
 - Related: `docs/ARCHITECTURE.md`, `docs/MISSION_PLAN.md`, `praxis-desktop/src/SettingsApp.tsx`, `praxis-desktop/electron/settingsRepository.ts`
 
 ### AI Review Write Boundary Needs Enforcement
 
-- Priority: High
-- Impact: Future model-assisted review could become unsafe if suggested actions directly mutate missions, projects, todos, deadlines, or people records.
-- Likely Fix: Route write-like model suggestions into Review Inbox candidates, staged drafts, or explicit confirmation commands, with rule-based ranking as the safety net and no silent task graph mutations.
+- Priority: Closed
+- Impact: Closed for AI Review. Ollama and API model output is validated against packet stable IDs and rendered read-only with deterministic fallback.
+- Likely Fix: Keep enforcing this pattern on future write-adjacent model surfaces.
 - Related: `docs/ARCHITECTURE.md`, `praxis-desktop/electron/assistantRouter.ts`, `praxis-desktop/electron/assistantContextRepository.ts`, `praxis-desktop/shared/assistantContextResolver.ts`
 
 ### Project Template Reject And Saved Template Usability Were Missing

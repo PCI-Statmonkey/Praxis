@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, create-only Google/Outlook publish adapters, publish-state visibility, and failed-publish retry staging are complete. The next active product track is live provider write-back QA with the operator present, followed by provider reconciliation/update-delete planning only after create-only publish is trusted. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, create-only Google/Outlook publish adapters, publish-state visibility, failed-publish retry staging, provider live-QA runbook, provider reconciliation/update-delete planning, and OpenAI-compatible AI Review generation are complete. The next active product track is operator-present live provider write-back QA, followed by V1.1 persistent presence/Rainmeter planning or checklist/context-memory redesign. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -165,6 +165,9 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Focused Plan shows publish-state badges on local blocks and in the publish picker once publish records exist.
 - Failed provider publish attempts persist sanitized `publish_failed` records and can be staged for a fresh preview retry without update/delete provider writes.
 - Live Google/Outlook provider QA still requires operator-present OAuth refresh and explicit consent because it creates real calendar events.
+- `docs/PROVIDER_CALENDAR_LIVE_QA.md` defines the operator-present create-only publish QA path and failure/retry checks.
+- `docs/PROVIDER_CALENDAR_RECONCILIATION_PLAN.md` defines the later detect-only, confirmed update, and confirmed delete path for PRAXIS-created provider events only.
+- AI Review can now use configured OpenAI-compatible API generation under API-capable reliance policies, validates model output against packet stable IDs, and falls back deterministically on missing config or provider errors.
 
 ## NEXT STEPS
 
@@ -251,7 +254,7 @@ Complete for the backend foundation. The publish identity table, preview builder
 
 **STATUS**
 
-Complete for settings/storage. AI Settings now captures OpenAI-compatible API base URL, model name, and encrypted API key state behind explicit operator control. No API model caller is wired yet, and AI Review remains deterministic/Ollama-only unless a later slice adds an explicit API generation path.
+Complete. AI Settings now captures OpenAI-compatible API base URL, model name, and encrypted API key state behind explicit operator control, and AI Review can call the configured API provider under API-capable reliance policies. Model output is still packet/stable-ID validated and read-only.
 
 ### 5D. Wire Calendar Publish UI And Provider Adapters
 
@@ -291,7 +294,13 @@ Validate the real provider publish path carefully and make published/failed stat
 
 **STATUS**
 
-Complete for code polish. Plan now shows publish-state badges for local blocks, persists sanitized failed publish records, and stages failed records for retry through the same preview/confirm flow. Live provider QA remains pending because it requires operator-present OAuth refresh and creates real Google/Outlook calendar events.
+Complete for code polish and QA handoff. Plan now shows publish-state badges for local blocks, persists sanitized failed publish records, and stages failed records for retry through the same preview/confirm flow. The live-QA runbook is in `docs/PROVIDER_CALENDAR_LIVE_QA.md`; the live run remains pending because it requires operator-present OAuth refresh and creates real Google/Outlook calendar events.
+
+### 5F. Plan Provider Calendar Reconciliation
+
+**STATUS**
+
+Complete as a planning artifact. `docs/PROVIDER_CALENDAR_RECONCILIATION_PLAN.md` defines the later detect-only, confirmed update, and confirmed delete phases for PRAXIS-created provider events. Do not implement update/delete provider writes until create-only live QA passes.
 
 ### 6. Plan Checklist Grouping And Context-Memory Redesign
 

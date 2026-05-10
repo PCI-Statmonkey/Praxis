@@ -131,13 +131,22 @@ const summarizeAiReviewSource = (route: AssistantRouteResult): AssistantReviewUi
 
 const summarizeGeneratedAiReview = (
   result: Extract<AssistantAIReviewGenerateResult, { ok: true }>
-): AssistantReviewUiState => ({
-  active: true,
-  status: result.summarySource === "ollama" ? "model" : "fallback",
-  mode: result.mode,
-  sourceLabel: result.summarySource === "ollama" ? "Ollama" : "Deterministic fallback",
-  fallbackReason: result.summarySource === "deterministic_fallback" ? result.fallbackReason : null,
-});
+): AssistantReviewUiState => {
+  const modelSource = result.summarySource === "ollama" || result.summarySource === "api";
+  return {
+    active: true,
+    status: modelSource ? "model" : "fallback",
+    mode: result.mode,
+    sourceLabel:
+      result.summarySource === "ollama"
+        ? "Ollama"
+        : result.summarySource === "api"
+          ? "API"
+          : "Deterministic fallback",
+    fallbackReason:
+      result.summarySource === "deterministic_fallback" ? result.fallbackReason : null,
+  };
+};
 
 const summarizeFailedAiReview = (
   route: AssistantRouteResult,
