@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, Tray, type MenuItemConstructorOptions } from 'electron'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import type { ChecklistEvent } from '../shared/persistence/checklistEvents'
@@ -151,6 +151,8 @@ import {
   updateCalendarAutoSyncSettings,
   updateOutlookOAuthSettings,
   updateSlackSettings,
+  getUiSettings,
+  getCalendarAutoSyncSettings,
 } from './settingsRepository'
 import { checkOllamaModelAvailability } from './ollamaProbe'
 import {
@@ -217,7 +219,6 @@ import type {
   CalendarAutoSyncRequest,
   CalendarAutoSyncUpdate,
 } from '../shared/calendarAutoSync'
-import { getCalendarAutoSyncSettings } from './settingsRepository'
 import type { AppointmentReportRequest } from '../shared/appointmentReport'
 import type { EmailAutoSyncUpdate } from '../shared/emailAutoSync'
 import type { ImportChatConversationInput } from '../shared/chatImport'
@@ -259,8 +260,11 @@ const appIconPath = path.join(vitePublic, 'praxis-icon.png')
 
 let win: BrowserWindow | null
 let settingsWindow: BrowserWindow | null
+let tray: Tray | null = null
 let calendarAutoSyncInterval: NodeJS.Timeout | null = null
 let emailAutoSyncInterval: NodeJS.Timeout | null = null
+let isExplicitQuit = false
+let hasShutDown = false
 
 type SettingsWindowTab =
   | 'google'
@@ -363,6 +367,76 @@ const openSettingsWindow = (tab?: SettingsWindowTab) => {
     window: 'settings',
     ...(tab ? { settingsTab: tab } : {}),
   })
+}
+
+const shutdownPraxisRuntime = () => {
+  if (hasShutDown) {
+    return
+  }
+  hasShutDown = true
+  stopCalendarAutoSyncInterval()
+  stopEmailAutoSyncInterval()
+  void stopSlackAdapter()
+  closePraxisDatabase()
+}
+
+const quitPraxis = () => {
+  isExplicitQuit = true
+  shutdownPraxisRuntime()
+  app.quit()
+}
+
+const showMainWindow = () => {
+  if (!win || win.isDestroyed()) {
+    createWindow()
+    return
+  }
+  if (win.isMinimized()) {
+    win.restore()
+  }
+  win.show()
+  win.focus()
+}
+
+const updateTrayMenu = () => {
+  if (!tray) {
+    return
+  }
+
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      {
+        label: 'Open PRAXIS',
+        click: showMainWindow,
+      },
+      {
+        label: 'Sync Calendars Now',
+        click: () => {
+          void autoSyncReadyCalendars('user_request', broadcastCalendarAutoSyncUpdate)
+        },
+      },
+      {
+        label: 'Settings',
+        click: () => openSettingsWindow(),
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit PRAXIS',
+        click: quitPraxis,
+      },
+    ])
+  )
+}
+
+const createTray = () => {
+  if (tray || process.platform !== 'win32') {
+    return
+  }
+
+  tray = new Tray(appIconPath)
+  tray.setToolTip('PRAXIS')
+  tray.on('click', showMainWindow)
+  updateTrayMenu()
 }
 
 const buildApplicationMenu = () => {
@@ -499,6 +573,19 @@ function createWindow() {
 
   loadRendererWindow(win)
 
+  win.on('close', (event) => {
+    if (isExplicitQuit || !getUiSettings().closeToTrayEnabled) {
+      return
+    }
+    event.preventDefault()
+    win?.hide()
+    createTray()
+  })
+
+  win.on('closed', () => {
+    win = null
+  })
+
   win.maximize()
 }
 
@@ -507,13 +594,18 @@ function createWindow() {
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    stopCalendarAutoSyncInterval()
-    stopEmailAutoSyncInterval()
-    void stopSlackAdapter()
-    closePraxisDatabase()
+    if (getUiSettings().closeToTrayEnabled && !isExplicitQuit) {
+      createTray()
+      return
+    }
+    shutdownPraxisRuntime()
     app.quit()
-    win = null
   }
+})
+
+app.on('before-quit', () => {
+  isExplicitQuit = true
+  shutdownPraxisRuntime()
 })
 
 app.on('activate', () => {
@@ -601,6 +693,7 @@ app.whenReady().then(() => {
     return
   }
   buildApplicationMenu()
+  createTray()
   void startSlackAdapter()
   createWindow()
   onGoogleCalendarOAuthUpdate((update) => {
@@ -729,6 +822,7 @@ app.whenReady().then(() => {
   ipcMain.handle('settings:updateUISettings', async (_event, input: UpdateUiSettingsInput) => {
     const snapshot = updateUiSettings(input)
     broadcastUiSettingsUpdate(snapshot.ui)
+    updateTrayMenu()
     return snapshot
   })
   ipcMain.handle(

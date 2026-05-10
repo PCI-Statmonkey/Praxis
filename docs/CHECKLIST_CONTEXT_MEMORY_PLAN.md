@@ -103,10 +103,11 @@ large JSX.
 
 Phase 1: Pure selectors
 
-- Build checklist context groups from todos, projects, missions, people, deadlines, and proactive
-  suggestion.
-- Build memory context lanes from indexed memory documents and current work graph.
-- Add regression tests for grouping, redaction, and stable ordering.
+- Done: build checklist context groups from todos, projects, missions, people, and top-move context.
+- Done: build memory context lanes from indexed memory documents and current work graph.
+- Done: add regression tests for grouping and stable ordering.
+- Later: fold deadlines and proactive suggestion context into the same selector layer when the UI
+  consumes it.
 
 Phase 2: Checklist UI
 

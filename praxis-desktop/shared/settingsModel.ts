@@ -228,6 +228,7 @@ export type UiTimeFormat = "standard" | "military";
 export type UiSettings = {
   fontScalePercent: number;
   timeFormat: UiTimeFormat;
+  closeToTrayEnabled: boolean;
 };
 
 export type UpdateAiSettingsInput = {
@@ -243,6 +244,7 @@ export type UpdateAiSettingsInput = {
 export type UpdateUiSettingsInput = {
   fontScalePercent?: number;
   timeFormat?: UiTimeFormat;
+  closeToTrayEnabled?: boolean;
 };
 
 export type CheckOllamaModelAvailabilityInput = {
@@ -306,6 +308,7 @@ export const UI_FONT_SCALE_STEP_PERCENT = 2;
 export const DEFAULT_UI_SETTINGS: UiSettings = {
   fontScalePercent: 100,
   timeFormat: "standard",
+  closeToTrayEnabled: false,
 };
 
 const uiTimeFormats = new Set<UiTimeFormat>(["standard", "military"]);
@@ -330,6 +333,10 @@ export const normalizeUiSettings = (
   return {
     fontScalePercent,
     timeFormat: isUiTimeFormat(input.timeFormat) ? input.timeFormat : fallback.timeFormat,
+    closeToTrayEnabled:
+      typeof input.closeToTrayEnabled === "boolean"
+        ? input.closeToTrayEnabled
+        : fallback.closeToTrayEnabled,
   };
 };
 

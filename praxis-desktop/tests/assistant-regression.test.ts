@@ -17,6 +17,10 @@ import {
   skillIdsForAssistantIntent,
   skillReferencesForAssistantIntent,
 } from "../shared/assistantSkillRouting";
+import {
+  buildChecklistContextGroups,
+  buildMemoryContextLanes,
+} from "../shared/contextSurfaces";
 import { buildWorkItemActions } from "../shared/workLookupContext";
 import type { WorkSnapshot } from "../shared/workModel";
 import {
@@ -1012,6 +1016,78 @@ assert(!aiReviewPacketJson.includes("secret-calendar-ref"));
 assert(!aiReviewPacketJson.includes("secret calendar sync failure"));
 assert(!aiReviewPacketJson.includes("raw block note should not leak"));
 assert(!aiReviewPacketJson.includes("databasePath"));
+
+const checklistContextGroups = buildChecklistContextGroups({
+  todos: aiReviewSnapshot.todos,
+  projects: aiReviewSnapshot.projects,
+  missions: aiReviewSnapshot.missions,
+  people: aiReviewSnapshot.people,
+  topMoveTodoId: "todo-3",
+  now: "2026-04-28T12:00:00.000Z",
+});
+assert.deepEqual(checklistContextGroups[0]?.id, "top_move");
+assert.deepEqual(checklistContextGroups[0]?.todoIds, ["todo-3"]);
+assert(checklistContextGroups.some((group) => group.id === "due" && group.todoIds.includes("todo-1")));
+assert(
+  checklistContextGroups.some(
+    (group) =>
+      group.id === "waiting:person-1" &&
+      group.label === "Waiting on Max" &&
+      group.todoIds.includes("todo-1")
+  )
+);
+assert(
+  checklistContextGroups.some(
+    (group) => group.id === "quick" && group.todoIds.includes("todo-3") && !group.todoIds.includes("todo-4")
+  )
+);
+
+const memoryContextLanes = buildMemoryContextLanes({
+  memoryDocuments: [
+    {
+      title: "Daily Brief",
+      relativePath: "daily/2026-04-28.md",
+      docKind: "daily",
+      entityKind: "daily",
+    },
+    {
+      title: "Powerless Sourcebook",
+      relativePath: "projects/powerless-sourcebook.md",
+      docKind: "project",
+      entityKind: "project",
+    },
+    {
+      title: "Origins Mission",
+      relativePath: "missions/origins.md",
+      docKind: "mission",
+      entityKind: "mission",
+    },
+    {
+      title: "Max",
+      relativePath: "people/max.md",
+      docKind: "person",
+      entityKind: "person",
+    },
+    {
+      title: "Engineering template",
+      relativePath: "templates/engineering.md",
+      docKind: "project_template",
+      entityKind: "template",
+    },
+  ],
+  projects: [{ ...aiReviewSnapshot.projects[0], markdownPath: "projects/powerless-sourcebook.md" }],
+  missions: [{ ...aiReviewSnapshot.missions[0], markdownPath: "missions/origins.md" }],
+  people: [{ ...aiReviewSnapshot.people[0], markdownPath: "people/max.md" }],
+});
+assert.deepEqual(memoryContextLanes.map((lane) => lane.id), [
+  "today",
+  "project:project-1",
+  "mission:mission-1",
+  "person:person-1",
+  "templates",
+]);
+assert.deepEqual(memoryContextLanes[1]?.documentPaths, ["projects/powerless-sourcebook.md"]);
+assert.deepEqual(memoryContextLanes[1]?.relatedEntityIds, ["project-1"]);
 
 const aiReviewUnifiedPacket = buildAIReviewContextPacket({
   snapshot: aiReviewSnapshot,

@@ -427,10 +427,17 @@ assert.deepEqual(normalizeUiSettings(), DEFAULT_UI_SETTINGS);
 assert.deepEqual(normalizeUiSettings({ fontScalePercent: 108 }), {
   fontScalePercent: 108,
   timeFormat: "standard",
+  closeToTrayEnabled: false,
 });
 assert.deepEqual(normalizeUiSettings({ fontScalePercent: 200, timeFormat: "military" }), {
   fontScalePercent: 114,
   timeFormat: "military",
+  closeToTrayEnabled: false,
+});
+assert.deepEqual(normalizeUiSettings({ closeToTrayEnabled: true }), {
+  fontScalePercent: 100,
+  timeFormat: "standard",
+  closeToTrayEnabled: true,
 });
 assert.deepEqual(
   normalizeUiSettings({ fontScalePercent: 50, timeFormat: "unknown" } as unknown as Partial<
@@ -439,6 +446,7 @@ assert.deepEqual(
   {
     fontScalePercent: 94,
     timeFormat: "standard",
+    closeToTrayEnabled: false,
   }
 );
 assert.equal(uiFontScaleCssValue({ fontScalePercent: 106 }), "1.06");

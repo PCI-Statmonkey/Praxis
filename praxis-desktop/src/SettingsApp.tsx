@@ -874,7 +874,7 @@ export default function SettingsApp() {
     setSettingsSnapshot(nextSettings);
     setUiSettingsForm(nextSettings.ui);
     setStatus(
-      `Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale, ${nextSettings.ui.timeFormat} time.`
+      `Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale, ${nextSettings.ui.timeFormat} time, close-to-tray ${nextSettings.ui.closeToTrayEnabled ? "on" : "off"}.`
     );
   };
 
@@ -1046,6 +1046,8 @@ export default function SettingsApp() {
   const currentFontScalePercent =
     uiSettingsForm.fontScalePercent ?? DEFAULT_UI_SETTINGS.fontScalePercent;
   const currentTimeFormat = uiSettingsForm.timeFormat ?? DEFAULT_UI_SETTINGS.timeFormat;
+  const closeToTrayEnabled =
+    uiSettingsForm.closeToTrayEnabled ?? DEFAULT_UI_SETTINGS.closeToTrayEnabled;
   const allPersonContactSuggestions = buildPersonContactSuggestions(snapshot.people, emailSnapshot.messages);
   const activePersonContactSuggestions: PersonContactSuggestion[] = [];
   const dismissedPersonContactSuggestions: Array<
@@ -1309,6 +1311,23 @@ export default function SettingsApp() {
                   <option value="standard">Standard (2:30 PM)</option>
                   <option value="military">Military (14:30)</option>
                 </select>
+              </label>
+              <label className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={closeToTrayEnabled}
+                  onChange={(event) =>
+                    setUiSettingsForm({
+                      ...uiSettingsForm,
+                      closeToTrayEnabled: event.target.checked,
+                    })
+                  }
+                />
+                <span>
+                  <strong>Keep PRAXIS in the tray when the main window closes</strong>
+                  <br />
+                  Background sync stays active until you quit from the tray or app menu.
+                </span>
               </label>
               <div className="appearance-scale-row">
                 <p className="brief-path">{currentFontScalePercent}% scale</p>

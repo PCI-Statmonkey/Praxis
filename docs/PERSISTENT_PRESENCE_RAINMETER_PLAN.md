@@ -8,13 +8,13 @@ surfaces are display-only outputs, not command surfaces.
 
 ## Current State
 
-- Electron currently quits on `window-all-closed` outside macOS.
+- Electron now supports a Windows tray lifetime when the operator enables close-to-tray in Settings.
 - Calendar and email background sync intervals live in the main process while the app is open.
 - Mission Control already has a compact command/status surface, service health, Review Inbox, Talk,
   Plan, and local time blocks.
 - AI Review can now explain priority/risk through deterministic, Ollama, or configured API model
   ranking while preserving the read-only boundary.
-- No tray, close-to-tray, notification, or Rainmeter export contract exists yet.
+- Pause/quiet mode, notification, and Rainmeter export contracts remain planned but not implemented.
 
 ## Product Boundary
 
@@ -30,13 +30,13 @@ Presence is not automation. It should:
 
 Implementation target:
 
-- Add a Windows tray icon with `Open PRAXIS`, `Pause nudges`, `Resume nudges`, `Sync now`,
-  `Settings`, and `Quit`.
-- Add close-to-tray as a setting, default off until live QA proves it is understandable.
-- Keep explicit quit available from tray and File menu.
-- Preserve command-line maintenance modes such as `--storage-check`, `--memory-reindex`, and
+- Done: add a Windows tray icon with `Open PRAXIS`, `Sync Calendars Now`, `Settings`, and `Quit`.
+- Done: add close-to-tray as a setting, default off until live QA proves it is understandable.
+- Done: keep explicit quit available from tray and File menu.
+- Done: preserve command-line maintenance modes such as `--storage-check`, `--memory-reindex`, and
   companion commands as true one-shot commands that never create tray state.
-- Keep calendar/email sync intervals alive only when the app is intentionally resident.
+- Done: keep calendar/email/slack runtime alive only when the app is intentionally resident.
+- Later: add pause/resume nudge controls after a persisted presence state exists.
 
 Acceptance:
 

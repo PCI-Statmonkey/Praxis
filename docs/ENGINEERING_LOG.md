@@ -1,5 +1,32 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Tray Presence And Context Selectors
+
+### Closed
+
+- Added a default-off `closeToTrayEnabled` UI setting and Settings checkbox so background presence is operator-controlled.
+- Added Windows tray lifetime support with Open PRAXIS, Sync Calendars Now, Settings, and Quit.
+- Preserved explicit quit semantics by stopping calendar/email/slack background runtime and closing the database on true app quit.
+- Added pure shared checklist context group and memory context lane selectors in `shared/contextSurfaces.ts`.
+- Added regression coverage for close-to-tray settings normalization, checklist grouping, memory lane ordering, and related entity binding.
+- Kept live Google/Outlook provider publish QA pending because it requires operator-present OAuth/consent and creates real provider calendar events.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA.
+- Wire checklist context selectors into `MasterChecklistPanel`.
+- Add persisted pause/quiet presence state before adding tray nudge controls or Rainmeter export.
+
 ## 2026-05-10 - Presence And Context Planning
 
 ### Closed
