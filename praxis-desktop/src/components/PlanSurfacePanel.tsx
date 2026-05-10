@@ -1,6 +1,9 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type {
   CreateTimeBlockInput,
+  DraftPlanProposedBlock,
+  GenerateDraftPlanRequest,
+  GenerateDraftPlanResult,
   PlanningDayView,
   PlanningTimeBlockItem,
   PlanningWorkCandidate,
@@ -27,6 +30,7 @@ type PlanSurfacePanelProps = {
   createTimeBlock: (input: CreateTimeBlockInput) => Promise<void>;
   updateTimeBlock: (input: UpdateTimeBlockInput) => Promise<void>;
   deleteTimeBlock: (id: string) => Promise<void>;
+  generateDraftPlan: (input: GenerateDraftPlanRequest) => Promise<GenerateDraftPlanResult>;
   onPlanningDateChange: (date: string) => void;
   onResetPlanningDate: () => void;
   variant?: "full" | "compact";
@@ -227,6 +231,19 @@ const formFromRecommendation = (
   ]),
 });
 
+const formFromDraftBlock = (block: DraftPlanProposedBlock): TimeBlockFormState => ({
+  id: null,
+  title: block.title,
+  date: formatDateInput(block.startsAt),
+  startTime: formatTimeInput(block.startsAt),
+  endTime: formatTimeInput(block.endsAt),
+  durationMinutes: block.estimatedMinutes,
+  entityKind: block.entityKind,
+  entityId: block.entityId,
+  notes: block.explanation,
+  tags: tagList(["AI draft", block.reason, block.priority]),
+});
+
 export function PlanSurfacePanel({
   isActive,
   planningDay,
@@ -241,6 +258,7 @@ export function PlanSurfacePanel({
   createTimeBlock,
   updateTimeBlock,
   deleteTimeBlock,
+  generateDraftPlan,
   onPlanningDateChange,
   onResetPlanningDate,
   variant = "full",
@@ -262,9 +280,22 @@ export function PlanSurfacePanel({
   const [timeBlockForm, setTimeBlockForm] = useState<TimeBlockFormState | null>(null);
   const [completionPrompt, setCompletionPrompt] = useState<CompletionPromptState | null>(null);
   const [formError, setFormError] = useState("");
+  const [draftPlanResult, setDraftPlanResult] = useState<GenerateDraftPlanResult | null>(null);
+  const [draftPlanLoading, setDraftPlanLoading] = useState(false);
+  const [draftPlanError, setDraftPlanError] = useState("");
+  const draftRequestIdRef = useRef(0);
   const today = formatDateInput(new Date().toISOString());
   const now = new Date();
   const isViewingToday = planningDay.targetDate === today;
+  const scheduleReviewFingerprint = [
+    scheduleReview.targetDate,
+    scheduleReview.summary.scheduledMinutes,
+    scheduleReview.summary.openMinutes,
+    scheduleReview.summary.recommendedBlockCount,
+    scheduleReview.recommendedBlocks.map((recommendation) => recommendation.id).join("|"),
+  ].join(":");
+  const draftPlan = draftPlanResult?.draftPlan ?? null;
+  const draftBlocks = draftPlan?.proposedBlocks.slice(0, reviewItemLimit) ?? [];
   const hourMarkers = Array.from(
     { length: timelineEndHour - timelineStartHour + 1 },
     (_, index) => timelineStartHour + index
@@ -376,6 +407,42 @@ export function PlanSurfacePanel({
   const openRecommendationBlock = (recommendation: ScheduleRecommendedBlock) => {
     setFormError("");
     setTimeBlockForm(formFromRecommendation(recommendation, planningDay.targetDate));
+  };
+
+  const openDraftBlock = (block: DraftPlanProposedBlock) => {
+    setFormError("");
+    setTimeBlockForm(formFromDraftBlock(block));
+  };
+
+  useEffect(() => {
+    draftRequestIdRef.current += 1;
+    setDraftPlanResult(null);
+    setDraftPlanError("");
+  }, [scheduleReviewFingerprint]);
+
+  const requestDraftPlan = async () => {
+    const requestId = draftRequestIdRef.current + 1;
+    draftRequestIdRef.current = requestId;
+    setDraftPlanLoading(true);
+    setDraftPlanError("");
+    try {
+      const result = await generateDraftPlan({ scheduleReview, maxBlocks: reviewItemLimit });
+      if (draftRequestIdRef.current !== requestId) {
+        return;
+      }
+      setDraftPlanResult(result);
+    } catch (error) {
+      if (draftRequestIdRef.current !== requestId) {
+        return;
+      }
+      setDraftPlanError(
+        error instanceof Error ? error.message : "Praxis could not build an AI draft plan."
+      );
+    } finally {
+      if (draftRequestIdRef.current === requestId) {
+        setDraftPlanLoading(false);
+      }
+    }
   };
 
   const shiftPlanningDay = (dayCount: number) => {
@@ -868,6 +935,73 @@ export function PlanSurfacePanel({
             )}
           </section>
         </div>
+      </section>
+
+      <section className="plan-draft-section" aria-label="AI draft planning">
+        <div className="plan-review-header">
+          <div>
+            <span className="recommended-label">AI Draft Plan</span>
+            <h3>Staged planning suggestions</h3>
+            <p>
+              Drafts use Schedule Review recommendations and only prefill local block review.
+            </p>
+          </div>
+          <div className="plan-review-load">
+            <span className="badge waiting-badge">No auto-create</span>
+            <strong>{draftPlan ? draftPlan.source.replace(/_/g, " ") : "not generated"}</strong>
+            <span>Google and Outlook remain read-only.</span>
+          </div>
+        </div>
+        <div className="plan-draft-actions">
+          <button
+            type="button"
+            disabled={draftPlanLoading || scheduleReview.recommendedBlocks.length === 0}
+            onClick={() => void requestDraftPlan()}
+          >
+            {draftPlanLoading ? "Drafting..." : "Build draft plan"}
+          </button>
+          {draftPlanResult?.fallbackReason ? (
+            <span className="badge">Fallback: {draftPlanResult.fallbackReason}</span>
+          ) : draftPlanResult?.summarySource ? (
+            <span className="badge">Source: {draftPlanResult.summarySource}</span>
+          ) : null}
+        </div>
+        {draftPlanError ? <p className="form-error">{draftPlanError}</p> : null}
+        {scheduleReview.recommendedBlocks.length === 0 ? (
+          <p className="brief-path">
+            No draft can be built until Schedule Review has a schedulable recommendation.
+          </p>
+        ) : null}
+        {draftPlan ? (
+          <div className="plan-draft-body">
+            <p>{draftPlan.explanation}</p>
+            {draftPlan.rejectedProposalReasons.length > 0 ? (
+              <p className="plan-conflict-copy">
+                {draftPlan.rejectedProposalReasons.slice(0, 2).join(" ")}
+              </p>
+            ) : null}
+            {draftBlocks.length > 0 ? (
+              <ol className="plan-review-list">
+                {draftBlocks.map((block) => (
+                  <li key={block.id} className="plan-review-item">
+                    <strong>{block.title}</strong>
+                    <span className="badge">{block.estimatedMinutes} min</span>
+                    <span className="badge">{block.priority}</span>
+                    <p>
+                      {formatDateTime(block.startsAt)} - {formatPlanTime(block.endsAt, timeFormat)}
+                    </p>
+                    <p>{block.explanation}</p>
+                    <button type="button" onClick={() => openDraftBlock(block)}>
+                      Review local block
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="brief-path">The draft did not find a safe block to stage.</p>
+            )}
+          </div>
+        ) : null}
       </section>
 
       <div className="plan-surface-grid">

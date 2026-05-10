@@ -2164,7 +2164,8 @@ ol {
   white-space: nowrap;
 }
 
-.plan-review-section {
+.plan-review-section,
+.plan-draft-section {
   order: 3;
   display: grid;
   gap: 12px;
@@ -2175,6 +2176,14 @@ ol {
     linear-gradient(145deg, rgba(85, 234, 220, 0.06), transparent 56%),
     rgba(7, 12, 12, 0.58);
   padding: 14px;
+}
+
+.plan-draft-section {
+  order: 4;
+  border-color: rgba(244, 198, 109, 0.2);
+  background:
+    linear-gradient(145deg, rgba(244, 198, 109, 0.06), transparent 58%),
+    rgba(7, 12, 12, 0.58);
 }
 
 .plan-review-header {
@@ -2285,6 +2294,27 @@ ol {
 
 .plan-review-item button {
   margin-left: auto;
+}
+
+.plan-draft-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan-draft-actions button {
+  min-width: 144px;
+}
+
+.plan-draft-body {
+  display: grid;
+  gap: 10px;
+}
+
+.plan-draft-body > p {
+  margin: 0;
+  color: var(--dim);
 }
 
 .plan-surface-grid {

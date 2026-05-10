@@ -30,6 +30,7 @@ import {
   buildPlanningDayView,
   buildScheduleReview,
   type CreateTimeBlockInput,
+  type GenerateDraftPlanRequest,
   type TimeBlockRecord,
   type UpdateTimeBlockInput,
 } from "../shared/timeBlocking";
@@ -777,6 +778,16 @@ export default function App() {
     setStatus("Deleted local Praxis time block. Google and Outlook were not updated.");
   };
 
+  const generateDraftPlan = async (input: GenerateDraftPlanRequest) => {
+    const result = await window.praxis.plan.generateDraft(input);
+    setStatus(
+      result.summarySource === "ollama"
+        ? "Built a staged AI draft plan. No local blocks or provider calendars were changed."
+        : "Built a deterministic fallback draft plan. No local blocks or provider calendars were changed."
+    );
+    return result;
+  };
+
   const upcomingDeadlines = selectUpcomingDeadlines(snapshot.deadlines);
   const upcomingAppointments = selectUpcomingAppointments(snapshot.appointments);
   const reviewInboxItems = selectReviewInboxItems(
@@ -1041,6 +1052,7 @@ export default function App() {
         createTimeBlock={createTimeBlock}
         updateTimeBlock={updateTimeBlock}
         deleteTimeBlock={deleteTimeBlock}
+        generateDraftPlan={generateDraftPlan}
         onPlanningDateChange={setPlanningDateOverride}
         onResetPlanningDate={() => setPlanningDateOverride(null)}
         variant={activePanel === "command" ? "compact" : "full"}

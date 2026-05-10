@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - AI Draft Planning Surface
+
+### Closed
+
+- Pushed `9883cbc Add template management reversal surface` to `origin/master`.
+- Wired focused Plan mode to the existing local `plan:generateDraft` IPC route.
+- Added an AI Draft Plan section that builds staged planning suggestions from Schedule Review.
+- Shows draft source/fallback status, explanation copy, rejected proposal reasons, and proposed local blocks.
+- Draft block actions only prefill the existing local block review form; the operator must still explicitly create the local block.
+- Guards draft generation against stale async responses when the planning day or Schedule Review changes mid-request.
+- Preserved the boundary that draft planning does not auto-create blocks, write Google/Outlook calendars, change provider sync behavior, or publish external calendar events.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Continue with template revision/apply planning or provider calendar write-back planning as separate explicit-confirmation tracks.
+
 ## 2026-05-09 - Template Management And Suppression Reversal
 
 ### Closed

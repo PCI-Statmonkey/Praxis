@@ -127,6 +127,13 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Saved active markdown project task templates now appear in the existing project creation template selector and seed future project-linked todos when selected.
 - Settings now has a Templates tab showing saved/built-in project templates and hidden proposal patterns.
 - Dismissed, snoozed, rejected, and do-not-suggest-again proposal states can be cleared with `Allow suggestions again`; accepted states remain tied to saved templates.
+- `9883cbc Add template management reversal surface` has been pushed to `origin/master`.
+- AI draft planning from Schedule Review is visible in focused Plan mode.
+- The Plan surface can request a staged draft through the existing local `plan:generateDraft` IPC route.
+- Draft planning uses Schedule Review as source of truth, preserves deterministic fallback when Ollama/model output is unavailable or unusable, and shows fallback/source status in the UI.
+- Draft blocks prefill the existing local block review form only after operator selection.
+- No AI draft action auto-creates time blocks, writes Google/Outlook calendars, changes provider sync behavior, or publishes external calendar events.
+- AI draft planning verification passed: `npx tsc --noEmit`, `npm run lint`, `npm run test:assistant`, `npm run build:app`, and `git diff --check` with CRLF warnings only.
 
 ## NEXT STEPS
 
@@ -151,22 +158,9 @@ Plan the next template capabilities without automatic edits or project mutation.
 
 ### 2. Wire AI Draft Planning From Schedule Review
 
-**GOAL**
+**STATUS**
 
-Turn the pure `buildAiDraftPlan` contract into a visible local-first planning surface without adding automatic writes.
-
-**DIRECTION**
-
-- Use deterministic Schedule Review as the source of truth.
-- Keep proposed blocks as staged suggestions until the operator schedules them.
-- Do not add provider calendar write-back in this slice.
-- Preserve the no-write confirmation boundary for all model-assisted planning suggestions.
-
-**DONE WHEN**
-
-- AI draft planning is visible and useful without auto-creating time blocks.
-- Deterministic fallback remains available when local model output is unavailable.
-- Provider calendars remain read-only.
+Complete for the first visible local-first surface. Keep future improvements scoped to UX polish, richer model prompts, and tests around any new write-adjacent behavior.
 
 ### 3. Plan Provider Calendar Write-Back
 
