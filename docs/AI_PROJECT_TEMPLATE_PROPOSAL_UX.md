@@ -210,6 +210,8 @@ If future UX adds an explicit apply flow, it must be separate:
 > Apply missing tasks to selected existing projects
 
 That action should require its own review screen and should not be part of saving the template.
+The dedicated plan for revision proposals and apply previews is
+`docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`.
 
 ## AI Write Boundary
 

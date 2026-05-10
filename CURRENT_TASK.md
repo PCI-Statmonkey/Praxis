@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, and first template management/reversal visibility are complete. Move the immediate execution queue to future template revision/apply flows or AI draft planning from Schedule Review, while preserving the boundary that proposals do not mutate existing projects, call AI, or write to providers. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, and safe template revision/apply planning are complete. The immediate implementation queue is pure read-only template revision proposal detection and tests, followed later by revision proposal state/schema work, Review Inbox surfacing, confirmed markdown revision, and selected-project apply preview. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
 
 ## CURRENT STATE
 
@@ -134,35 +134,47 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Draft blocks prefill the existing local block review form only after operator selection.
 - No AI draft action auto-creates time blocks, writes Google/Outlook calendars, changes provider sync behavior, or publishes external calendar events.
 - AI draft planning verification passed: `npx tsc --noEmit`, `npm run lint`, `npm run test:assistant`, `npm run build:app`, and `git diff --check` with CRLF warnings only.
+- Safe template revision/apply planning is complete in `docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`.
+- Revision proposals are defined as a separate track from new-template proposals and must not overwrite markdown until explicit confirmation.
+- Apply-template-to-existing-projects is defined as a separate selected-project preview flow before any todo creation path.
+- The next template implementation should start with pure read-only revision proposal detection and tests.
 
 ## NEXT STEPS
 
 ### 1. Plan Template Revision And Apply Flows
 
+**STATUS**
+
+Complete. See `docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`.
+
+### 2. Add Pure Template Revision Proposal Detection
+
 **GOAL**
 
-Plan the next template capabilities without automatic edits or project mutation.
+Detect when an existing saved markdown project task template may need an update, without writing
+markdown or mutating projects.
 
 **DIRECTION**
 
-- Add template revision proposals for existing markdown templates.
-- Keep apply-template-to-existing-projects as a separate explicit-confirmation flow.
-- Preserve operator edits to saved templates.
-- Do not overwrite markdown templates automatically.
+- Add separate revision proposal types and fingerprints from new-template proposals.
+- Compare active markdown templates against repeated local project/task evidence.
+- Start with addition/rename/reorder suggestions only; do not generate removal writes.
+- Define revision fingerprints/material-change hashes, but leave persisted anti-nagging/filtering for the follow-up schema/API slice.
+- Do not add Review Inbox UI or markdown update writes in this first implementation slice unless deliberately scoped later.
 
 **DONE WHEN**
 
-- Template revision behavior has a safe plan and test strategy.
-- Existing projects are changed only through a later selected-project review flow.
-- Automatic overwrite/apply behavior remains out of scope.
+- Pure detector returns stable read-only revision proposal drafts.
+- Tests cover material change, suppression, already-covered templates, and no-write behavior.
+- Existing projects, todos, markdown templates, and providers remain unchanged by snapshot reads.
 
-### 2. Wire AI Draft Planning From Schedule Review
+### 3. Wire AI Draft Planning From Schedule Review
 
 **STATUS**
 
 Complete for the first visible local-first surface. Keep future improvements scoped to UX polish, richer model prompts, and tests around any new write-adjacent behavior.
 
-### 3. Plan Provider Calendar Write-Back
+### 4. Plan Provider Calendar Write-Back
 
 **GOAL**
 
@@ -178,7 +190,7 @@ Keep external calendar write-back as an explicit later track after local plannin
 
 - Provider write-back has a separate technical plan, confirmation model, and test strategy.
 
-### 4. Continue Mission Control Follow-Up Polish
+### 5. Continue Mission Control Follow-Up Polish
 
 **GOAL**
 
@@ -198,7 +210,7 @@ Keep non-blocking Mission Control layout and copy issues moving behind the unifi
 - Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
 - Any AI Review launcher path preserves no-write behavior.
 
-### 5. Plan Checklist Grouping And Context-Memory Redesign
+### 6. Plan Checklist Grouping And Context-Memory Redesign
 
 **GOAL**
 
@@ -214,7 +226,7 @@ Keep checklist grouping and context-memory redesign visible as follow-up work af
 
 - The redesign has a scoped plan and does not distract from the active calendar/time-blocking work.
 
-### 6. Plan V1.1 Persistent Presence After AI Review
+### 7. Plan V1.1 Persistent Presence After AI Review
 
 **GOAL**
 
@@ -239,7 +251,7 @@ Define how PRAXIS should live as a persistent Windows assistant after the AI rev
 
 - V1.1 has a follow-on persistent-presence plan that depends on the AI review context packet rather than replacing it.
 
-### 7. Keep Future Intelligence And Capture Tracks Execution-Focused
+### 8. Keep Future Intelligence And Capture Tracks Execution-Focused
 
 **GOAL**
 

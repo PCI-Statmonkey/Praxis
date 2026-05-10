@@ -188,6 +188,12 @@ accepted with the saved template slug/path.
 Saved project templates are creation-time seeds. They may help initialize future projects, but
 existing projects do not auto-mutate when a template is added, accepted, edited, or removed.
 
+Template revision proposals and apply-to-existing-project flows are separate tracks. Revision
+proposals may draft updates for an existing markdown template, but they must not overwrite the file
+until the operator confirms the revised markdown. Applying a template to existing projects must start
+as a selected-project preview and must not be bundled into template save or revision confirmation.
+The detailed plan and test strategy live in `docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`.
+
 ## Definitions
 
 - Idea: a captured possibility that has not yet been committed to

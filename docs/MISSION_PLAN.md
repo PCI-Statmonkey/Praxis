@@ -146,8 +146,9 @@ Inbox, remembers dismiss/snooze/reject/do-not-suggest-again state, and lets the 
 save one markdown template only after explicit confirmation. Active saved markdown templates appear
 in future project creation choices. Existing projects and connected providers do not change.
 
-The next implementation slice is template management/reversal, so saved templates and suppressions
-can be reviewed after the first creation path exists.
+Template management/reversal and AI draft planning from Schedule Review are complete. The next
+implementation slice is pure read-only template revision proposal detection and tests, followed by
+revision proposal state/schema support before any Review Inbox surfacing or markdown write path.
 
 Model direction is local-first through Ollama with a configurable local model. Optional API provider
 settings may exist later, but API use should be explicit, operator-controlled, and governed by an AI
@@ -332,11 +333,12 @@ Initial remote access design should assume access from anywhere, not only same-h
 
 ## Immediate Development Priorities
 
-1. Add project template management/reversal for saved templates and suppressions
-2. Wire AI draft planning through the deterministic Schedule Review source with a no-write confirmation boundary
-3. Keep provider calendar write-back explicit and later, after local planning behavior is proven
-4. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
-5. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
-6. Redesign Context/Memory and checklist grouping after the current planning slice or when the operator asks to prioritize it
-7. Plan persistent presence and Rainmeter after PRAXIS can explain priority and risk
-8. Add voice wake and spoken output after the review and briefing logic are trustworthy
+1. Add pure read-only template revision proposal detection and tests
+2. Add revision proposal state/schema support before Review Inbox surfacing
+3. Keep apply-template-to-existing-projects as selected-project preview before any todo creation path
+4. Keep provider calendar write-back explicit and later, after local planning behavior is proven
+5. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
+6. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
+7. Redesign Context/Memory and checklist grouping after the current planning slice or when the operator asks to prioritize it
+8. Plan persistent presence and Rainmeter after PRAXIS can explain priority and risk
+9. Add voice wake and spoken output after the review and briefing logic are trustworthy

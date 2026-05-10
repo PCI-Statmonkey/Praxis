@@ -93,7 +93,7 @@
 - [x] Add read-only unified Plan surface combining appointments, deadlines, unscheduled work, and local time-block placeholders
 - [x] Add local-only time block persistence and click-to-schedule Plan UI
 - [x] Add deterministic Schedule Review for load state, risks, conflicts, open gaps, blocked/waiting items, and recommended local blocks
-- [ ] Add AI draft plan surface with no-write confirmation boundary
+- [x] Add AI draft plan surface with no-write confirmation boundary
 - [ ] Add explicit provider calendar write-back later, after local planning and confirmation UX are proven
 - [ ] Email fact extraction for due dates, waiting-on, and next actions
 - [ ] Bill.com awareness for invoices, approvals, and overdue money tasks
@@ -131,6 +131,7 @@
 - [x] Add `Not this template` / reject handling for wrong proposal drafts
 - [x] Make saved markdown project task templates selectable during project creation
 - [x] Add first template management visibility and suppression reversal
+- [x] Plan safe template revision and apply-template-to-existing-project flows
 - [ ] Add template revision proposals for existing markdown templates
 - [ ] Add apply-template flow for existing projects, behind explicit review and confirmation
 - [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health

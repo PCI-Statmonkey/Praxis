@@ -46,6 +46,10 @@ Current implementation work should keep room for the agreed PRAXIS direction:
 
 The AI project template proposal detector, SQLite proposal state/filtering, Review Inbox surfacing, explicit markdown save/editor path, `Not this template` rejection, and saved-template project creation usability are complete. Accepted templates are written only after confirmation under `memory/templates/project-task-templates/`; existing projects and connected providers do not change.
 
-The next work should add template management/reversal. Template revision proposals and applying templates to existing projects remain later follow-ups.
+Template management/reversal, AI draft planning from Schedule Review, and the safe plan for template
+revision/apply flows are complete. The next template implementation should start with pure
+read-only template revision proposal detection, then add revision proposal state/schema support,
+then add Review Inbox surfacing, then add confirmed markdown revision. Applying templates to existing
+projects should start later as a selected-project preview before any todo creation path.
 
 Provider calendar write-back and persistent presence/Rainmeter remain separate later tracks.

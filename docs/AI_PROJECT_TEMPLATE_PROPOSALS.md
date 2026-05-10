@@ -118,7 +118,7 @@ Write rules:
 - Do not overwrite operator edits automatically.
 - Preserve human-readable task order and frontmatter.
 - Use `source: ai_confirmed` for templates accepted from AI proposals.
-- Use version increments for confirmed edits, such as `version: 2`.
+- Keep `version: 1` until the parser and project creation path explicitly support template versions greater than 1.
 
 Existing projects must not auto-mutate after a template file changes. Templates remain creation-time seeds only.
 
@@ -127,10 +127,15 @@ Existing projects must not auto-mutate after a template file changes. Templates 
 When an existing template appears stale, PRAXIS can propose an edit draft:
 
 - Compare new repeated task evidence against the existing markdown template.
-- Show additions, removals, renames, and reorder suggestions.
-- Require explicit confirmation before writing a new markdown version.
+- Show additions, renames, reorder suggestions, and non-writing removal notes.
+- Require explicit confirmation before writing a markdown revision.
 - Do not rewrite existing project todos.
 - Future projects using the template should instantiate from the confirmed markdown version.
+
+The detailed revision/apply plan and test strategy lives in
+`docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md`. That plan keeps revision proposals separate from
+new-template proposals and keeps applying templates to existing projects as a later selected-project
+preview flow.
 
 ## Audit and Source Identity
 
@@ -178,4 +183,3 @@ Slice 1 should be deterministic and no-write by default:
 6. Do not write markdown files until a later confirmation slice.
 
 Slice 2 can add the review UI and confirmation action that writes the markdown file.
-

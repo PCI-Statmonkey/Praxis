@@ -1,5 +1,24 @@
 # ENGINEERING LOG
 
+## 2026-05-09 - Template Revision And Apply Planning
+
+### Closed
+
+- Added `docs/PROJECT_TEMPLATE_REVISION_APPLY_PLAN.md` with safe behavior, data boundaries, proposal shapes, confirmation model, state model, and test strategy.
+- Defined template revision proposals as a separate track from new-template proposals.
+- Preserved the rule that revision proposals do not overwrite markdown until explicit operator confirmation.
+- Defined apply-template-to-existing-projects as a selected-project preview flow before any todo creation path.
+- Documented prerequisites for persisted revision state, canonical task matching, and template version support before confirmed revision writes.
+- Updated architecture, workflow, roadmap, mission plan, decisions, and current task docs to point at pure read-only revision proposal detection as the next implementation slice.
+
+### Verification
+
+- Documentation-only slice; `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Implement pure template revision proposal detection and regression tests before adding Review Inbox UI or markdown update writes.
+
 ## 2026-05-09 - AI Draft Planning Surface
 
 ### Closed

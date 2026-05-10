@@ -13,6 +13,8 @@
 - Storage: use a hybrid model with SQLite for operational state, markdown for long-term human-readable memory, and filesystem storage for artifacts
 - Project template proposals: anti-nagging and review state lives in SQLite; accepted saved templates live in markdown only after explicit confirmation
 - Project template detector: proposal detection is pure/no-write logic and must not write SQLite, markdown, providers, call AI/API providers, or expose secrets/provider payloads
+- Project template revision: revision proposals are separate from new-template proposals and must not overwrite markdown until explicit confirmation
+- Project template apply: applying a template to existing projects must start as selected-project preview and must not be bundled into template save or revision confirmation
 - Secrets: store integration tokens only through Electron main-process OS-backed encryption; never mirror secrets to markdown or expose raw secret values to the renderer
 - Memory: maintain an index-first markdown external brain so Praxis can route to relevant records quickly
 - Maintenance: storage repair and integrity checks should run as headless Electron commands so they use the same production database paths and schema setup as the app
