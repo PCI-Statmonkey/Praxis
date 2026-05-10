@@ -1,5 +1,32 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Notification Settings And Provider QA Preflight
+
+### Closed
+
+- Held Rainmeter packaging/live testing as requested until Rainmeter is installed.
+- Kept Google/Outlook create-only publish live QA at the explicit operator-confirmation boundary; no provider publish endpoints were called and no provider calendar events were created.
+- Added persisted, default-off desktop notification delivery settings to `UiSettings`.
+- Added persisted notification quiet-window settings with start/end minute normalization.
+- Added Settings > Appearance controls for desktop notification delivery and the daily quiet window.
+- Updated notification boundary planning to mark Settings controls complete while keeping OS notification scheduling/delivery pending.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA when the operator confirms the target provider/calendar/test block.
+- Add notification candidate selection, snooze state, and click-through routing before OS notification delivery.
+- Resume Rainmeter packaging/live desktop testing after Rainmeter is installed.
+
 ## 2026-05-10 - Service Presence And Notification Boundaries
 
 ### Closed

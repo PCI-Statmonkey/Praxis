@@ -434,16 +434,49 @@ assert.deepEqual(normalizeUiSettings({ fontScalePercent: 108 }), {
   fontScalePercent: 108,
   timeFormat: "standard",
   closeToTrayEnabled: false,
+  notificationsEnabled: false,
+  notificationQuietWindowEnabled: true,
+  notificationQuietStartMinutes: 1320,
+  notificationQuietEndMinutes: 420,
 });
 assert.deepEqual(normalizeUiSettings({ fontScalePercent: 200, timeFormat: "military" }), {
   fontScalePercent: 114,
   timeFormat: "military",
   closeToTrayEnabled: false,
+  notificationsEnabled: false,
+  notificationQuietWindowEnabled: true,
+  notificationQuietStartMinutes: 1320,
+  notificationQuietEndMinutes: 420,
 });
 assert.deepEqual(normalizeUiSettings({ closeToTrayEnabled: true }), {
   fontScalePercent: 100,
   timeFormat: "standard",
   closeToTrayEnabled: true,
+  notificationsEnabled: false,
+  notificationQuietWindowEnabled: true,
+  notificationQuietStartMinutes: 1320,
+  notificationQuietEndMinutes: 420,
+});
+assert.deepEqual(
+  normalizeUiSettings({
+    notificationsEnabled: true,
+    notificationQuietWindowEnabled: false,
+    notificationQuietStartMinutes: 26 * 60,
+    notificationQuietEndMinutes: -25,
+  }),
+  {
+    fontScalePercent: 100,
+    timeFormat: "standard",
+    closeToTrayEnabled: false,
+    notificationsEnabled: true,
+    notificationQuietWindowEnabled: false,
+    notificationQuietStartMinutes: 1439,
+    notificationQuietEndMinutes: 0,
+  }
+);
+assert.deepEqual(normalizeUiSettings({ notificationsEnabled: true }, DEFAULT_UI_SETTINGS), {
+  ...DEFAULT_UI_SETTINGS,
+  notificationsEnabled: true,
 });
 assert.deepEqual(
   normalizeUiSettings({ fontScalePercent: 50, timeFormat: "unknown" } as unknown as Partial<
@@ -453,6 +486,10 @@ assert.deepEqual(
     fontScalePercent: 94,
     timeFormat: "standard",
     closeToTrayEnabled: false,
+    notificationsEnabled: false,
+    notificationQuietWindowEnabled: true,
+    notificationQuietStartMinutes: 1320,
+    notificationQuietEndMinutes: 420,
   }
 );
 assert.equal(uiFontScaleCssValue({ fontScalePercent: 106 }), "1.06");

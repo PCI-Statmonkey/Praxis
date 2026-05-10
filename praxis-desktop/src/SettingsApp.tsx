@@ -268,6 +268,28 @@ const formatDateTime = (value: string | null) => {
   return date.toLocaleString();
 };
 
+const minutesToTimeInput = (minutes: number) => {
+  const safeMinutes = Number.isFinite(minutes)
+    ? Math.min(23 * 60 + 59, Math.max(0, Math.floor(minutes)))
+    : 0;
+  const hours = Math.floor(safeMinutes / 60);
+  const remainderMinutes = safeMinutes % 60;
+  return `${String(hours).padStart(2, "0")}:${String(remainderMinutes).padStart(2, "0")}`;
+};
+
+const timeInputToMinutes = (value: string, fallback: number) => {
+  const match = /^(\d{2}):(\d{2})$/.exec(value);
+  if (!match) {
+    return fallback;
+  }
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || hours > 23 || minutes > 59) {
+    return fallback;
+  }
+  return hours * 60 + minutes;
+};
+
 export default function SettingsApp() {
   const [activeTab, setActiveTab] = useState<SettingsTab>(() => initialSettingsTab());
   const [snapshot, setSnapshot] = useState<WorkSnapshot>(EMPTY_SNAPSHOT);
@@ -877,7 +899,7 @@ export default function SettingsApp() {
     setSettingsSnapshot(nextSettings);
     setUiSettingsForm(nextSettings.ui);
     setStatus(
-      `Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale, ${nextSettings.ui.timeFormat} time, close-to-tray ${nextSettings.ui.closeToTrayEnabled ? "on" : "off"}.`
+      `Appearance saved: ${nextSettings.ui.fontScalePercent}% font scale, ${nextSettings.ui.timeFormat} time, close-to-tray ${nextSettings.ui.closeToTrayEnabled ? "on" : "off"}, notifications ${nextSettings.ui.notificationsEnabled ? "on" : "off"}.`
     );
   };
 
@@ -1061,6 +1083,17 @@ export default function SettingsApp() {
   const currentTimeFormat = uiSettingsForm.timeFormat ?? DEFAULT_UI_SETTINGS.timeFormat;
   const closeToTrayEnabled =
     uiSettingsForm.closeToTrayEnabled ?? DEFAULT_UI_SETTINGS.closeToTrayEnabled;
+  const notificationsEnabled =
+    uiSettingsForm.notificationsEnabled ?? DEFAULT_UI_SETTINGS.notificationsEnabled;
+  const notificationQuietWindowEnabled =
+    uiSettingsForm.notificationQuietWindowEnabled ??
+    DEFAULT_UI_SETTINGS.notificationQuietWindowEnabled;
+  const notificationQuietStartMinutes =
+    uiSettingsForm.notificationQuietStartMinutes ??
+    DEFAULT_UI_SETTINGS.notificationQuietStartMinutes;
+  const notificationQuietEndMinutes =
+    uiSettingsForm.notificationQuietEndMinutes ??
+    DEFAULT_UI_SETTINGS.notificationQuietEndMinutes;
   const currentPresence = settingsSnapshot.presence ?? DEFAULT_PRESENCE_SETTINGS;
   const quietUntilLabel = currentPresence.quietUntil
     ? formatPraxisTime(currentPresence.quietUntil, currentTimeFormat)
@@ -1388,6 +1421,84 @@ export default function SettingsApp() {
                   >
                     Quiet 1 hour
                   </button>
+                </div>
+              </div>
+              <div className="appearance-presence-panel">
+                <div className="checklist-group-header">
+                  <strong>Notifications</strong>
+                  <span className="badge">{notificationsEnabled ? "enabled" : "off"}</span>
+                </div>
+                <p className="brief-path">
+                  Desktop notifications are off by default. Future delivery will open PRAXIS to the
+                  right surface; notification actions will not write work or providers.
+                </p>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={notificationsEnabled}
+                    onChange={(event) =>
+                      setUiSettingsForm({
+                        ...uiSettingsForm,
+                        notificationsEnabled: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>
+                    <strong>Enable desktop notification delivery</strong>
+                    <br />
+                    Delivery still respects pause, quiet presence, and the quiet window below.
+                  </span>
+                </label>
+                <label className="checkbox-row">
+                  <input
+                    type="checkbox"
+                    checked={notificationQuietWindowEnabled}
+                    onChange={(event) =>
+                      setUiSettingsForm({
+                        ...uiSettingsForm,
+                        notificationQuietWindowEnabled: event.target.checked,
+                      })
+                    }
+                  />
+                  <span>
+                    <strong>Use notification quiet window</strong>
+                    <br />
+                    PRAXIS should suppress notification delivery during this daily window.
+                  </span>
+                </label>
+                <div className="notification-quiet-grid">
+                  <label className="field-label">
+                    <span>Quiet starts</span>
+                    <input
+                      type="time"
+                      value={minutesToTimeInput(notificationQuietStartMinutes)}
+                      onChange={(event) =>
+                        setUiSettingsForm({
+                          ...uiSettingsForm,
+                          notificationQuietStartMinutes: timeInputToMinutes(
+                            event.target.value,
+                            notificationQuietStartMinutes
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field-label">
+                    <span>Quiet ends</span>
+                    <input
+                      type="time"
+                      value={minutesToTimeInput(notificationQuietEndMinutes)}
+                      onChange={(event) =>
+                        setUiSettingsForm({
+                          ...uiSettingsForm,
+                          notificationQuietEndMinutes: timeInputToMinutes(
+                            event.target.value,
+                            notificationQuietEndMinutes
+                          ),
+                        })
+                      }
+                    />
+                  </label>
                 </div>
               </div>
               <div className="appearance-scale-row">

@@ -12,6 +12,7 @@ send messages, archive inbox items, or write memory.
 - Presence supports `active`, `paused`, and `quiet_until`.
 - AI Review can explain next moves from a read-only factual packet.
 - Rainmeter export is read-only and now carries service-attention presence copy.
+- Settings now persists default-off desktop notification delivery and a daily quiet window.
 - No notification scheduler or OS notification delivery is implemented yet.
 
 ## Allowed Notification Sources
@@ -35,15 +36,15 @@ send messages, archive inbox items, or write memory.
 ## First Implementation Shape
 
 1. Build a pure notification candidate selector from the same factual context used by AI Review.
-2. Add local runtime snooze state with expiry timestamps.
-3. Deliver OS notifications only when effective presence is active and not attention-paused by user
+2. Done: add Settings controls for notification enablement and quiet windows before defaulting
+   anything on.
+3. Add local runtime snooze state with expiry timestamps.
+4. Deliver OS notifications only when effective presence is active and not attention-paused by user
    settings.
-4. Route click-through to Today, Checklist, Plan, Review Inbox, or Settings.
-5. Add Settings controls for notification enablement and quiet windows before defaulting anything on.
+5. Route click-through to Today, Checklist, Plan, Review Inbox, or Settings.
 
 ## Verification
 
 - Unit tests for candidate selection, privacy copy, quiet/pause suppression, and snooze expiry.
 - Manual Windows QA for click-through routing and notification dismissal.
 - Regression pass: `npx tsc --noEmit`, lint, assistant/sync tests, build, storage check.
-

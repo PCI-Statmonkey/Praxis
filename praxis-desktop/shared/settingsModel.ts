@@ -230,6 +230,10 @@ export type UiSettings = {
   fontScalePercent: number;
   timeFormat: UiTimeFormat;
   closeToTrayEnabled: boolean;
+  notificationsEnabled: boolean;
+  notificationQuietWindowEnabled: boolean;
+  notificationQuietStartMinutes: number;
+  notificationQuietEndMinutes: number;
 };
 
 export type PresenceSettings = {
@@ -252,6 +256,10 @@ export type UpdateUiSettingsInput = {
   fontScalePercent?: number;
   timeFormat?: UiTimeFormat;
   closeToTrayEnabled?: boolean;
+  notificationsEnabled?: boolean;
+  notificationQuietWindowEnabled?: boolean;
+  notificationQuietStartMinutes?: number;
+  notificationQuietEndMinutes?: number;
 };
 
 export type UpdatePresenceSettingsInput = {
@@ -321,6 +329,10 @@ export const DEFAULT_UI_SETTINGS: UiSettings = {
   fontScalePercent: 100,
   timeFormat: "standard",
   closeToTrayEnabled: false,
+  notificationsEnabled: false,
+  notificationQuietWindowEnabled: true,
+  notificationQuietStartMinutes: 22 * 60,
+  notificationQuietEndMinutes: 7 * 60,
 };
 
 export const DEFAULT_PRESENCE_SETTINGS: PresenceSettings = {
@@ -345,6 +357,13 @@ const normalizeIsoDateOrNull = (value: unknown) => {
   return Number.isNaN(date.getTime()) ? null : date.toISOString();
 };
 
+const normalizeMinuteOfDay = (value: unknown, fallback: number) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.min(23 * 60 + 59, Math.max(0, Math.floor(value)));
+};
+
 export const normalizeUiSettings = (
   input: Partial<UiSettings | UpdateUiSettingsInput> = {},
   fallback: UiSettings = DEFAULT_UI_SETTINGS
@@ -366,6 +385,22 @@ export const normalizeUiSettings = (
       typeof input.closeToTrayEnabled === "boolean"
         ? input.closeToTrayEnabled
         : fallback.closeToTrayEnabled,
+    notificationsEnabled:
+      typeof input.notificationsEnabled === "boolean"
+        ? input.notificationsEnabled
+        : fallback.notificationsEnabled,
+    notificationQuietWindowEnabled:
+      typeof input.notificationQuietWindowEnabled === "boolean"
+        ? input.notificationQuietWindowEnabled
+        : fallback.notificationQuietWindowEnabled,
+    notificationQuietStartMinutes: normalizeMinuteOfDay(
+      input.notificationQuietStartMinutes,
+      fallback.notificationQuietStartMinutes
+    ),
+    notificationQuietEndMinutes: normalizeMinuteOfDay(
+      input.notificationQuietEndMinutes,
+      fallback.notificationQuietEndMinutes
+    ),
   };
 };
 

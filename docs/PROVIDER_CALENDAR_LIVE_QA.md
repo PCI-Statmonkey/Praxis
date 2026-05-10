@@ -65,3 +65,8 @@ calling provider publish endpoints, or creating provider calendar events.
 Service-presence 2026-05-10 update: still blocked on operator-present execution. Service-health
 presence integration, notification boundary planning, and the Rainmeter skin draft did not call
 provider publish endpoints or create provider calendar events.
+
+Notification-settings 2026-05-10 update: still held at the explicit operator-confirmation boundary.
+Notification Settings controls were implemented without calling provider publish endpoints or
+creating provider calendar events. To complete live QA, the operator still needs to choose the
+target provider/calendar/test block and confirm that a real event may be created.
