@@ -51,6 +51,10 @@ const toRecord = (row: DbTimeBlockPublish): TimeBlockPublishRecord => ({
 export const listTimeBlockPublishes = (
   input: ListTimeBlockPublishesInput = {}
 ): TimeBlockPublishRecord[] => {
+  if (input.timeBlockIds && input.timeBlockIds.length === 0) {
+    return [];
+  }
+
   const rows = getPraxisDatabase()
     .prepare(
       `SELECT *

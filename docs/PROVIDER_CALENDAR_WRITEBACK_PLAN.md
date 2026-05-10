@@ -26,12 +26,14 @@ Already implemented:
   `Calendars.ReadWrite`.
 - Google/Outlook create-only event adapters exist behind explicit confirmation and store PRAXIS
   local time block identity markers on created events.
+- Plan shows safe publish-state badges for local blocks once `time_block_publishes` records exist.
+- Sanitized `publish_failed` records are persisted and can be staged for a fresh preview/confirm
+  retry without update/delete provider writes.
 
 Still out of scope until implementation:
 
 - Updating or deleting Google/Outlook events.
 - Two-way sync/reconciliation for PRAXIS-created provider events.
-- Publish-state badges/retry UI in Plan.
 - Automatic publish based on AI/deterministic planning suggestions.
 
 ## Required Confirmation Model
@@ -111,6 +113,7 @@ Repository/API tests:
 - Confirm publish creates records only after explicit confirmation.
 - Confirm duplicate publish attempts skip existing provider event identity.
 - Confirm provider errors return safe messages and do not expose raw payloads or token data.
+- Confirm failed publish records do not block a later retry preview.
 - Confirm imported appointments are not mutated.
 
 Manual QA:

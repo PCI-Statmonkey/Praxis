@@ -23,6 +23,7 @@ import type {
   TimeBlockPublishPreview,
   TimeBlockPublishPreviewRequest,
   TimeBlockPublishProvider,
+  TimeBlockPublishRecord,
 } from "../../shared/calendarWriteback";
 import type { MissionRecord, ProjectRecord } from "../../shared/workModel";
 import { EmptyState } from "./EmptyState";
@@ -43,6 +44,7 @@ type PlanSurfacePanelProps = {
   deleteTimeBlock: (id: string) => Promise<void>;
   generateDraftPlan: (input: GenerateDraftPlanRequest) => Promise<GenerateDraftPlanResult>;
   calendarConnections: CalendarConnectionRecord[];
+  timeBlockPublishes: TimeBlockPublishRecord[];
   previewTimeBlockPublish: (
     input: TimeBlockPublishPreviewRequest
   ) => Promise<TimeBlockPublishPreview>;
@@ -203,6 +205,29 @@ const blockRangeLabel = (
   timeFormat: UiTimeFormat
 ) => `${formatDateTime(block.startsAt)} - ${formatPlanTime(block.endsAt, timeFormat)}`;
 
+const providerLabel = (provider: TimeBlockPublishProvider) =>
+  provider === "google" ? "Google" : "Outlook";
+
+const publishBadgeLabel = (publish: TimeBlockPublishRecord | null) => {
+  if (!publish) {
+    return "Not published";
+  }
+  if (publish.status === "published") {
+    return `Published: ${providerLabel(publish.provider)}`;
+  }
+  if (publish.status === "publish_failed") {
+    return `Publish failed: ${providerLabel(publish.provider)}`;
+  }
+  return `Publish ${publish.status.replace(/_/g, " ")}: ${providerLabel(publish.provider)}`;
+};
+
+const publishBadgeClass = (publish: TimeBlockPublishRecord | null) => {
+  if (!publish || publish.status === "published") {
+    return "badge";
+  }
+  return publish.status === "publish_failed" ? "badge urgent-badge" : "badge waiting-badge";
+};
+
 const emptyBlockForm = (targetDate: string): TimeBlockFormState => ({
   id: null,
   title: "",
@@ -278,6 +303,7 @@ export function PlanSurfacePanel({
   deleteTimeBlock,
   generateDraftPlan,
   calendarConnections,
+  timeBlockPublishes,
   previewTimeBlockPublish,
   confirmTimeBlockPublish,
   onPlanningDateChange,
@@ -379,10 +405,18 @@ export function PlanSurfacePanel({
   const publishConnections = calendarConnections.filter(
     (connection) => connection.provider === publishProvider && connection.enabled
   );
+  const latestPublishByBlock = new Map<string, TimeBlockPublishRecord>();
+  for (const publish of [...timeBlockPublishes].sort((left, right) =>
+    right.updatedAt.localeCompare(left.updatedAt)
+  )) {
+    if (!latestPublishByBlock.has(publish.timeBlockId)) {
+      latestPublishByBlock.set(publish.timeBlockId, publish);
+    }
+  }
   const selectedPublishConnection =
-    publishConnections.find((connection) => connection.id === publishConnectionId) ??
-    publishConnections[0] ??
-    null;
+    (publishConnectionId
+      ? publishConnections.find((connection) => connection.id === publishConnectionId)
+      : publishConnections[0]) ?? null;
   const publishableBlocks = planningDay.timeBlocks.filter((block) => block.status === "planned");
   const publishPreviewReadyItems =
     publishPreview?.items.filter((item) => item.status === "ready") ?? [];
@@ -401,6 +435,15 @@ export function PlanSurfacePanel({
     );
     setPublishPreview(null);
     setPublishResult(null);
+  };
+
+  const retryFailedPublish = (publish: TimeBlockPublishRecord) => {
+    setPublishProvider(publish.provider);
+    setPublishConnectionId(publish.calendarConnectionId);
+    setSelectedPublishBlockIds([publish.timeBlockId]);
+    setPublishPreview(null);
+    setPublishResult(null);
+    setPublishError("Build a fresh preview before retrying this failed publish.");
   };
 
   const publishRequestInput = (): TimeBlockPublishPreviewRequest | null => {
@@ -1178,22 +1221,29 @@ export function PlanSurfacePanel({
 
         {publishableBlocks.length > 0 ? (
           <ol className="plan-review-list">
-            {publishableBlocks.slice(0, reviewItemLimit).map((block) => (
-              <li key={block.id} className="plan-review-item">
-                <label className="checkbox-row">
-                  <input
-                    type="checkbox"
-                    checked={selectedPublishBlockIds.includes(block.id)}
-                    onChange={() => togglePublishBlock(block.id)}
-                  />
-                  <span>
-                    <strong>{block.title}</strong>
-                    <br />
-                    {blockRangeLabel(block, formatDateTime, timeFormat)}
-                  </span>
-                </label>
-              </li>
-            ))}
+            {publishableBlocks.slice(0, reviewItemLimit).map((block) => {
+              const publish = latestPublishByBlock.get(block.id) ?? null;
+              return (
+                <li key={block.id} className="plan-review-item">
+                  <label className="checkbox-row">
+                    <input
+                      type="checkbox"
+                      checked={selectedPublishBlockIds.includes(block.id)}
+                      onChange={() => togglePublishBlock(block.id)}
+                    />
+                    <span>
+                      <strong>{block.title}</strong>
+                      <br />
+                      {blockRangeLabel(block, formatDateTime, timeFormat)}
+                    </span>
+                  </label>
+                  <span className={publishBadgeClass(publish)}>{publishBadgeLabel(publish)}</span>
+                  {publish?.status === "publish_failed" && publish.lastError ? (
+                    <p className="plan-conflict-copy">{publish.lastError}</p>
+                  ) : null}
+                </li>
+              );
+            })}
           </ol>
         ) : (
           <p className="brief-path">No planned local blocks are available to publish.</p>
@@ -1339,42 +1389,54 @@ export function PlanSurfacePanel({
           </div>
           {visibleLocalBlockCards.length > 0 ? (
             <ol className="plan-time-list">
-              {visibleLocalBlockCards.map((timeBlock) => (
-                <li key={timeBlock.id} className="plan-time-block is-local">
-                  <span className="plan-time-range">
-                    {blockRangeLabel(timeBlock, formatDateTime, timeFormat)}
-                  </span>
-                  <strong>{timeBlock.title}</strong>
-                  <span className="badge">{timeBlock.status}</span>
-                  <span className="badge">{timeBlock.entityKind}</span>
-                  {timeBlock.status === "completed" && timeBlock.actualMinutes ? (
-                    <span className="badge">Actual {timeBlock.actualMinutes} min</span>
-                  ) : null}
-                  <div className="plan-block-actions">
-                    <button type="button" onClick={() => openEditBlock(timeBlock)}>
-                      Edit
-                    </button>
-                    {timeBlock.status !== "completed" ? (
-                      <button type="button" onClick={() => promptForCompletion(timeBlock)}>
-                        Complete
-                      </button>
+              {visibleLocalBlockCards.map((timeBlock) => {
+                const publish = latestPublishByBlock.get(timeBlock.id) ?? null;
+                return (
+                  <li key={timeBlock.id} className="plan-time-block is-local">
+                    <span className="plan-time-range">
+                      {blockRangeLabel(timeBlock, formatDateTime, timeFormat)}
+                    </span>
+                    <strong>{timeBlock.title}</strong>
+                    <span className="badge">{timeBlock.status}</span>
+                    <span className="badge">{timeBlock.entityKind}</span>
+                    <span className={publishBadgeClass(publish)}>{publishBadgeLabel(publish)}</span>
+                    {timeBlock.status === "completed" && timeBlock.actualMinutes ? (
+                      <span className="badge">Actual {timeBlock.actualMinutes} min</span>
                     ) : null}
-                    <button
-                      type="button"
-                      onClick={() => void updateBlockStatus(timeBlock.id, "canceled")}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      className="danger-button"
-                      onClick={() => void removeBlock(timeBlock.id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </li>
-              ))}
+                    {publish?.status === "publish_failed" && publish.lastError ? (
+                      <p className="plan-conflict-copy">{publish.lastError}</p>
+                    ) : null}
+                    <div className="plan-block-actions">
+                      <button type="button" onClick={() => openEditBlock(timeBlock)}>
+                        Edit
+                      </button>
+                      {timeBlock.status !== "completed" ? (
+                        <button type="button" onClick={() => promptForCompletion(timeBlock)}>
+                          Complete
+                        </button>
+                      ) : null}
+                      {publish?.status === "publish_failed" ? (
+                        <button type="button" onClick={() => retryFailedPublish(publish)}>
+                          Retry publish
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => void updateBlockStatus(timeBlock.id, "canceled")}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={() => void removeBlock(timeBlock.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           ) : (
             <div className="plan-local-placeholder">

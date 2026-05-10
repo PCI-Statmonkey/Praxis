@@ -16,6 +16,7 @@ import {
   validateTimeBlockRange,
 } from "../shared/timeBlocking";
 import { getPraxisDatabase } from "./praxisDb";
+import { listTimeBlockPublishes } from "./timeBlockPublishRepository";
 
 type DbTimeBlock = {
   id: string;
@@ -151,9 +152,16 @@ const listTimeBlockRecords = (input: ListTimeBlocksInput = {}) => {
   ).map(toTimeBlock);
 };
 
-export const getTimeBlockSnapshot = (input: ListTimeBlocksInput = {}): TimeBlockSnapshot => ({
-  timeBlocks: listTimeBlockRecords(input),
-});
+export const getTimeBlockSnapshot = (input: ListTimeBlocksInput = {}): TimeBlockSnapshot => {
+  const timeBlocks = listTimeBlockRecords(input);
+  return {
+    timeBlocks,
+    publishes:
+      timeBlocks.length > 0
+        ? listTimeBlockPublishes({ timeBlockIds: timeBlocks.map((timeBlock) => timeBlock.id) })
+        : [],
+  };
+};
 
 export const createTimeBlock = (input: CreateTimeBlockInput): TimeBlockSnapshot => {
   const title = normalizeTitle(input.title);

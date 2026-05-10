@@ -109,7 +109,7 @@ export const confirmTimeBlockPublishRequest = async (
   );
 
   for (const item of result.results) {
-    if (item.record && item.status === "published") {
+    if (item.record) {
       storeTimeBlockPublish(item.record);
     }
   }

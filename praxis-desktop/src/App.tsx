@@ -28,6 +28,7 @@ import type {
 } from "../shared/projectTemplateProposals";
 import type {
   TimeBlockPublishConfirmRequest,
+  TimeBlockPublishRecord,
   TimeBlockPublishPreviewRequest,
 } from "../shared/calendarWriteback";
 import {
@@ -309,6 +310,7 @@ export default function App() {
   const [editingAppointment, setEditingAppointment] = useState<AppointmentRecord | null>(null);
   const [editingPerson, setEditingPerson] = useState<PersonRecord | null>(null);
   const [timeBlocks, setTimeBlocks] = useState<TimeBlockRecord[]>([]);
+  const [timeBlockPublishes, setTimeBlockPublishes] = useState<TimeBlockPublishRecord[]>([]);
   const [planningDateOverride, setPlanningDateOverride] = useState<string | null>(null);
   const [missionForm, setMissionForm] = useState<CreateMissionInput>(() => emptyMissionForm());
   const [projectForm, setProjectForm] = useState<CreateProjectInput>(() => emptyProjectForm());
@@ -365,6 +367,7 @@ export default function App() {
   const loadTimeBlocksForDate = useCallback(async (targetDate: string) => {
     const nextSnapshot = await window.praxis.timeBlocks.list(planningDateRange(targetDate));
     setTimeBlocks(nextSnapshot.timeBlocks);
+    setTimeBlockPublishes(nextSnapshot.publishes);
   }, []);
 
   const {
@@ -768,18 +771,21 @@ export default function App() {
   const createTimeBlock = async (input: CreateTimeBlockInput) => {
     const nextSnapshot = await window.praxis.timeBlocks.create(input);
     setTimeBlocks(nextSnapshot.timeBlocks);
+    setTimeBlockPublishes(nextSnapshot.publishes);
     setStatus("Created a local Praxis time block. Google and Outlook were not updated.");
   };
 
   const updateTimeBlock = async (input: UpdateTimeBlockInput) => {
     const nextSnapshot = await window.praxis.timeBlocks.update(input);
     setTimeBlocks(nextSnapshot.timeBlocks);
+    setTimeBlockPublishes(nextSnapshot.publishes);
     setStatus("Updated local Praxis time block. Google and Outlook were not updated.");
   };
 
   const deleteTimeBlock = async (id: string) => {
     const nextSnapshot = await window.praxis.timeBlocks.delete({ id });
     setTimeBlocks(nextSnapshot.timeBlocks);
+    setTimeBlockPublishes(nextSnapshot.publishes);
     setStatus("Deleted local Praxis time block. Google and Outlook were not updated.");
   };
 
@@ -803,6 +809,10 @@ export default function App() {
 
   const confirmTimeBlockPublish = async (input: TimeBlockPublishConfirmRequest) => {
     const result = await window.praxis.calendar.confirmTimeBlockPublish(input);
+    const targetDate = planningDateOverride ?? (dailyBrief.localDate || formatLocalDate(new Date()));
+    const nextSnapshot = await window.praxis.timeBlocks.list(planningDateRange(targetDate));
+    setTimeBlocks(nextSnapshot.timeBlocks);
+    setTimeBlockPublishes(nextSnapshot.publishes);
     setStatus(
       `Calendar publish finished: ${result.publishedCount} created, ${result.skippedCount} skipped, ${result.failedCount} failed.`
     );
@@ -1075,6 +1085,7 @@ export default function App() {
         deleteTimeBlock={deleteTimeBlock}
         generateDraftPlan={generateDraftPlan}
         calendarConnections={serviceSnapshot.settings?.calendarConnections ?? []}
+        timeBlockPublishes={timeBlockPublishes}
         previewTimeBlockPublish={previewTimeBlockPublish}
         confirmTimeBlockPublish={confirmTimeBlockPublish}
         onPlanningDateChange={setPlanningDateOverride}

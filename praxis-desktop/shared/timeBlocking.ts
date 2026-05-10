@@ -7,6 +7,7 @@ import type {
   WorkPriority,
   WorkStatus,
 } from "./workModel";
+import type { TimeBlockPublishRecord } from "./calendarWriteback";
 
 export type TimeBlockStatus = "planned" | "completed" | "canceled";
 
@@ -61,6 +62,7 @@ export type DeleteTimeBlockInput = {
 
 export type TimeBlockSnapshot = {
   timeBlocks: TimeBlockRecord[];
+  publishes: TimeBlockPublishRecord[];
 };
 
 export type PlanningDayViewInput = {

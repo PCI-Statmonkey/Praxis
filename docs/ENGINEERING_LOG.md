@@ -1,5 +1,30 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Calendar Write-Back Publish-State Polish
+
+### Closed
+
+- Added publish records to the local time-block snapshot so Plan can render safe publish identity state beside visible local blocks.
+- Focused Plan now shows provider publish-state badges on local blocks and in the publish picker.
+- Confirmed publish now persists sanitized `publish_failed` records as well as successful `published` records.
+- Failed publish records can be staged for a fresh retry through the existing preview/confirm flow; no update/delete provider writes were added.
+- Empty publish-record filters now return no rows instead of unrelated publish history.
+- Added regression coverage confirming failed publish records do not block a later retry preview.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run live Google/Outlook write-scope reconnect and create-only publish QA with the operator present because it creates real calendar events.
+- Plan the later provider reconciliation/update-delete surface only after create-only publish behavior is trusted.
+
 ## 2026-05-10 - Calendar Write-Back UI And Provider Adapters
 
 ### Closed

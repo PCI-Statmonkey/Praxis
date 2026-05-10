@@ -2584,7 +2584,13 @@ ol {
 }
 
 .plan-block-actions {
+  grid-column: 2 / -1;
   justify-content: flex-end;
+}
+
+.plan-time-block .plan-conflict-copy {
+  grid-column: 2 / -1;
+  font-size: 0.78rem;
 }
 
 .plan-block-actions button,

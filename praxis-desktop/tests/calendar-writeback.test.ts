@@ -116,6 +116,25 @@ const conflictPreview = buildTimeBlockPublishPreview({
 assert.equal(conflictPreview.items[0]?.status, "conflict");
 assert.deepEqual(conflictPreview.items[0]?.conflictIds, ["appointment-1"]);
 
+const retryableFailedPreview = buildTimeBlockPublishPreview({
+  selectedTimeBlockIds: ["time-block-1"],
+  provider: "google",
+  calendarConnectionId: "calendar-google-1",
+  timeBlocks: [block()],
+  calendarConnections: [readyGoogleConnection],
+  existingPublishes: [
+    {
+      ...existingPublish,
+      providerEventId: null,
+      status: "publish_failed",
+      lastPublishedAt: null,
+      lastError: "Provider publish failed. Reconnect or check calendar write access.",
+    },
+  ],
+});
+assert.equal(retryableFailedPreview.readyCount, 1);
+assert.equal(retryableFailedPreview.items[0]?.status, "ready");
+
 const skippedConfirm = await confirmTimeBlockPublish(
   {
     preview: conflictPreview,
