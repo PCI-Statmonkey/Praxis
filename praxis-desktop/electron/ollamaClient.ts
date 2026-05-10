@@ -148,6 +148,9 @@ const allowedPromptItems = (
   if (mode === "stale_projects") {
     return packet.staleProjects.items.slice(0, 5).map(workPromptItem);
   }
+  if (mode === "change_review") {
+    return packet.recentCloseoutChanges.items.slice(0, 5).map(workPromptItem);
+  }
   if (mode === "risk_review") {
     return [
       ...packet.overdueDueSoon.items.slice(0, 5).map(workPromptItem),

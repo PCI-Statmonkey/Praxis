@@ -25,6 +25,7 @@ export type AssistantReviewRouteKind =
   | "forgetting"
   | "risk_review"
   | "stale_projects"
+  | "change_review"
   | "person_project_lookup";
 
 export type AssistantReviewRoute = {
@@ -39,7 +40,8 @@ export type AssistantAIReviewMode =
   | "reset"
   | "forgetting"
   | "risk_review"
-  | "stale_projects";
+  | "stale_projects"
+  | "change_review";
 
 export type AssistantAIReviewModelPlan = {
   selectedProvider: "deterministic_fallback";
@@ -92,6 +94,7 @@ const assistantAIReviewModes = new Set<AssistantAIReviewMode>([
   "forgetting",
   "risk_review",
   "stale_projects",
+  "change_review",
 ]);
 
 export const isAssistantAIReviewMode = (value: unknown): value is AssistantAIReviewMode =>
@@ -180,12 +183,34 @@ export const classifyAssistantReviewRoute = (text: string): AssistantReviewRoute
     };
   }
 
+  if (
+    /\b(what should i do next|what do i do next|what next|next move|where should i start|what should i start)\b/.test(
+      normalized
+    )
+  ) {
+    return {
+      kind: "reset",
+      intent: "daily_report",
+      confidence: 0.84,
+      message: "Checking the current work graph for the next move.",
+    };
+  }
+
   if (/\b(forgetting|forgot|missed|missing)\b/.test(normalized)) {
     return {
       kind: "forgetting",
       intent: "daily_report",
       confidence: 0.82,
       message: "Checking the daily status report for anything easy to miss.",
+    };
+  }
+
+  if (/\b(what changed|changed since|changed today|since yesterday|recent changes|what did i finish|what got done)\b/.test(normalized)) {
+    return {
+      kind: "change_review",
+      intent: "daily_report",
+      confidence: 0.8,
+      message: "Checking recent work changes from the local packet.",
     };
   }
 

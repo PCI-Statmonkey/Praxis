@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - AI Task Review Packet And Natural Intents
+
+### Closed
+
+- Expanded the shared AI Task Review packet with local time-block counts, unified Review Inbox items, calendar service health, and slack adapter health.
+- Kept the packet factual and source-attributed with confirmation-only follow-up actions.
+- Preserved privacy boundaries by excluding raw todo/appointment/time-block notes, raw email subject/body content, provider account refs, provider sync errors, local storage details, and secret material from packet and prompt surfaces.
+- Added a read-only `change_review` mode that summarizes recent completed-work movement from the packet.
+- Added natural-language route coverage for next-move prompts like `what should I do next?` and recent-change prompts like `what changed since yesterday?`.
+- Extended Ollama prompt item selection and deterministic fallback rendering for change-review mode.
+- Added regression coverage for unified Review Inbox source identity, service-health summaries, redaction, route mapping, prompt filtering, and no-write response behavior.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Start provider calendar write-back implementation with the create-only, explicit-confirmation slice from `docs/PROVIDER_CALENDAR_WRITEBACK_PLAN.md`.
+
 ## 2026-05-10 - Template Apply Confirmation And Calendar Write-Back Planning
 
 ### Closed

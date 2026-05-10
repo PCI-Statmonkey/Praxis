@@ -2,6 +2,10 @@ import type {
   EmailConnectionRecord,
   EmailSuggestionRecord,
 } from "./emailModel";
+import type { ReviewInboxActionKind, ReviewInboxItem } from "./reviewInbox";
+import type { CalendarConnectionRecord } from "./settingsModel";
+import type { SlackAdapterStatus } from "./slackAdapter";
+import type { TimeBlockRecord } from "./timeBlocking";
 import type {
   AppointmentRecord,
   DeadlineEntityKind,
@@ -69,7 +73,7 @@ export type AIReviewInboxItem = {
   stableId: string;
   suggestionId: string;
   title: string;
-  suggestedEntityKind: "todo" | "project";
+  suggestedEntityKind: ReviewInboxActionKind;
   reason: string;
   confidence: number;
   dueAt: string | null;
@@ -95,6 +99,17 @@ export type AIReviewServiceHealth = {
     errorCount: number;
     latestSyncAt: string | null;
   };
+  calendar: {
+    connectionCount: number;
+    readyCount: number;
+    blockedCount: number;
+    errorCount: number;
+    latestSyncAt: string | null;
+  };
+  slack: {
+    enabled: boolean;
+    reason: string;
+  } | null;
 };
 
 export type AIReviewContextPacket = {
@@ -115,6 +130,7 @@ export type AIReviewContextPacket = {
   };
   calendarPressure: {
     appointmentCount: number;
+    localTimeBlockCount: number;
     items: AIReviewAppointmentItem[];
   };
   reviewInbox: {
@@ -149,7 +165,11 @@ export type AIReviewContextPacket = {
 export type BuildAIReviewContextPacketInput = {
   snapshot: WorkSnapshot;
   emailSuggestions?: EmailSuggestionRecord[];
+  reviewInboxItems?: ReviewInboxItem[];
   emailConnections?: EmailConnectionRecord[];
+  calendarConnections?: CalendarConnectionRecord[];
+  slack?: SlackAdapterStatus | null;
+  timeBlocks?: TimeBlockRecord[];
   storage?: AIReviewServiceHealth["storage"];
   generatedAt?: string;
   staleProjectDays?: number;
@@ -505,6 +525,15 @@ const buildCalendarPressure = (snapshot: WorkSnapshot, now: Date, dueSoonDays: n
   };
 };
 
+const activeTimeBlockCount = (timeBlocks: TimeBlockRecord[], now: Date, dueSoonDays: number) =>
+  timeBlocks.filter((block) => {
+    if (block.status !== "planned") {
+      return false;
+    }
+    const startsIn = daysUntil(block.startsAt, now);
+    return startsIn !== null && startsIn >= 0 && startsIn <= dueSoonDays;
+  }).length;
+
 const buildReviewInbox = (
   suggestions: EmailSuggestionRecord[],
   now: Date
@@ -526,18 +555,67 @@ const buildReviewInbox = (
         matchedPersonId: suggestion.matchedPersonId,
         matchedPersonName: suggestion.matchedPersonName,
         rank: (dueDays ?? 30) - Math.round(suggestion.confidence * 10),
-        allowedFollowUpActions: [
-          suggestion.suggestedEntityKind === "project"
-            ? action("review_inbox_accept_project", "Create project from suggestion")
-            : action("review_inbox_accept_todo", "Create todo from suggestion"),
-          action("review_inbox_dismiss", "Dismiss suggestion"),
-        ],
+        allowedFollowUpActions: reviewInboxActions(suggestion.suggestedEntityKind),
       };
     });
 
   return {
     pendingCount: items.length,
     items: top(items, 6),
+  };
+};
+
+const reviewInboxActions = (suggestedEntityKind: ReviewInboxActionKind) => {
+  if (suggestedEntityKind === "project") {
+    return [
+      action("review_inbox_accept_project", "Create project from suggestion"),
+      action("review_inbox_dismiss", "Dismiss suggestion"),
+    ];
+  }
+  if (suggestedEntityKind === "todo") {
+    return [
+      action("review_inbox_accept_todo", "Create todo from suggestion"),
+      action("review_inbox_dismiss", "Dismiss suggestion"),
+    ];
+  }
+  if (suggestedEntityKind === "project_template") {
+    return [action("review_inbox_dismiss", "Review project template suggestion")];
+  }
+  return [action("review_inbox_dismiss", "Review suggestion")];
+};
+
+const buildUnifiedReviewInbox = (items: ReviewInboxItem[], now: Date) => {
+  const packetItems = items
+    .filter((item) => item.status === "pending")
+    .map((item) => {
+      const dueDays = daysUntil(item.dueAt, now);
+      const suggestedEntityKind =
+        item.suggestedActionKind === "project_template"
+          ? "project_template"
+          : item.suggestedActionKind;
+      return {
+        stableId:
+          item.sourceKind === "email"
+            ? `review_inbox:${item.sourceRecordId}`
+            : `review_inbox:${item.sourceKind}:${item.sourceRecordId}`,
+        suggestionId: item.sourceRecordId,
+        title: item.title,
+        suggestedEntityKind,
+        reason: item.reason,
+        confidence: item.confidence,
+        dueAt: item.dueAt,
+        sourceSystem: item.sourceSystem,
+        receivedAt: item.receivedAt,
+        matchedPersonId: null,
+        matchedPersonName: item.matchedPersonName,
+        rank: (dueDays ?? 30) - Math.round(item.confidence * 10),
+        allowedFollowUpActions: reviewInboxActions(suggestedEntityKind),
+      } satisfies AIReviewInboxItem;
+    });
+
+  return {
+    pendingCount: packetItems.length,
+    items: top(packetItems, 8),
   };
 };
 
@@ -573,6 +651,31 @@ const buildEmailHealth = (connections: EmailConnectionRecord[]) => {
   };
 };
 
+const buildCalendarHealth = (connections: CalendarConnectionRecord[]) => {
+  const syncedAtValues = connections
+    .map((connection) => connection.lastSyncedAt)
+    .filter((value): value is string => Boolean(value))
+    .sort();
+  const latestSyncAt = syncedAtValues.length > 0 ? syncedAtValues[syncedAtValues.length - 1] : null;
+  return {
+    connectionCount: connections.length,
+    readyCount: connections.filter((connection) => connection.authStatus === "ready").length,
+    blockedCount: connections.filter((connection) => connection.syncStatus === "blocked").length,
+    errorCount: connections.filter(
+      (connection) => connection.authStatus === "error" || connection.syncStatus === "error"
+    ).length,
+    latestSyncAt,
+  };
+};
+
+const buildSlackHealth = (slack: SlackAdapterStatus | null | undefined) =>
+  slack
+    ? {
+        enabled: slack.enabled,
+        reason: slack.reason,
+      }
+    : null;
+
 const fallbackSummary = (
   overdueDueSoon: AIReviewContextPacket["overdueDueSoon"],
   waitingOn: AIReviewContextPacket["waitingOn"],
@@ -605,7 +708,11 @@ const fallbackSummary = (
 export const buildAIReviewContextPacket = ({
   snapshot,
   emailSuggestions = [],
+  reviewInboxItems = [],
   emailConnections = [],
+  calendarConnections = [],
+  slack = null,
+  timeBlocks = [],
   storage = null,
   generatedAt = new Date().toISOString(),
   staleProjectDays = 14,
@@ -613,8 +720,14 @@ export const buildAIReviewContextPacket = ({
 }: BuildAIReviewContextPacketInput): AIReviewContextPacket => {
   const now = new Date(generatedAt);
   const localDate = startOfDay(now).toISOString().slice(0, 10);
-  const calendarPressure = buildCalendarPressure(snapshot, now, dueSoonDays);
-  const reviewInbox = buildReviewInbox(emailSuggestions, now);
+  const calendarPressure = {
+    ...buildCalendarPressure(snapshot, now, dueSoonDays),
+    localTimeBlockCount: activeTimeBlockCount(timeBlocks, now, dueSoonDays),
+  };
+  const reviewInbox =
+    reviewInboxItems.length > 0
+      ? buildUnifiedReviewInbox(reviewInboxItems, now)
+      : buildReviewInbox(emailSuggestions, now);
   const staleProjects = buildStaleProjects(snapshot, now, staleProjectDays);
   const waitingOn = buildWaitingOn(snapshot, now);
   const overdueDueSoon = buildOverdueDueSoon(snapshot, now, dueSoonDays);
@@ -649,6 +762,8 @@ export const buildAIReviewContextPacket = ({
     serviceHealth: {
       storage,
       email: buildEmailHealth(emailConnections),
+      calendar: buildCalendarHealth(calendarConnections),
+      slack: buildSlackHealth(slack),
     },
   };
 };

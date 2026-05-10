@@ -54,6 +54,7 @@ const modeHeadlines: Record<AssistantAIReviewMode, string> = {
   forgetting: "Easy-to-miss pressure from the current work graph:",
   risk_review: "Near-term pressure from the current work graph:",
   stale_projects: "Stale project pressure from the current work graph:",
+  change_review: "Recent changes from the current work graph:",
 };
 
 const modelConfigured = (settings: AiSettings) => Boolean(settings.localModelName);
@@ -199,6 +200,15 @@ const staleProjectLines = (packet: AIReviewContextPacket, seenKeys?: Set<string>
   );
 };
 
+const recentChangeLines = (packet: AIReviewContextPacket, seenKeys?: Set<string>) => {
+  return workLines(
+    packet.recentCloseoutChanges.items,
+    5,
+    "No todo changes are visible in today's packet.",
+    seenKeys
+  );
+};
+
 const section = (title: string, lines: string[]) => [
   title,
   ...lines,
@@ -229,6 +239,13 @@ const modeSections = (mode: AssistantAIReviewMode, packet: AIReviewContextPacket
     return compactSections([sectionIfLines("Stale projects", staleProjectLines(packet, seenKeys))]);
   }
 
+  if (mode === "change_review") {
+    return compactSections([
+      sectionIfLines("Changed today", recentChangeLines(packet, seenKeys)),
+      section("Review Inbox", inboxLines(packet).slice(0, 2)),
+    ]);
+  }
+
   if (mode === "forgetting") {
     return compactSections([
       sectionIfLines("Overdue / due soon", pressureLines(packet, seenKeys)),
@@ -251,6 +268,8 @@ const suggestedStableIds = (mode: AssistantAIReviewMode, packet: AIReviewContext
       ? packet.quickWins.items
       : mode === "stale_projects"
         ? packet.staleProjects.items
+        : mode === "change_review"
+          ? packet.recentCloseoutChanges.items
         : mode === "risk_review"
           ? [...packet.overdueDueSoon.items, ...packet.waitingOn.items]
           : [
@@ -405,6 +424,9 @@ const allowedModelItems = (
   }
   if (mode === "stale_projects") {
     return packet.staleProjects.items.map(workRenderable);
+  }
+  if (mode === "change_review") {
+    return packet.recentCloseoutChanges.items.map(workRenderable);
   }
   if (mode === "risk_review") {
     return [
@@ -595,6 +617,7 @@ const modeSelectionSectionTitles: Record<AssistantAIReviewMode, string> = {
   forgetting: "Do not let this slip",
   risk_review: "Watch this first",
   stale_projects: "Review this stale lane",
+  change_review: "Review recent movement",
 };
 
 const renderAIReviewModelSelection = (

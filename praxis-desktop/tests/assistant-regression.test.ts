@@ -27,6 +27,10 @@ import {
   type AssistantReviewRoute,
 } from "../shared/assistantRouter";
 import { buildAIReviewContextPacket } from "../shared/aiReviewContext";
+import type { ReviewInboxItem } from "../shared/reviewInbox";
+import type { CalendarConnectionRecord } from "../shared/settingsModel";
+import type { SlackAdapterStatus } from "../shared/slackAdapter";
+import type { TimeBlockRecord } from "../shared/timeBlocking";
 import type {
   EmailConnectionRecord,
   EmailSuggestionRecord,
@@ -763,6 +767,23 @@ const aiReviewSnapshot: WorkSnapshot = {
       createdAt: "2026-04-28T00:00:00.000Z",
       updatedAt: "2026-04-28T00:00:00.000Z",
     },
+    {
+      id: "todo-4",
+      projectId: "project-1",
+      title: "File signed proposal",
+      status: "completed",
+      priority: "normal",
+      dueAt: null,
+      moneyRelated: false,
+      quickAction: false,
+      estimatedMinutes: null,
+      waitingOnPersonId: null,
+      sourceKind: null,
+      sourceRef: null,
+      notes: null,
+      createdAt: "2026-04-27T00:00:00.000Z",
+      updatedAt: "2026-04-28T10:30:00.000Z",
+    },
     snapshot.todos[1],
   ],
   appointments: [
@@ -821,10 +842,117 @@ const aiReviewConnections: EmailConnectionRecord[] = [
   },
 ];
 
+const aiReviewCalendarConnections: CalendarConnectionRecord[] = [
+  {
+    id: "calendar-connection-1",
+    provider: "google",
+    label: "Work Calendar",
+    accountRef: "secret-calendar-ref",
+    enabled: true,
+    authStatus: "ready",
+    syncStatus: "ready_to_sync",
+    lastSyncedAt: "2026-04-28T10:30:00.000Z",
+    lastSyncError: "secret calendar sync failure",
+    createdAt: "2026-04-28T00:00:00.000Z",
+    updatedAt: "2026-04-28T10:30:00.000Z",
+  },
+];
+
+const aiReviewSlackStatus: SlackAdapterStatus = {
+  enabled: false,
+  reason: "Not configured",
+};
+
+const aiReviewTimeBlocks: TimeBlockRecord[] = [
+  {
+    id: "time-block-1",
+    title: "Deep work",
+    startsAt: "2026-04-28T13:00:00.000Z",
+    endsAt: "2026-04-28T14:00:00.000Z",
+    entityKind: "todo",
+    entityId: "todo-3",
+    status: "planned",
+    source: "local",
+    notes: "raw block note should not leak",
+    actualMinutes: null,
+    createdAt: "2026-04-28T00:00:00.000Z",
+    updatedAt: "2026-04-28T00:00:00.000Z",
+  },
+];
+
+const aiReviewInboxItems: ReviewInboxItem[] = [
+  {
+    id: "review-email-suggestion-1",
+    sourceKind: "email",
+    sourceSystem: "gmail",
+    sourceLabel: "Gmail",
+    sourceRecordId: "email-suggestion-1",
+    title: "Follow up with Stacy",
+    suggestedActionKind: "todo",
+    confidence: 0.8,
+    status: "pending",
+    dueAt: "2026-04-29T17:00:00.000Z",
+    receivedAt: "2026-04-28T09:00:00.000Z",
+    isOverdue: false,
+    actorLabel: "Stacy",
+    matchedPersonName: "Max",
+    subject: "Follow-up request",
+    snippet: "Please send the follow-up.",
+    reason: "Possible follow-up request",
+    recommendedDecision: "create_todo",
+    recommendationReason: "The candidate is still actionable.",
+  },
+  {
+    id: "review-chat-suggestion-1",
+    sourceKind: "chat_import",
+    sourceSystem: "slack",
+    sourceLabel: "Slack",
+    sourceRecordId: "chat-suggestion-1",
+    title: "Ask Dana for launch notes",
+    suggestedActionKind: "todo",
+    confidence: 0.7,
+    status: "pending",
+    dueAt: null,
+    receivedAt: "2026-04-28T09:15:00.000Z",
+    isOverdue: false,
+    actorLabel: "Dana",
+    matchedPersonName: null,
+    subject: "Launch thread",
+    snippet: "Dana asked for launch notes.",
+    reason: "Imported chat follow-up",
+    recommendedDecision: "create_todo",
+    recommendationReason: "The chat import looks actionable.",
+  },
+  {
+    id: "review-template-proposal-1",
+    sourceKind: "project_template_proposal",
+    sourceSystem: "local",
+    sourceLabel: "Project templates",
+    sourceRecordId: "template-proposal-1",
+    title: "Engineering checklist template",
+    suggestedActionKind: "project_template",
+    confidence: 0.9,
+    status: "pending",
+    dueAt: null,
+    receivedAt: "2026-04-28T09:30:00.000Z",
+    isOverdue: false,
+    actorLabel: "Praxis",
+    matchedPersonName: null,
+    subject: "Repeated project pattern",
+    snippet: "Repeated engineering checklist pattern.",
+    reason: "Three recent projects repeat the same task sequence.",
+    recommendedDecision: "review",
+    recommendationReason: "Review before saving a reusable template.",
+  },
+];
+
 const aiReviewPacket = buildAIReviewContextPacket({
   snapshot: aiReviewSnapshot,
   emailSuggestions: aiReviewSuggestions,
   emailConnections: aiReviewConnections,
+  calendarConnections: aiReviewCalendarConnections,
+  slack: aiReviewSlackStatus,
+  timeBlocks: aiReviewTimeBlocks,
   storage: {
     ok: true,
     checkedAt: "2026-04-28T11:00:00.000Z",
@@ -839,6 +967,7 @@ assert.equal(aiReviewPacket.generatedAt, "2026-04-28T12:00:00.000Z");
 assert.equal(aiReviewPacket.workGraph.activeProjectCount, 1);
 assert.equal(aiReviewPacket.workGraph.activeTodoCount, 2);
 assert.equal(aiReviewPacket.calendarPressure.items[0]?.stableId, "appointment:appointment-1");
+assert.equal(aiReviewPacket.calendarPressure.localTimeBlockCount, 1);
 assert.equal(aiReviewPacket.reviewInbox.items[0]?.stableId, "review_inbox:email-suggestion-1");
 assert.equal(aiReviewPacket.staleProjects.items[0]?.stableId, "project:project-1");
 assert.equal(aiReviewPacket.waitingOn.items[0]?.stableId, "todo:todo-1");
@@ -851,9 +980,12 @@ const aiReviewProjectDeadline = aiReviewPacket.overdueDueSoon.items.find(
 );
 assert.equal(aiReviewProjectDeadline?.linkedEntityKind, "project");
 assert.equal(aiReviewProjectDeadline?.linkedEntityId, "project-1");
-assert.equal(aiReviewPacket.recentCloseoutChanges.completedTodayCount, 0);
+assert.equal(aiReviewPacket.recentCloseoutChanges.completedTodayCount, 1);
 assert.equal(aiReviewPacket.serviceHealth.storage?.warningCount, 1);
 assert.equal(aiReviewPacket.serviceHealth.email.latestSyncAt, "2026-04-28T10:00:00.000Z");
+assert.equal(aiReviewPacket.serviceHealth.calendar.readyCount, 1);
+assert.equal(aiReviewPacket.serviceHealth.calendar.latestSyncAt, "2026-04-28T10:30:00.000Z");
+assert.equal(aiReviewPacket.serviceHealth.slack?.enabled, false);
 assert(
   aiReviewPacket.reviewInbox.items.every((item) =>
     item.allowedFollowUpActions.every((candidate) => candidate.requiresConfirmation)
@@ -874,7 +1006,33 @@ assert(!aiReviewPacketJson.includes("raw email subject should not leak"));
 assert(!aiReviewPacketJson.includes("secret.sender@example.com"));
 assert(!aiReviewPacketJson.includes("secret-account-ref"));
 assert(!aiReviewPacketJson.includes("secret token refresh failure"));
+assert(!aiReviewPacketJson.includes("secret-calendar-ref"));
+assert(!aiReviewPacketJson.includes("secret calendar sync failure"));
+assert(!aiReviewPacketJson.includes("raw block note should not leak"));
 assert(!aiReviewPacketJson.includes("databasePath"));
+
+const aiReviewUnifiedPacket = buildAIReviewContextPacket({
+  snapshot: aiReviewSnapshot,
+  reviewInboxItems: aiReviewInboxItems,
+  generatedAt: "2026-04-28T12:00:00.000Z",
+});
+assert.deepEqual(
+  new Set(aiReviewUnifiedPacket.reviewInbox.items.map((item) => item.stableId)),
+  new Set([
+    "review_inbox:email-suggestion-1",
+    "review_inbox:chat_import:chat-suggestion-1",
+    "review_inbox:project_template_proposal:template-proposal-1",
+  ])
+);
+const aiReviewTemplateProposalItem = aiReviewUnifiedPacket.reviewInbox.items.find(
+  (item) => item.stableId === "review_inbox:project_template_proposal:template-proposal-1"
+);
+assert.equal(aiReviewTemplateProposalItem?.suggestedEntityKind, "project_template");
+assert(
+  aiReviewTemplateProposalItem?.allowedFollowUpActions.every(
+    (candidate) => candidate.requiresConfirmation
+  )
+);
 
 const aiReviewQuickWins = buildAIReviewResponse({
   mode: "quick_wins",
@@ -933,12 +1091,24 @@ const aiReviewStale = buildAIReviewResponse({
 assert.match(aiReviewStale.message, /Stale project pressure/);
 assert.match(aiReviewStale.message, /Powerless Sourcebook/);
 
+const aiReviewChanges = buildAIReviewResponse({
+  mode: "change_review",
+  packet: aiReviewPacket,
+});
+assert.match(aiReviewChanges.message, /Recent changes from the current work graph/);
+assert.match(aiReviewChanges.message, /File signed proposal/);
+assert.deepEqual(aiReviewChanges.suggestedStableIds, ["todo:todo-4"]);
+
 const aiReviewPrompt = buildOllamaAIReviewPrompt("stale_projects", aiReviewPacket);
 assert.match(aiReviewPrompt, /Return JSON only/);
 assert.match(aiReviewPrompt, /"allowedItems"/);
 assert.match(aiReviewPrompt, /"stableId":"project:project-1"/);
 assert.doesNotMatch(aiReviewPrompt, /Review mode: stale_projects/);
 assert.doesNotMatch(aiReviewPrompt, /Do this first:/);
+
+const aiReviewChangesPrompt = buildOllamaAIReviewPrompt("change_review", aiReviewPacket);
+assert.match(aiReviewChangesPrompt, /"stableId":"todo:todo-4"/);
+assert.doesNotMatch(aiReviewChangesPrompt, /raw todo note should not leak/);
 
 const ollamaSuccessFetch: typeof fetch = async (input) => {
   const url = String(input);
@@ -1273,6 +1443,13 @@ assert.deepEqual(
   {
     ok: true,
     mode: "stale_projects",
+  }
+);
+assert.deepEqual(
+  resolveAssistantAIReviewGenerateMode({ routeKind: "change_review" }),
+  {
+    ok: true,
+    mode: "change_review",
   }
 );
 assert.deepEqual(
@@ -1627,6 +1804,8 @@ assertAIReviewFallbackRoute("Give me a few wins.", "quick_wins", /A few safe win
 assertAIReviewFallbackRoute("What am I forgetting?", "forgetting", /Easy-to-miss pressure/);
 assertAIReviewFallbackRoute("What's about to bite me?", "risk_review", /Near-term pressure/);
 assertAIReviewFallbackRoute("What projects are stale?", "stale_projects", /Stale project pressure/);
+assertAIReviewFallbackRoute("What should I do next?", "reset", /Reset from the current work graph/);
+assertAIReviewFallbackRoute("What changed since yesterday?", "change_review", /Recent changes/);
 
 const personProjectReviewRoute = classifyAssistantReviewRoute("Hey, you have that project with Stacy.");
 assert.equal(personProjectReviewRoute?.intent, "person_lookup");
@@ -1641,6 +1820,7 @@ assert.equal(aiReviewModeFromRouteKind("reset"), "reset");
 assert.equal(aiReviewModeFromRouteKind("forgetting"), "forgetting");
 assert.equal(aiReviewModeFromRouteKind("risk_review"), "risk_review");
 assert.equal(aiReviewModeFromRouteKind("stale_projects"), "stale_projects");
+assert.equal(aiReviewModeFromRouteKind("change_review"), "change_review");
 assert.equal(aiReviewModeFromRouteKind("person_project_lookup"), null);
 
 assert.deepEqual(

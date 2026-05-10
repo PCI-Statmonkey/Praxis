@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, and the current Mission Control follow-up polish are complete. Provider calendar write-back implementation remains explicitly later. The next active product track is the AI Task Review factual context packet and natural-language review intents. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, and the AI Task Review factual context packet/natural-language intents are complete. Provider calendar write-back implementation remains explicitly later. The next active product track is the first create-only provider calendar write-back implementation slice behind explicit confirmation. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -147,6 +147,11 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Provider calendar write-back is planned in `docs/PROVIDER_CALENDAR_WRITEBACK_PLAN.md` as a future create-only publish flow with explicit confirmation, scope upgrades, publish identity storage, and no automatic AI/provider writes.
 - Mission Control follow-up polish reduced healthy Service Health duplication while preserving degraded-service visibility, and mobile Command mode now orders Mission Control then Talk/capture before Plan, Projects, and Checklist.
 - Revision/apply/planning/polish verification passed for TypeScript, lint, assistant regression tests, app build, and diff whitespace checks.
+- AI Task Review context packets now include factual local work graph, appointments, local time-block counts, unified Review Inbox items, stale projects, waiting-on work, overdue/due-soon work, quick wins, recent completed-work changes, and storage/email/calendar/slack service health.
+- AI Task Review packet generation keeps source identity and confirmation-only follow-up actions while redacting raw notes, provider account refs, sync errors, raw email subject/body data, and local storage details.
+- Talk/AI review routing now recognizes `what should I do next?` as reset/next-move review and `what changed since yesterday?` / recent-change prompts as a read-only change review.
+- The `change_review` AI Review mode renders packet-backed recent movement without creating blocks, todos, calendar events, provider writes, or any other work graph mutation.
+- AI Task Review packet/intents verification passed: `npx tsc --noEmit`, `npm run lint`, `npm run test:assistant`, `npm run build:app`, and `git diff --check` with CRLF warnings only.
 
 ## NEXT STEPS
 
@@ -201,10 +206,29 @@ change summaries.
 - Do not let model generation own writes; all write-like outcomes stay in Review Inbox, staged drafts,
   or explicit confirmation paths.
 
+**STATUS**
+
+Complete. The packet now covers work graph, calendar pressure, local time blocks, unified Review Inbox items, stale projects, waiting-on items, overdue/due-soon work, quick wins, recent changes, and service health. Natural-language next-move and change-review intents route to read-only packet-backed AI Review responses.
+
+### 5B. Implement Provider Calendar Write-Back Slice 1
+
+**GOAL**
+
+Implement the first safe provider calendar write-back slice for publishing operator-confirmed local time blocks as create-only external calendar events.
+
+**DIRECTION**
+
+- Start from `docs/PROVIDER_CALENDAR_WRITEBACK_PLAN.md`.
+- Keep publication create-only, explicit-confirmation only, and never AI/autopublish driven.
+- Add provider identity/publish-state tracking before any provider call path.
+- Preserve local blocks as the source of truth and make failed/blocked publishes recoverable.
+- Do not expose OAuth tokens, refresh tokens, client secrets, raw provider payloads, encrypted secret values, or `secure_secrets`.
+
 **DONE WHEN**
 
-- Shared packet builder has regression coverage.
-- Talk/AI review routes can consume the packet without changing work state.
+- Provider write-back has a staged implementation path with regression coverage.
+- Any real provider write path is behind a clear operator confirmation boundary.
+- Google/Outlook sync behavior remains stable, and no existing local blocks are mutated unexpectedly.
 
 ### 6. Plan Checklist Grouping And Context-Memory Redesign
 

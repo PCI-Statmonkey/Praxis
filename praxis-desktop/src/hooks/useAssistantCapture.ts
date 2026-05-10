@@ -38,6 +38,9 @@ const AI_REVIEW_REQUEST_PATTERNS = [
   "about to bite",
   "stale",
   "overwhelmed",
+  "what should i do next",
+  "what changed",
+  "since yesterday",
 ];
 
 const looksLikeAiReviewRequest = (value: string) => {

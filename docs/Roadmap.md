@@ -136,8 +136,8 @@
 - [x] Add template revision proposals for existing markdown templates
 - [x] Add selected-project apply preview for existing projects without todo creation
 - [x] Add confirmed apply-template flow for existing projects, behind explicit review and confirmation
-- [ ] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health
-- [ ] Add natural-language review intents such as `reset me`, `what am I missing?`, `what should I do next?`, `what changed since yesterday?`, and `what is stale?`
+- [x] Build a factual review context packet from work graph, calendar, Review Inbox, stale projects, waiting-on items, overdue items, quick wins, recent changes, and service health
+- [x] Add natural-language review intents such as `reset me`, `what am I missing?`, `what should I do next?`, `what changed since yesterday?`, and `what is stale?`
 - [ ] Route model review through a local-first Ollama provider with configurable local model settings
 - [ ] Add optional API provider settings behind explicit operator control
 - [ ] Keep rule-based ranking as the deterministic fallback and safety net
