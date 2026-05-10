@@ -31,6 +31,7 @@ export type AssistantReviewUiState = {
   mode: string | null;
   sourceLabel: string | null;
   fallbackReason: string | null;
+  suggestedStableIds: string[];
 };
 
 export const assistantReviewIdleState: AssistantReviewUiState = {
@@ -39,6 +40,7 @@ export const assistantReviewIdleState: AssistantReviewUiState = {
   mode: null,
   sourceLabel: null,
   fallbackReason: null,
+  suggestedStableIds: [],
 };
 
 type AssistantRouteHandlerOptions = {
@@ -126,6 +128,7 @@ const summarizeAiReviewSource = (route: AssistantRouteResult): AssistantReviewUi
         ? "Packet fallback"
         : `${modelPlan.selectedProvider} model`,
     fallbackReason,
+    suggestedStableIds: route.aiReview.suggestedStableIds,
   };
 };
 
@@ -145,6 +148,7 @@ const summarizeGeneratedAiReview = (
           : "Deterministic fallback",
     fallbackReason:
       result.summarySource === "deterministic_fallback" ? result.fallbackReason : null,
+    suggestedStableIds: result.suggestedStableIds,
   };
 };
 
@@ -339,6 +343,7 @@ export const handleAssistantRoute = async (options: AssistantRouteHandlerOptions
       mode: route.aiReview.mode,
       sourceLabel: "Generating AI Review",
       fallbackReason: null,
+      suggestedStableIds: route.aiReview.suggestedStableIds,
     });
     setCaptureStatus("Generating a read-only AI Task Review.");
     clearPendingCapture({ setPendingCapture, setCaptureDraft });

@@ -1,5 +1,33 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Rainmeter Polish And AI Review Lane Highlights
+
+### Closed
+
+- Kept Google/Outlook create-only publish live QA gated behind operator-present OAuth/consent because it creates real provider calendar events.
+- Extended the read-only Rainmeter snapshot with skin-ready flat field names while preserving the existing nested snapshot fields.
+- Added sanitized service-health label/detail copy to the Rainmeter snapshot so skins do not need to infer user-facing wording from raw state.
+- Carried AI Review `suggestedStableIds` through Talk UI state into Today and Checklist surfaces.
+- Added pure selector helpers that map AI Review stable IDs to relevant checklist context groups and context-memory lanes without creating groups or writing memory.
+- Added visual AI Review highlights and badges for matched checklist groups and memory lanes.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0` after rerunning sequentially; the first concurrent run collided with the parallel build while Vite cleaned `dist/assets`.
+- `npm run rainmeter:snapshot` passed and wrote the ignored runtime JSON under `memory/runtime/rainmeter/`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA.
+- Add service-health presence integration.
+- Plan notification boundaries or draft a simple Rainmeter skin around the stable snapshot fields.
+
 ## 2026-05-10 - Context Memory Lanes And Rainmeter Export
 
 ### Closed

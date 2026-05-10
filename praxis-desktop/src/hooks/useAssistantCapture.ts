@@ -130,6 +130,7 @@ export function useAssistantCapture({
         mode: null,
         sourceLabel: "Checking work packet",
         fallbackReason: null,
+        suggestedStableIds: [],
       });
     }
 

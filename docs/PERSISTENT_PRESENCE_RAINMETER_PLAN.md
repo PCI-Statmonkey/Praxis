@@ -90,7 +90,9 @@ Suggested path:
 `memory/runtime/rainmeter/praxis-snapshot.json`
 
 Implementation status: done. PRAXIS writes this snapshot on startup, through
-`npm run rainmeter:snapshot`, and through an explicit IPC hook for app surfaces.
+`npm run rainmeter:snapshot`, and through an explicit IPC hook for app surfaces. The snapshot keeps
+the nested contract and also includes skin-ready flat field names under `skin` so Rainmeter layouts
+can bind to stable keys without parsing nested objects.
 
 Suggested shape:
 
@@ -122,7 +124,15 @@ Suggested shape:
   },
   "serviceHealth": {
     "state": "ready",
+    "label": "Services ready",
+    "detail": "Connected services look ready.",
     "attentionCount": 0
+  },
+  "skin": {
+    "presenceLabel": "PRAXIS active",
+    "topMoveTitle": "Review the packet-backed next move",
+    "reviewInboxCount": 0,
+    "serviceHealthLabel": "Services ready"
   }
 }
 ```

@@ -1238,6 +1238,19 @@ ol {
   box-shadow: 0 0 14px rgba(85, 234, 220, 0.14);
 }
 
+.filter-actions .is-ai-review-highlight,
+.checklist-group.is-ai-review-highlight,
+.memory-context-lane.is-ai-review-highlight {
+  outline: 1px solid rgba(255, 214, 102, 0.45);
+  outline-offset: 2px;
+  box-shadow: 0 0 18px rgba(255, 214, 102, 0.12);
+}
+
+.ai-review-badge {
+  border-color: rgba(255, 214, 102, 0.42);
+  color: #ffe9a3;
+}
+
 .brief-priority-list {
   display: grid;
   gap: 8px;

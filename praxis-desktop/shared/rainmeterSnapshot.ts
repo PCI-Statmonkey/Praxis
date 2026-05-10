@@ -35,6 +35,25 @@ export type RainmeterSnapshot = {
   };
   serviceHealth: {
     state: "ready" | "attention";
+    label: string;
+    detail: string;
+    attentionCount: number;
+  };
+  skin: {
+    presenceLabel: string;
+    presenceDetail: string;
+    topMoveTitle: string;
+    topMoveKind: string;
+    topMovePriority: string;
+    reviewInboxCount: number;
+    overdueCount: number;
+    dueTodayCount: number;
+    waitingCount: number;
+    localBlocksTodayCount: number;
+    nextAppointmentTitle: string;
+    nextAppointmentStartsAt: string;
+    serviceHealthLabel: string;
+    serviceHealthDetail: string;
     attentionCount: number;
   };
 };
@@ -94,6 +113,14 @@ const integrationNeedsAttention = (integration: CompanionSnapshot["integrations"
     integration.syncStatus === "blocked" ||
     integration.syncStatus === "error");
 
+const serviceHealthLabel = (attentionCount: number) =>
+  attentionCount > 0 ? "Attention needed" : "Services ready";
+
+const serviceHealthDetail = (attentionCount: number) =>
+  attentionCount > 0
+    ? `${attentionCount} service${attentionCount === 1 ? "" : "s"} need attention.`
+    : "Connected services look ready.";
+
 export const buildRainmeterSnapshot = ({
   companionSnapshot,
   presence,
@@ -112,6 +139,28 @@ export const buildRainmeterSnapshot = ({
   const attentionCount = companionSnapshot.integrations.filter(integrationNeedsAttention).length;
   const nextAppointment = companionSnapshot.today.appointments[0] ?? null;
   const topMove = companionSnapshot.topMove;
+  const presenceSummary = {
+    state: effectivePresence.mode,
+    label: presenceLabel(effectivePresence),
+    detail: presenceDetail(effectivePresence),
+  };
+  const topMoveSummary = topMove
+    ? {
+        title: sanitizeDisplayText(topMove.title),
+        kind: topMove.entityKind,
+        priority: "priority" in topMove ? topMove.priority : null,
+      }
+    : null;
+  const calendar = {
+    nextAppointmentTitle: nextAppointment ? sanitizeDisplayText(nextAppointment.title) : null,
+    nextAppointmentStartsAt: nextAppointment?.startsAt ?? null,
+  };
+  const serviceHealth = {
+    state: attentionCount > 0 ? ("attention" as const) : ("ready" as const),
+    label: serviceHealthLabel(attentionCount),
+    detail: serviceHealthDetail(attentionCount),
+    attentionCount,
+  };
 
   return {
     schemaVersion: "praxis.rainmeter.v1",
@@ -123,18 +172,8 @@ export const buildRainmeterSnapshot = ({
       commandsAccepted: false,
       directStorageAccess: false,
     },
-    presence: {
-      state: effectivePresence.mode,
-      label: presenceLabel(effectivePresence),
-      detail: presenceDetail(effectivePresence),
-    },
-    topMove: topMove
-      ? {
-          title: sanitizeDisplayText(topMove.title),
-          kind: topMove.entityKind,
-          priority: "priority" in topMove ? topMove.priority : null,
-        }
-      : null,
+    presence: presenceSummary,
+    topMove: topMoveSummary,
     counts: {
       reviewInbox: companionSnapshot.inbox.pendingEmailFollowUpCount,
       overdue,
@@ -142,12 +181,23 @@ export const buildRainmeterSnapshot = ({
       waiting: companionSnapshot.summary.waitingOnCount,
       localBlocksToday,
     },
-    calendar: {
-      nextAppointmentTitle: nextAppointment ? sanitizeDisplayText(nextAppointment.title) : null,
-      nextAppointmentStartsAt: nextAppointment?.startsAt ?? null,
-    },
-    serviceHealth: {
-      state: attentionCount > 0 ? "attention" : "ready",
+    calendar,
+    serviceHealth,
+    skin: {
+      presenceLabel: presenceSummary.label,
+      presenceDetail: presenceSummary.detail,
+      topMoveTitle: topMoveSummary?.title ?? "",
+      topMoveKind: topMoveSummary?.kind ?? "",
+      topMovePriority: topMoveSummary?.priority ?? "",
+      reviewInboxCount: companionSnapshot.inbox.pendingEmailFollowUpCount,
+      overdueCount: overdue,
+      dueTodayCount: dueToday,
+      waitingCount: companionSnapshot.summary.waitingOnCount,
+      localBlocksTodayCount: localBlocksToday,
+      nextAppointmentTitle: calendar.nextAppointmentTitle ?? "",
+      nextAppointmentStartsAt: calendar.nextAppointmentStartsAt ?? "",
+      serviceHealthLabel: serviceHealth.label,
+      serviceHealthDetail: serviceHealth.detail,
       attentionCount,
     },
   };

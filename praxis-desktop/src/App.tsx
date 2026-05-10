@@ -1133,6 +1133,7 @@ export default function App() {
         upcomingAppointments={upcomingAppointments}
         upcomingDeadlines={upcomingDeadlines}
         memoryDocuments={snapshot.memoryDocuments}
+        aiReviewSuggestedStableIds={assistantReplyIsAiReview.suggestedStableIds}
         formatDateTime={formatDateTime}
         renderStatusActions={renderStatusActions}
         setFocusSelection={setFocusSelection}
@@ -1228,6 +1229,7 @@ export default function App() {
             ? dailyBrief.recommendedMove.item.id
             : null
         }
+        aiReviewSuggestedStableIds={assistantReplyIsAiReview.suggestedStableIds}
         openCapture={() => setActivePanel("morningPlan")}
         todoFilter={todoFilter}
         setTodoFilter={setTodoFilter}

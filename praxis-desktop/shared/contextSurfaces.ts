@@ -59,6 +59,12 @@ export type BuildMemoryContextLanesInput = {
   people: PersonRecord[];
 };
 
+const parseStableId = (stableId: string) => {
+  const [kind, ...idParts] = stableId.split(":");
+  const id = idParts.join(":");
+  return kind && id ? { kind, id } : null;
+};
+
 const priorityRank: Record<WorkPriority, number> = {
   critical: 0,
   high: 1,
@@ -244,6 +250,36 @@ export const buildChecklistContextGroups = ({
   return groups;
 };
 
+export const highlightedChecklistContextGroupIds = (
+  groups: ChecklistContextGroup[],
+  suggestedStableIds: string[] = []
+) => {
+  const todoIds = new Set<string>();
+  const directGroupIds = new Set<string>();
+  for (const stableId of suggestedStableIds) {
+    const parsed = parseStableId(stableId);
+    if (!parsed) {
+      continue;
+    }
+    if (parsed.kind === "todo") {
+      todoIds.add(parsed.id);
+    }
+    if (parsed.kind === "project" || parsed.kind === "mission") {
+      directGroupIds.add(`${parsed.kind}:${parsed.id}`);
+    }
+  }
+
+  return groups
+    .filter(
+      (group) =>
+        directGroupIds.has(group.id) ||
+        group.todoIds.some((todoId) => todoIds.has(todoId)) ||
+        Boolean(group.projectId && directGroupIds.has(`project:${group.projectId}`)) ||
+        Boolean(group.missionId && directGroupIds.has(`mission:${group.missionId}`))
+    )
+    .map((group) => group.id);
+};
+
 const addLaneDocument = (
   lanes: Map<string, MemoryContextLane>,
   lane: Omit<MemoryContextLane, "documentPaths" | "relatedEntityIds">,
@@ -341,4 +377,26 @@ export const buildMemoryContextLanes = ({
   return [...lanes.values()].sort(
     (left, right) => laneOrder[left.kind] - laneOrder[right.kind] || left.label.localeCompare(right.label)
   );
+};
+
+export const highlightedMemoryContextLaneIds = (
+  lanes: MemoryContextLane[],
+  suggestedStableIds: string[] = []
+) => {
+  const laneIds = new Set(lanes.map((lane) => lane.id));
+  const highlighted = new Set<string>();
+  for (const stableId of suggestedStableIds) {
+    const parsed = parseStableId(stableId);
+    if (!parsed) {
+      continue;
+    }
+    const directLaneId = `${parsed.kind}:${parsed.id}`;
+    if (laneIds.has(directLaneId)) {
+      highlighted.add(directLaneId);
+    }
+    if (parsed.kind === "review_inbox" && laneIds.has("inbox")) {
+      highlighted.add("inbox");
+    }
+  }
+  return [...highlighted];
 };

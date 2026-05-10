@@ -20,6 +20,8 @@ import {
 import {
   buildChecklistContextGroups,
   buildMemoryContextLanes,
+  highlightedChecklistContextGroupIds,
+  highlightedMemoryContextLaneIds,
 } from "../shared/contextSurfaces";
 import { buildWorkItemActions } from "../shared/workLookupContext";
 import type { WorkSnapshot } from "../shared/workModel";
@@ -1041,6 +1043,17 @@ assert(
     (group) => group.id === "quick" && group.todoIds.includes("todo-3") && !group.todoIds.includes("todo-4")
   )
 );
+const highlightedTodoGroups = highlightedChecklistContextGroupIds(checklistContextGroups, [
+  "todo:todo-3",
+]);
+assert(highlightedTodoGroups.includes("top_move"));
+assert(highlightedTodoGroups.includes("quick"));
+assert(highlightedTodoGroups.includes("project:project-1"));
+assert(
+  highlightedChecklistContextGroupIds(checklistContextGroups, ["project:project-1"]).includes(
+    "project:project-1"
+  )
+);
 
 const memoryContextLanes = buildMemoryContextLanes({
   memoryDocuments: [
@@ -1088,6 +1101,10 @@ assert.deepEqual(memoryContextLanes.map((lane) => lane.id), [
 ]);
 assert.deepEqual(memoryContextLanes[1]?.documentPaths, ["projects/powerless-sourcebook.md"]);
 assert.deepEqual(memoryContextLanes[1]?.relatedEntityIds, ["project-1"]);
+assert.deepEqual(
+  highlightedMemoryContextLaneIds(memoryContextLanes, ["project:project-1"]),
+  ["project:project-1"]
+);
 
 const aiReviewUnifiedPacket = buildAIReviewContextPacket({
   snapshot: aiReviewSnapshot,

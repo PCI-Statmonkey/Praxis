@@ -16,7 +16,10 @@ import type {
   ProjectRecord,
   WorkStatus,
 } from "../../shared/workModel";
-import { buildMemoryContextLanes } from "../../shared/contextSurfaces";
+import {
+  buildMemoryContextLanes,
+  highlightedMemoryContextLaneIds,
+} from "../../shared/contextSurfaces";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
 import { AtRiskLane } from "./mission-control/AtRiskLane";
@@ -61,6 +64,7 @@ type TodayTimelinePanelProps = {
   upcomingAppointments: AppointmentRecord[];
   upcomingDeadlines: DeadlineRecord[];
   memoryDocuments: MemoryDocumentSummary[];
+  aiReviewSuggestedStableIds?: string[];
   formatDateTime: (value: string | null) => string;
   renderStatusActions: (
     entityKind: "mission" | "project" | "todo" | "deadline",
@@ -120,6 +124,7 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       upcomingAppointments,
       upcomingDeadlines,
       memoryDocuments,
+      aiReviewSuggestedStableIds = [],
       formatDateTime,
       renderStatusActions,
       setFocusSelection,
@@ -172,6 +177,9 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       missions,
       people,
     });
+    const aiReviewHighlightedMemoryLaneIds = new Set(
+      highlightedMemoryContextLaneIds(memoryContextLanes, aiReviewSuggestedStableIds)
+    );
     return (
       <section ref={ref} className={`panel center${isActive ? " is-active-panel" : ""}`}>
         <div className="mission-control-root">
@@ -580,10 +588,17 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
         {memoryContextLanes.length > 0 ? (
           <div className="memory-context-lanes">
             {memoryContextLanes.slice(0, 8).map((lane) => (
-              <section key={lane.id} className="memory-context-lane" aria-label={lane.label}>
+              <section
+                key={lane.id}
+                className={`memory-context-lane${aiReviewHighlightedMemoryLaneIds.has(lane.id) ? " is-ai-review-highlight" : ""}`}
+                aria-label={lane.label}
+              >
                 <div className="checklist-group-header">
                   <strong>{lane.label}</strong>
                   <span className="badge">{lane.kind}</span>
+                  {aiReviewHighlightedMemoryLaneIds.has(lane.id) ? (
+                    <span className="badge ai-review-badge">AI Review</span>
+                  ) : null}
                 </div>
                 <ul className="checklist-strip">
                   {lane.documentPaths.slice(0, 4).map((documentPath) => (

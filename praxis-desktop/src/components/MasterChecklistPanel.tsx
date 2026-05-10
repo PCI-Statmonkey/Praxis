@@ -9,6 +9,7 @@ import type {
 } from "../../shared/workModel";
 import {
   buildChecklistContextGroups,
+  highlightedChecklistContextGroupIds,
   type ChecklistContextGroup as SelectorChecklistContextGroup,
 } from "../../shared/contextSurfaces";
 import { ActionMenu } from "./ActionMenu";
@@ -23,6 +24,7 @@ type MasterChecklistPanelProps = {
   missions: MissionRecord[];
   people: PersonRecord[];
   topMoveTodoId?: string | null;
+  aiReviewSuggestedStableIds?: string[];
   openCapture: () => void;
   todoFilter: string;
   setTodoFilter: Dispatch<SetStateAction<string>>;
@@ -56,6 +58,7 @@ export function MasterChecklistPanel({
   missions,
   people,
   topMoveTodoId = null,
+  aiReviewSuggestedStableIds = [],
   openCapture,
   todoFilter,
   setTodoFilter,
@@ -76,6 +79,9 @@ export function MasterChecklistPanel({
   const selectedGroupId = todoFilter.startsWith(groupFilterPrefix)
     ? todoFilter.slice(groupFilterPrefix.length)
     : null;
+  const aiReviewHighlightedGroupIds = new Set(
+    highlightedChecklistContextGroupIds(contextGroups, aiReviewSuggestedStableIds)
+  );
   const selectedGroup = selectedGroupId
     ? contextGroups.find((group) => group.id === selectedGroupId) ?? null
     : null;
@@ -238,7 +244,12 @@ export function MasterChecklistPanel({
             <button
               key={group.id}
               type="button"
-              className={todoFilter === filterId ? "is-filter-active" : ""}
+              className={[
+                todoFilter === filterId ? "is-filter-active" : "",
+                aiReviewHighlightedGroupIds.has(group.id) ? "is-ai-review-highlight" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
               onClick={() => setTodoFilter(filterId)}
             >
               {group.label} ({group.count})
@@ -249,10 +260,17 @@ export function MasterChecklistPanel({
       {rankedTodos.length > 0 ? (
         <div className="checklist-groups">
           {groupedTodos.map((group) => (
-            <section key={group.id} className="checklist-group" aria-label={group.label}>
+            <section
+              key={group.id}
+              className={`checklist-group${aiReviewHighlightedGroupIds.has(group.id) ? " is-ai-review-highlight" : ""}`}
+              aria-label={group.label}
+            >
               <div className="checklist-group-header">
                 <strong>{group.label}</strong>
                 <span className="badge">{group.todos.length}</span>
+                {aiReviewHighlightedGroupIds.has(group.id) ? (
+                  <span className="badge ai-review-badge">AI Review</span>
+                ) : null}
               </div>
               <ul className="checklist-strip">
                 {group.todos.map((todo) => (

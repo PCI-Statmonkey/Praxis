@@ -124,8 +124,9 @@ Phase 3: Context-memory UI
 
 Phase 4: AI Review tie-in
 
-- Let AI Review suggested stable IDs highlight relevant checklist group(s).
-- Do not let model output create groups or write memory docs.
+- Done: AI Review suggested stable IDs highlight relevant checklist group(s).
+- Done: AI Review suggested stable IDs highlight relevant Today context-memory lane(s).
+- Done: model output cannot create groups or write memory docs.
 
 ## Verification
 

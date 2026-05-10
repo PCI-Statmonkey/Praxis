@@ -601,6 +601,15 @@ assert.equal(rainmeterSnapshot.counts.waiting, 1);
 assert.equal(rainmeterSnapshot.counts.localBlocksToday, 3);
 assert.equal(rainmeterSnapshot.calendar.nextAppointmentTitle, "Client review");
 assert.equal(rainmeterSnapshot.serviceHealth.state, "ready");
+assert.equal(rainmeterSnapshot.serviceHealth.label, "Services ready");
+assert.equal(rainmeterSnapshot.serviceHealth.detail, "Connected services look ready.");
+assert.equal(rainmeterSnapshot.skin.presenceLabel, "PRAXIS quiet");
+assert.equal(rainmeterSnapshot.skin.topMoveTitle, "Review packet");
+assert.equal(rainmeterSnapshot.skin.topMoveKind, "todo");
+assert.equal(rainmeterSnapshot.skin.reviewInboxCount, 2);
+assert.equal(rainmeterSnapshot.skin.overdueCount, 1);
+assert.equal(rainmeterSnapshot.skin.dueTodayCount, 1);
+assert.equal(rainmeterSnapshot.skin.serviceHealthLabel, "Services ready");
 
 assert.deepEqual(
   parseOllamaModelTags({
