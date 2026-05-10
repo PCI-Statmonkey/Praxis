@@ -1,5 +1,28 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Template Apply Confirmation And Calendar Write-Back Planning
+
+### Closed
+
+- Added confirmed apply-template support on top of the Settings Templates preview.
+- The apply flow now lets the operator select missing tasks per selected project and then explicitly confirm creation.
+- Confirmed apply rechecks the preview at confirmation time, creates only still-missing selected project-linked todos, preserves existing todos, records `sourceKind=project_template`, and stores stable template `sourceRef` values.
+- Added apply-result counts for selected projects, requested tasks, created todos, and skipped no-longer-missing tasks.
+- Added regression coverage for selected-task creation, duplicate skipping, source identity, and no provider-write boundary.
+- Added `docs/PROVIDER_CALENDAR_WRITEBACK_PLAN.md` with the future write-back confirmation model, storage shape, provider scope upgrades, create-only publish semantics, and test strategy.
+- Reduced Mission Control Service Health duplication by hiding the healthy full Today card while preserving degraded/setup/loading visibility.
+- Adjusted narrow Command ordering so Mission Control and Talk/capture appear before Plan, Projects, and Checklist.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+
+### Follow-Up
+
+- Build the factual AI Task Review context packet and natural-language review intents.
+
 ## 2026-05-09 - Template Revision And Apply Preview
 
 ### Closed

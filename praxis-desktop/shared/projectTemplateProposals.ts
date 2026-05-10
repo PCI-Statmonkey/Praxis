@@ -234,6 +234,10 @@ export type ProjectTemplateApplyPreview = {
       taskSlug: string;
       title: string;
       priority: WorkPriority;
+      moneyRelated: boolean;
+      quickAction: boolean;
+      estimatedMinutes: number | null;
+      notes: string | null;
       sourceRef: string;
     }>;
     duplicateWarnings: Array<{
@@ -244,6 +248,52 @@ export type ProjectTemplateApplyPreview = {
   }>;
   writeBoundary: {
     createsTodos: false;
+    writesOnConfirmOnly: true;
+    editsExistingTodos: false;
+    providerWrites: false;
+  };
+};
+
+export type ProjectTemplateApplyTaskSelection = {
+  projectId: string;
+  taskSlug: string;
+};
+
+export type ProjectTemplateApplyConfirmInput = {
+  templateSlug: string;
+  projectIds: string[];
+  selectedTasks: ProjectTemplateApplyTaskSelection[];
+};
+
+export type ProjectTemplateApplyTodoCreation = {
+  projectId: string;
+  taskSlug: string;
+  title: string;
+  priority: WorkPriority;
+  moneyRelated: boolean;
+  quickAction: boolean;
+  estimatedMinutes: number | null;
+  notes: string | null;
+  sourceRef: string;
+};
+
+export type ProjectTemplateApplyConfirmResult = {
+  ok: true;
+  message: string;
+  templateSlug: string;
+  templateVersion: number;
+  selectedProjectCount: number;
+  requestedTaskCount: number;
+  createdCount: number;
+  skippedDuplicateCount: number;
+  createdTodos: Array<{
+    id: string;
+    projectId: string | null;
+    title: string;
+    sourceRef: string | null;
+  }>;
+  writeBoundary: {
+    createsTodos: true;
     writesOnConfirmOnly: true;
     editsExistingTodos: false;
     providerWrites: false;
@@ -1039,6 +1089,10 @@ export const buildProjectTemplateApplyPreview = ({
             taskSlug: item.taskSlug,
             title: item.title,
             priority: item.priority,
+            moneyRelated: item.moneyRelated,
+            quickAction: item.quickAction,
+            estimatedMinutes: item.estimatedMinutes,
+            notes: item.notes,
             sourceRef: `${template.slug}:v${template.version}:${item.taskSlug}`,
           });
         });
@@ -1057,4 +1111,35 @@ export const buildProjectTemplateApplyPreview = ({
       providerWrites: false,
     },
   };
+};
+
+export const buildProjectTemplateApplyTodoCreations = (
+  preview: ProjectTemplateApplyPreview,
+  selectedTasks: ProjectTemplateApplyTaskSelection[]
+): ProjectTemplateApplyTodoCreation[] => {
+  const selectedTaskKeys = new Set(
+    selectedTasks
+      .map((task) => `${task.projectId.trim()}:${canonicalProjectTemplateTaskSlug(task.taskSlug)}`)
+      .filter((key) => key.length > 1)
+  );
+
+  return preview.projectPreviews.flatMap((projectPreview) =>
+    projectPreview.missingTasks
+      .filter((task) =>
+        selectedTaskKeys.has(
+          `${projectPreview.projectId}:${canonicalProjectTemplateTaskSlug(task.taskSlug)}`
+        )
+      )
+      .map((task) => ({
+        projectId: projectPreview.projectId,
+        taskSlug: task.taskSlug,
+        title: task.title,
+        priority: task.priority,
+        moneyRelated: task.moneyRelated,
+        quickAction: task.quickAction,
+        estimatedMinutes: task.estimatedMinutes,
+        notes: task.notes,
+        sourceRef: task.sourceRef,
+      }))
+  );
 };

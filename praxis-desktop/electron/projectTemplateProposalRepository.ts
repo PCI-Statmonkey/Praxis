@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import path from "node:path";
 import {
   buildProjectTemplateApplyPreview,
+  buildProjectTemplateApplyTodoCreations,
   buildProjectTemplateProposals,
   buildProjectTemplateRevisionProposals,
   filterEligibleProjectTemplateProposals,
@@ -16,10 +17,12 @@ import {
   type ProjectTemplateProposalShownResult,
   type ProjectTemplateProposalSnapshot,
   type ProjectTemplateApplyPreview,
+  type ProjectTemplateApplyConfirmResult,
 } from "../shared/projectTemplateProposals";
 import {
   parseProjectTaskTemplateMarkdown,
   PROJECT_TASK_TEMPLATE_MARKDOWN_ROOT,
+  PROJECT_TASK_TEMPLATE_SOURCE_KIND,
   PROJECT_TASK_TEMPLATES,
   type ProjectTaskTemplateDefinition,
 } from "../shared/workModel";
@@ -34,7 +37,7 @@ import {
   rejectProjectTemplateProposal,
   snoozeProjectTemplateProposal,
 } from "./projectTemplateProposalStateRepository";
-import { getWorkSnapshot, listProjectTaskTemplateManagementSummaries } from "./workRepository";
+import { createTodo, getWorkSnapshot, listProjectTaskTemplateManagementSummaries } from "./workRepository";
 
 const readTextField = (input: unknown, field: string) => {
   if (!input || typeof input !== "object" || !(field in input)) {
@@ -76,6 +79,28 @@ const fingerprintField = (input: unknown) => {
   }
   return fingerprint;
 };
+
+const projectIdsField = (input: unknown) =>
+  input && typeof input === "object" && Array.isArray((input as { projectIds?: unknown }).projectIds)
+    ? (input as { projectIds: unknown[] }).projectIds
+        .filter((projectId): projectId is string => typeof projectId === "string")
+        .map((projectId) => projectId.trim())
+        .filter(Boolean)
+    : [];
+
+const selectedTasksField = (input: unknown) =>
+  input && typeof input === "object" && Array.isArray((input as { selectedTasks?: unknown }).selectedTasks)
+    ? (input as { selectedTasks: unknown[] }).selectedTasks
+        .map((selection) => {
+          if (!selection || typeof selection !== "object") {
+            return null;
+          }
+          const projectId = readTextField(selection, "projectId");
+          const taskSlug = readTextField(selection, "taskSlug");
+          return projectId && taskSlug ? { projectId, taskSlug } : null;
+        })
+        .filter((selection): selection is { projectId: string; taskSlug: string } => Boolean(selection))
+    : [];
 
 const toExistingTemplateMetadata = (
   template: ReturnType<typeof parseProjectTaskTemplateMarkdown>
@@ -376,12 +401,7 @@ export const saveProjectTemplateProposalForReview = (
 
 export const previewApplyProjectTemplateForReview = (input: unknown): ProjectTemplateApplyPreview => {
   const templateSlug = readTextField(input, "templateSlug");
-  const projectIds =
-    input && typeof input === "object" && Array.isArray((input as { projectIds?: unknown }).projectIds)
-      ? ((input as { projectIds: unknown[] }).projectIds.filter(
-          (projectId): projectId is string => typeof projectId === "string"
-        ))
-      : [];
+  const projectIds = projectIdsField(input);
   if (!templateSlug) {
     throw new Error("Project template apply preview requires a template slug.");
   }
@@ -401,6 +421,79 @@ export const previewApplyProjectTemplateForReview = (input: unknown): ProjectTem
     todos: snapshot.todos,
     projectIds,
   });
+};
+
+export const confirmApplyProjectTemplateForReview = (
+  input: unknown
+): ProjectTemplateApplyConfirmResult => {
+  const templateSlug = readTextField(input, "templateSlug");
+  const projectIds = projectIdsField(input);
+  const selectedTasks = selectedTasksField(input);
+  if (!templateSlug) {
+    throw new Error("Project template apply requires a template slug.");
+  }
+  if (projectIds.length === 0) {
+    throw new Error("Project template apply requires selected projects.");
+  }
+  if (selectedTasks.length === 0) {
+    throw new Error("Project template apply requires selected tasks.");
+  }
+
+  const template = listAllProjectTaskTemplates().find((candidate) => candidate.slug === templateSlug);
+  if (!template || template.status !== "active") {
+    throw new Error("Project template apply requires an active template.");
+  }
+
+  const snapshot = getWorkSnapshot();
+  const preview = buildProjectTemplateApplyPreview({
+    template,
+    projects: snapshot.projects,
+    todos: snapshot.todos,
+    projectIds,
+  });
+  const creations = buildProjectTemplateApplyTodoCreations(preview, selectedTasks);
+  const createdTodos = creations.map((creation) =>
+    createTodo({
+      title: creation.title,
+      projectId: creation.projectId,
+      priority: creation.priority,
+      moneyRelated: creation.moneyRelated,
+      quickAction: creation.quickAction,
+      estimatedMinutes: creation.estimatedMinutes ?? undefined,
+      sourceKind: PROJECT_TASK_TEMPLATE_SOURCE_KIND,
+      sourceRef: creation.sourceRef,
+      notes: creation.notes ?? undefined,
+    })
+  );
+
+  const requestedTaskCount = selectedTasks.length;
+  const skippedDuplicateCount = Math.max(0, requestedTaskCount - createdTodos.length);
+  return {
+    ok: true,
+    message: `Applied ${createdTodos.length} project template task${
+      createdTodos.length === 1 ? "" : "s"
+    }; skipped ${skippedDuplicateCount} no-longer-missing task${
+      skippedDuplicateCount === 1 ? "" : "s"
+    }.`,
+    templateSlug: template.slug,
+    templateVersion: template.version,
+    selectedProjectCount: new Set(projectIds).size,
+    requestedTaskCount,
+    createdCount: createdTodos.length,
+    skippedDuplicateCount,
+    createdTodos: createdTodos.map((todo) => ({
+      id: todo.id,
+      projectId: todo.projectId,
+      title: todo.title,
+      sourceRef: todo.sourceRef,
+    })),
+    writeBoundary: {
+      createsTodos: true,
+      writesOnConfirmOnly: true,
+      editsExistingTodos: false,
+      providerWrites: false,
+    },
+  };
 };
 
 export const recordProjectTemplateProposalsShownForReview = (

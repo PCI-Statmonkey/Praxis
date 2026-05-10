@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, and selected-project apply preview are complete. The immediate implementation queue is the confirmed apply-template-to-existing-projects path, still behind explicit preview and confirmation. Provider calendar write-back remains explicitly later. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the proposal/template management work.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, and the current Mission Control follow-up polish are complete. Provider calendar write-back implementation remains explicitly later. The next active product track is the AI Task Review factual context packet and natural-language review intents. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -142,7 +142,11 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - Review Inbox can surface revision proposals as editable read-only drafts with dismiss, snooze, reject, never-suggest, and confirmed update actions.
 - Confirmed revision updates validate markdown, preserve supported `version: 1`, write only the selected template markdown path, refresh the memory index, and mark the revision accepted.
 - Settings Templates now includes a selected-project apply preview that computes missing template tasks and duplicate warnings without creating todos, editing existing todos, or writing providers.
-- Revision/apply verification passed for TypeScript, lint, assistant regression tests, app build, and diff whitespace checks.
+- Settings Templates can now confirm applying selected missing template tasks to selected existing projects after preview.
+- Confirmed apply creates only selected missing project-linked todos, preserves existing todos, records `sourceKind = "project_template"` plus stable template `sourceRef`, and returns created/skipped/project counts.
+- Provider calendar write-back is planned in `docs/PROVIDER_CALENDAR_WRITEBACK_PLAN.md` as a future create-only publish flow with explicit confirmation, scope upgrades, publish identity storage, and no automatic AI/provider writes.
+- Mission Control follow-up polish reduced healthy Service Health duplication while preserving degraded-service visibility, and mobile Command mode now orders Mission Control then Talk/capture before Plan, Projects, and Checklist.
+- Revision/apply/planning/polish verification passed for TypeScript, lint, assistant regression tests, app build, and diff whitespace checks.
 
 ## NEXT STEPS
 
@@ -166,62 +170,41 @@ Complete for the first visible local-first surface. Keep future improvements sco
 
 ### 4. Plan Provider Calendar Write-Back
 
-**GOAL**
+**STATUS**
 
-Keep external calendar write-back as an explicit later track after local planning behavior is proven.
-
-**DIRECTION**
-
-- Do not add Google or Outlook writes until local time blocks and confirmation UX are stable.
-- Require explicit operator confirmation before any future provider write-back.
-- Preserve auditability of source provider events versus PRAXIS-created local blocks.
-
-**DONE WHEN**
-
-- Provider write-back has a separate technical plan, confirmation model, and test strategy.
+Complete. See `docs/PROVIDER_CALENDAR_WRITEBACK_PLAN.md`. Implementation remains a later explicit-confirmation track.
 
 ### 4A. Add Confirmed Apply-Template Path For Existing Projects
 
-**GOAL**
+**STATUS**
 
-Turn the selected-project apply preview into a confirmed todo creation flow for only selected missing
-template tasks.
-
-**DIRECTION**
-
-- Start from the existing Settings Templates apply preview.
-- Let the operator review/select missing tasks per selected project before confirmation.
-- Create only selected missing project-linked todos.
-- Preserve existing todos, including completed, blocked, paused, waiting-on, and manually created items.
-- Set `sourceKind = "project_template"` and stable template `sourceRef` on created todos.
-- Do not delete, rename, reorder, complete, or mutate existing todos.
-- Do not write Google/Outlook calendars or connected providers.
-
-**DONE WHEN**
-
-- The preview remains read-only until an explicit confirmation action.
-- Confirmed apply returns created/skipped/project counts.
-- Regression tests cover duplicate skipping, selected-task creation, source identity, and no provider writes.
+Complete. The Settings Templates flow previews missing tasks, lets the operator select tasks, then creates only selected missing todos after confirmation.
 
 ### 5. Continue Mission Control Follow-Up Polish
 
+**STATUS**
+
+Complete for this pass. Healthy Service Health no longer repeats as a full Today card, degraded/setup/loading service issues still surface, and mobile Command mode now puts Mission Control and Talk/capture first.
+
+### 5A. Build AI Task Review Context Packet
+
 **GOAL**
 
-Keep non-blocking Mission Control layout and copy issues moving behind the unified calendar/time-blocking planning track.
+Build the factual packet that future review intents use for reset, stale work, risk, quick wins, and
+change summaries.
 
 **DIRECTION**
 
-- The polished first Mission Control pass is acceptable for now.
-- OAuth persistence, top-bar Command/service-pill polish, and UI/font polish are closed.
-- Service-health duplication remains follow-up UI polish, not a blocker.
-- Mobile ordering remains follow-up UI polish, not a blocker.
-- A future safe AI Review launcher can replace the current `Brief Review` card when Talk/AI Review control wiring is deliberately scoped.
+- Use local work graph, calendar appointments, local time blocks, Review Inbox, stale projects,
+  waiting-on items, overdue/due-today work, quick wins, recent changes, and service health.
+- Keep the packet factual and source-attributed.
+- Do not let model generation own writes; all write-like outcomes stay in Review Inbox, staged drafts,
+  or explicit confirmation paths.
 
 **DONE WHEN**
 
-- Service Health duplication is reduced without hiding broken-service visibility.
-- Narrow/mobile ordering puts Mission Control and Talk entry higher without breaking existing panels.
-- Any AI Review launcher path preserves no-write behavior.
+- Shared packet builder has regression coverage.
+- Talk/AI review routes can consume the packet without changing work state.
 
 ### 6. Plan Checklist Grouping And Context-Memory Redesign
 

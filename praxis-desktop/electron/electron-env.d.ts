@@ -91,6 +91,9 @@ import type {
 import type {
   ClearProjectTemplateProposalStateInput,
   ClearProjectTemplateProposalStateResult,
+  ProjectTemplateApplyConfirmInput,
+  ProjectTemplateApplyConfirmResult,
+  ProjectTemplateApplyPreview,
   ProjectTemplateManagementSnapshot,
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalActionResult,
@@ -99,7 +102,6 @@ import type {
   ProjectTemplateProposalShownInput,
   ProjectTemplateProposalShownResult,
   ProjectTemplateProposalSnapshot,
-  ProjectTemplateApplyPreview,
 } from "../shared/projectTemplateProposals";
 import type {
   CalendarConnectionRecord,
@@ -335,6 +337,9 @@ declare global {
           templateSlug: string;
           projectIds: string[];
         }) => Promise<ProjectTemplateApplyPreview>;
+        confirmApply: (
+          input: ProjectTemplateApplyConfirmInput
+        ) => Promise<ProjectTemplateApplyConfirmResult>;
       };
       calendar: {
         importEvents: (input: ImportCalendarEventsInput) => Promise<CalendarImportResult>;

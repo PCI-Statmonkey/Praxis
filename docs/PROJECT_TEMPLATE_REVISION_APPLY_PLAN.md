@@ -24,7 +24,6 @@ Already implemented:
 
 Still out of scope until a later explicit confirmation slice:
 
-- Automatic task creation on existing projects.
 - Bulk project mutation.
 - Provider writes or provider calendar write-back.
 
@@ -174,8 +173,8 @@ type ProjectTemplateApplyPreview = {
 
 ### Later Confirmed Apply
 
-A later confirmed apply flow may create missing project-linked todos only for selected projects and
-selected tasks.
+The confirmed apply flow may create missing project-linked todos only for selected projects and
+selected tasks after preview.
 
 Rules:
 
@@ -276,4 +275,4 @@ UI tests or QA:
    version 1.
 5. Complete: add explicit revision editor and confirmed markdown update path.
 6. Complete: add apply-template preview for selected existing projects. No todo creation.
-7. Add confirmed apply path for selected missing tasks only.
+7. Complete: add confirmed apply path for selected missing tasks only.

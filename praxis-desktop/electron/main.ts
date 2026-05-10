@@ -48,12 +48,14 @@ import type {
 } from '../shared/workModel'
 import type {
   ClearProjectTemplateProposalStateInput,
+  ProjectTemplateApplyConfirmInput,
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalSaveInput,
   ProjectTemplateProposalShownInput,
 } from '../shared/projectTemplateProposals'
 import {
   clearProjectTemplateProposalStateForReview,
+  confirmApplyProjectTemplateForReview,
   dismissProjectTemplateProposalForReview,
   getProjectTemplateManagementSnapshot,
   getProjectTemplateProposalSnapshot,
@@ -831,6 +833,11 @@ app.whenReady().then(() => {
   ipcMain.handle(
     'projectTemplates:previewApply',
     async (_event, input: unknown) => previewApplyProjectTemplateForReview(input)
+  )
+  ipcMain.handle(
+    'projectTemplates:confirmApply',
+    async (_event, input: ProjectTemplateApplyConfirmInput) =>
+      confirmApplyProjectTemplateForReview(input)
   )
   ipcMain.handle('calendar:getGoogleOAuthReadiness', async () => getGoogleCalendarOAuthReadiness())
   ipcMain.handle('calendar:getOutlookOAuthReadiness', async () => getOutlookCalendarOAuthReadiness())

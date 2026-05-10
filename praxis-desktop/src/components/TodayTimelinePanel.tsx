@@ -158,6 +158,9 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
       (reviewInboxItems.length > 0
         ? `${reviewInboxItems.length} review candidate${reviewInboxItems.length === 1 ? "" : "s"} need confirmation.`
         : "No overdue, waiting-on, or review-inbox pressure in the current brief.");
+    const hasDegradedService = serviceHealthItems.some(
+      (item) => item.state === "problem" || item.state === "setup" || item.state === "loading"
+    );
     return (
       <section ref={ref} className={`panel center${isActive ? " is-active-panel" : ""}`}>
         <div className="mission-control-root">
@@ -233,7 +236,9 @@ export const TodayTimelinePanel = forwardRef<HTMLElement, TodayTimelinePanelProp
             saveProjectTemplateProposal={saveProjectTemplateProposal}
           />
 
-          <ServiceHealthLane serviceHealthItems={serviceHealthItems} />
+          {hasDegradedService ? (
+            <ServiceHealthLane serviceHealthItems={serviceHealthItems} />
+          ) : null}
         </div>
 
         <article className="brief-card focus-card">

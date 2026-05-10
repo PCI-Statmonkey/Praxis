@@ -1,6 +1,7 @@
 import { strict as assert } from "node:assert";
 import {
   buildProjectTemplateApplyPreview,
+  buildProjectTemplateApplyTodoCreations,
   buildProjectTemplateProposals,
   buildProjectTemplateRevisionProposals,
   canonicalProjectTemplateTaskSlug,
@@ -566,3 +567,23 @@ assert.deepEqual(
   preview.projectPreviews[0].missingTasks.map((task) => task.sourceRef),
   ["engineering-project:v1:03-electrical", "engineering-project:v1:04-mechanical"]
 );
+assert.deepEqual(
+  buildProjectTemplateApplyTodoCreations(preview, [
+    { projectId: previewProject.id, taskSlug: "03-electrical" },
+    { projectId: previewProject.id, taskSlug: "01-contract" },
+  ]),
+  [
+    {
+      projectId: previewProject.id,
+      taskSlug: "03-electrical",
+      title: "Electrical",
+      priority: "normal",
+      moneyRelated: false,
+      quickAction: false,
+      estimatedMinutes: null,
+      notes: null,
+      sourceRef: "engineering-project:v1:03-electrical",
+    },
+  ]
+);
+assert.equal(preview.writeBoundary.providerWrites, false);

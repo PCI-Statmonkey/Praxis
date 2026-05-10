@@ -99,6 +99,9 @@ const EMPTY_PROJECT_TEMPLATE_MANAGEMENT: ProjectTemplateManagementSnapshot = {
   proposalStates: [],
 };
 
+const projectTemplateApplyTaskKey = (projectId: string, taskSlug: string) =>
+  `${projectId}:${taskSlug}`;
+
 const EMPTY_SETTINGS: SettingsSnapshot = {
   calendarConnections: [],
   emailConnections: [],
@@ -321,6 +324,8 @@ export default function SettingsApp() {
   const [applyProjectIds, setApplyProjectIds] = useState<string[]>([]);
   const [applyPreview, setApplyPreview] = useState<ProjectTemplateApplyPreview | null>(null);
   const [applyPreviewLoading, setApplyPreviewLoading] = useState(false);
+  const [selectedApplyTaskKeys, setSelectedApplyTaskKeys] = useState<string[]>([]);
+  const [applyConfirming, setApplyConfirming] = useState(false);
 
   const loadSettingsModel = useCallback(async () => {
     const [
@@ -971,10 +976,19 @@ export default function SettingsApp() {
   );
   const toggleApplyProject = (projectId: string) => {
     setApplyPreview(null);
+    setSelectedApplyTaskKeys([]);
     setApplyProjectIds((currentProjectIds) =>
       currentProjectIds.includes(projectId)
         ? currentProjectIds.filter((candidate) => candidate !== projectId)
         : [...currentProjectIds, projectId]
+    );
+  };
+  const toggleApplyTask = (projectId: string, taskSlug: string) => {
+    const taskKey = projectTemplateApplyTaskKey(projectId, taskSlug);
+    setSelectedApplyTaskKeys((currentTaskKeys) =>
+      currentTaskKeys.includes(taskKey)
+        ? currentTaskKeys.filter((candidate) => candidate !== taskKey)
+        : [...currentTaskKeys, taskKey]
     );
   };
   const renderTodoContextBadges = (projectId: string | null) => {
@@ -1154,6 +1168,13 @@ export default function SettingsApp() {
         projectIds: applyProjectIds,
       });
       setApplyPreview(result);
+      setSelectedApplyTaskKeys(
+        result.projectPreviews.flatMap((projectPreview) =>
+          projectPreview.missingTasks.map((task) =>
+            projectTemplateApplyTaskKey(projectPreview.projectId, task.taskSlug)
+          )
+        )
+      );
       setStatus(
         `Preview ready: ${result.projectPreviews.length} selected projects, no todos created.`
       );
@@ -1161,6 +1182,42 @@ export default function SettingsApp() {
       setStatus("Praxis could not build the project template apply preview.");
     } finally {
       setApplyPreviewLoading(false);
+    }
+  };
+
+  const confirmApplyProjectTemplate = async () => {
+    if (!applyPreview || selectedApplyTaskKeys.length === 0) {
+      setStatus("Select at least one missing task before applying.");
+      return;
+    }
+
+    setApplyConfirming(true);
+    try {
+      const selectedTasks = applyPreview.projectPreviews.flatMap((projectPreview) =>
+        projectPreview.missingTasks
+          .filter((task) =>
+            selectedApplyTaskKeys.includes(
+              projectTemplateApplyTaskKey(projectPreview.projectId, task.taskSlug)
+            )
+          )
+          .map((task) => ({
+            projectId: projectPreview.projectId,
+            taskSlug: task.taskSlug,
+          }))
+      );
+      const result = await window.praxis.projectTemplates.confirmApply({
+        templateSlug: applyPreview.templateSlug,
+        projectIds: applyProjectIds,
+        selectedTasks,
+      });
+      await loadSettingsModel();
+      setApplyPreview(null);
+      setSelectedApplyTaskKeys([]);
+      setStatus(result.message);
+    } catch {
+      setStatus("Praxis could not apply that project template preview.");
+    } finally {
+      setApplyConfirming(false);
     }
   };
 
@@ -1484,6 +1541,7 @@ export default function SettingsApp() {
                       onChange={(event) => {
                         setApplyTemplateSlug(event.target.value);
                         setApplyPreview(null);
+                        setSelectedApplyTaskKeys([]);
                       }}
                     >
                       {projectTemplateManagement.templates.map((template) => (
@@ -1538,7 +1596,22 @@ export default function SettingsApp() {
                             <ul className="project-template-change-list">
                               {projectPreview.missingTasks.map((task) => (
                                 <li key={task.taskSlug}>
-                                  {task.title} <span className="badge">{task.priority}</span>
+                                  <label>
+                                    <input
+                                      type="checkbox"
+                                      checked={selectedApplyTaskKeys.includes(
+                                        projectTemplateApplyTaskKey(
+                                          projectPreview.projectId,
+                                          task.taskSlug
+                                        )
+                                      )}
+                                      onChange={() =>
+                                        toggleApplyTask(projectPreview.projectId, task.taskSlug)
+                                      }
+                                    />{" "}
+                                    {task.title}
+                                  </label>{" "}
+                                  <span className="badge">{task.priority}</span>
                                 </li>
                               ))}
                             </ul>
@@ -1556,6 +1629,21 @@ export default function SettingsApp() {
                         </li>
                       ))}
                     </ol>
+                  ) : null}
+                  {applyPreview ? (
+                    <div className="filter-actions">
+                      <button
+                        type="button"
+                        onClick={() => void confirmApplyProjectTemplate()}
+                        disabled={applyConfirming || selectedApplyTaskKeys.length === 0}
+                      >
+                        {applyConfirming
+                          ? "Applying..."
+                          : `Apply ${selectedApplyTaskKeys.length} Selected Task${
+                              selectedApplyTaskKeys.length === 1 ? "" : "s"
+                            }`}
+                      </button>
+                    </div>
                   ) : null}
                 </>
               ) : (

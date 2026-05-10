@@ -3442,6 +3442,26 @@ ol {
     max-height: none;
   }
 
+  .app-shell.is-surface-command .center {
+    order: 1;
+  }
+
+  .app-shell.is-surface-command .right {
+    order: 2;
+  }
+
+  .app-shell.is-surface-command .plan-surface-panel.is-plan-compact {
+    order: 3;
+  }
+
+  .app-shell.is-surface-command .left {
+    order: 4;
+  }
+
+  .app-shell.is-surface-command .bottom {
+    order: 5;
+  }
+
   .operator-main-grid,
   .rhythm-grid,
   .surface-grid,
