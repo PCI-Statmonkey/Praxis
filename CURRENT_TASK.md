@@ -2,7 +2,7 @@
 
 ## OBJECTIVE
 
-AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, create-only Google/Outlook publish adapters, publish-state visibility, failed-publish retry staging, provider live-QA runbook, provider reconciliation/update-delete planning, and OpenAI-compatible AI Review generation are complete. The next active product track is operator-present live provider write-back QA, followed by V1.1 persistent presence/Rainmeter planning or checklist/context-memory redesign. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
+AI project template proposal persistence/filtering, Review Inbox surfacing, explicit markdown template save/editor, reject handling, saved-template project creation usability, first template management/reversal visibility, AI draft planning from Schedule Review, safe template revision/apply planning, template revision proposal surfacing, confirmed template markdown revision, selected-project apply preview, confirmed apply-template-to-existing-projects, provider calendar write-back planning, Mission Control follow-up polish, AI Task Review factual context packet/natural-language intents, provider calendar write-back foundation, optional API provider settings, visible Plan publish UI, write-scope guidance, create-only Google/Outlook publish adapters, publish-state visibility, failed-publish retry staging, provider live-QA runbook, provider reconciliation/update-delete planning, OpenAI-compatible AI Review generation, V1.1 persistent presence/Rainmeter planning, and checklist/context-memory redesign planning are complete. The next active product track is operator-present live provider write-back QA, then implementation can move to either persistent presence Phase 1 or checklist/context-memory selectors. Persistent presence, Rainmeter, and background wallpaper surfaces remain important V1.1 planning tracks, but they stay behind the AI review loop.
 
 ## CURRENT STATE
 
@@ -168,6 +168,8 @@ AI project template proposal persistence/filtering, Review Inbox surfacing, expl
 - `docs/PROVIDER_CALENDAR_LIVE_QA.md` defines the operator-present create-only publish QA path and failure/retry checks.
 - `docs/PROVIDER_CALENDAR_RECONCILIATION_PLAN.md` defines the later detect-only, confirmed update, and confirmed delete path for PRAXIS-created provider events only.
 - AI Review can now use configured OpenAI-compatible API generation under API-capable reliance policies, validates model output against packet stable IDs, and falls back deterministically on missing config or provider errors.
+- `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md` defines tray/background lifetime, pause/quiet states, notification boundaries, and a read-only Rainmeter snapshot contract.
+- `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md` defines context-based checklist groups, contextual memory lanes, selector-first implementation phases, and no-write boundaries.
 
 ## NEXT STEPS
 
@@ -314,9 +316,9 @@ Keep checklist grouping and context-memory redesign visible as follow-up work af
 - Revisit how memory-backed documents appear inside Today/Command without restoring a fake Memory top-nav mode.
 - Preserve explicit write boundaries and source identity.
 
-**DONE WHEN**
+**STATUS**
 
-- The redesign has a scoped plan and does not distract from the active calendar/time-blocking work.
+Complete as a planning artifact. `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md` defines selector-first checklist context groups, contextual memory lanes, UI phases, and verification requirements. Implementation should start with pure selectors before broad JSX changes.
 
 ### 7. Plan V1.1 Persistent Presence After AI Review
 
@@ -339,9 +341,9 @@ Define how PRAXIS should live as a persistent Windows assistant after the AI rev
 - `docs/ARCHITECTURE.md`
 - `docs/MISSION_PLAN.md`
 
-**DONE WHEN**
+**STATUS**
 
-- V1.1 has a follow-on persistent-presence plan that depends on the AI review context packet rather than replacing it.
+Complete as a planning artifact. `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md` defines tray/background lifetime, pause/quiet modes, notification boundaries, Rainmeter JSON export, privacy rules, and verification. Implementation should start with tray/background lifetime after live provider QA or when selected.
 
 ### 8. Keep Future Intelligence And Capture Tracks Execution-Focused
 

@@ -1,5 +1,29 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Presence And Context Planning
+
+### Closed
+
+- Added `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md` for V1.1 tray/background lifetime, close-to-tray, explicit quit, pause/quiet modes, notification boundaries, and read-only Rainmeter snapshot export.
+- Grounded the presence plan in current Electron behavior: the app currently quits on `window-all-closed`, with no tray or close-to-tray implementation yet.
+- Added `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md` for context-based checklist grouping and contextual memory lanes without restoring a fake Memory top-nav mode.
+- Grounded the checklist plan in the current `MasterChecklistPanel` behavior: active todos are ranked, top eight are grouped by project/mission context, and only `All Active` plus `Quick/Urgent` filters exist today.
+- Kept both plans local-first and explicit-boundary: Rainmeter is read-only, markdown memory is narrative/context, SQLite remains operational authority, and write-like outcomes stay in PRAXIS confirmation surfaces.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present provider publish QA when ready.
+- Choose either persistent presence Phase 1 or checklist/context-memory selectors as the next implementation slice.
+
 ## 2026-05-10 - Provider QA Planning And API AI Review
 
 ### Closed

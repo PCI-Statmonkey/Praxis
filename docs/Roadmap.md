@@ -146,10 +146,12 @@
 - [x] Document and enforce an AI reliance policy: the model summarizes, prioritizes, explains, and suggests, but local services own state changes
 
 ## Stage 7 - Persistent Presence and Rainmeter
-- [ ] Define Windows tray/background behavior with close-to-tray, explicit quit, pause/quiet mode, and visible active status
-- [ ] Define notification and nudge boundaries after AI Task Review can explain priority and risk
-- [ ] Define a read-only, privacy-safe Rainmeter snapshot/export contract for ambient desktop display
-- [ ] Keep Rainmeter and wallpaper display out of direct write paths
+- [x] Define Windows tray/background behavior with close-to-tray, explicit quit, pause/quiet mode, and visible active status
+- [x] Define notification and nudge boundaries after AI Task Review can explain priority and risk
+- [x] Define a read-only, privacy-safe Rainmeter snapshot/export contract for ambient desktop display
+- [x] Keep Rainmeter and wallpaper display out of direct write paths
+- [ ] Implement Windows tray/background lifetime
+- [ ] Implement read-only Rainmeter snapshot export
 
 ## Stage 8 - Voice and Arrival Ritual
 - [ ] Configurable wake phrase

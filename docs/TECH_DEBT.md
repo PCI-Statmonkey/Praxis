@@ -108,9 +108,16 @@
 ### Persistent Presence Depends On AI Review
 
 - Priority: Medium
-- Impact: Rainmeter, tray/background mode, and persistent assistant presence are useful V1.1 work, but they should not lead the queue before PRAXIS can explain priority and risk through AI Task Review.
-- Likely Fix: Implement AI Task Review first, then design notifications, nudges, tray state, and Rainmeter read-only snapshots around the same context packet.
+- Impact: Planning is complete, but tray/background lifetime and Rainmeter export are not implemented yet.
+- Likely Fix: Start from `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md`; implement tray/background lifetime first, then pause/quiet state, then read-only Rainmeter JSON export.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`, `docs/ARCHITECTURE.md`
+
+### Checklist Grouping And Context Memory Are Still Selector Work
+
+- Priority: Medium
+- Impact: Checklist currently groups only the top active todos by project/mission context, and memory-backed documents appear as a generic Today list.
+- Likely Fix: Start from `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md`; add pure selector contracts for checklist context groups and memory context lanes before changing broad JSX.
+- Related: `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md`, `praxis-desktop/src/components/MasterChecklistPanel.tsx`, `praxis-desktop/src/components/TodayTimelinePanel.tsx`, `praxis-desktop/shared/storage/hybridStorage.ts`
 
 ### Quick-Action Ranking Is Still Basic
 

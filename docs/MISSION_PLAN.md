@@ -260,7 +260,7 @@ This is necessary because:
 
 The markdown memory layer should include an index so Praxis can quickly find the right records without loading everything.
 
-The Context/Memory surface needs redesign because the old Memory top-nav behavior was confusing. Memory-backed documents should remain available from the operating context where they help, but should not look like a fake primary mode. Checklist grouping is also a future follow-up, likely around projects, missions, operating contexts, or schedule windows.
+The Context/Memory surface needs redesign because the old Memory top-nav behavior was confusing. Memory-backed documents should remain available from the operating context where they help, but should not look like a fake primary mode. Checklist grouping should now follow the selector-first plan in `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md`, likely around top move, due pressure, waiting-on people, projects, missions, money, quick wins, and standalone work.
 
 ## Trust and Safety Rules
 
@@ -339,6 +339,6 @@ Initial remote access design should assume access from anywhere, not only same-h
 4. Keep provider calendar write-back explicit and later, after local planning behavior is proven
 5. Continue AI Task Review / ADHD Reset Mode around factual local context packets and deterministic fallbacks
 6. Keep every write-like AI suggestion behind Review Inbox, staged drafts, or explicit confirmation
-7. Redesign Context/Memory and checklist grouping after the current planning slice or when the operator asks to prioritize it
-8. Plan persistent presence and Rainmeter after PRAXIS can explain priority and risk
+7. Implement Context/Memory and checklist grouping from `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md` when selected, starting with pure selectors
+8. Implement persistent presence and Rainmeter from `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md` when selected, starting with tray/background lifetime
 9. Add voice wake and spoken output after the review and briefing logic are trustworthy
