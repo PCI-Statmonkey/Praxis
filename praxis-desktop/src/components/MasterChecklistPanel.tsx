@@ -7,10 +7,14 @@ import type {
   WorkPriority,
   WorkStatus,
 } from "../../shared/workModel";
+import {
+  buildChecklistContextGroups,
+  type ChecklistContextGroup as SelectorChecklistContextGroup,
+} from "../../shared/contextSurfaces";
 import { ActionMenu } from "./ActionMenu";
 import { EmptyState } from "./EmptyState";
 
-type TodoFilter = "all" | "quick";
+const groupFilterPrefix = "group:";
 
 type MasterChecklistPanelProps = {
   isActive: boolean;
@@ -18,9 +22,10 @@ type MasterChecklistPanelProps = {
   projects: ProjectRecord[];
   missions: MissionRecord[];
   people: PersonRecord[];
+  topMoveTodoId?: string | null;
   openCapture: () => void;
-  todoFilter: TodoFilter;
-  setTodoFilter: Dispatch<SetStateAction<TodoFilter>>;
+  todoFilter: string;
+  setTodoFilter: Dispatch<SetStateAction<string>>;
   formatDateTime: (value: string | null) => string;
   renderStatusActions: (
     entityKind: "mission" | "project" | "todo" | "deadline",
@@ -50,6 +55,7 @@ export function MasterChecklistPanel({
   projects,
   missions,
   people,
+  topMoveTodoId = null,
   openCapture,
   todoFilter,
   setTodoFilter,
@@ -59,6 +65,20 @@ export function MasterChecklistPanel({
   deleteTodo,
 }: MasterChecklistPanelProps) {
   const activeTodos = todos.filter((todo) => todo.status !== "completed");
+  const todoById = new Map(activeTodos.map((todo) => [todo.id, todo]));
+  const contextGroups = buildChecklistContextGroups({
+    todos,
+    projects,
+    missions,
+    people,
+    topMoveTodoId,
+  });
+  const selectedGroupId = todoFilter.startsWith(groupFilterPrefix)
+    ? todoFilter.slice(groupFilterPrefix.length)
+    : null;
+  const selectedGroup = selectedGroupId
+    ? contextGroups.find((group) => group.id === selectedGroupId) ?? null
+    : null;
   const rankedTodos = [...activeTodos]
     .sort((a, b) => {
       const quickRankA = a.quickAction ? 0 : 1;
@@ -70,7 +90,15 @@ export function MasterChecklistPanel({
         a.title.localeCompare(b.title)
       );
     })
-    .filter((todo) => (todoFilter === "quick" ? todo.quickAction || todo.priority === "critical" : true));
+    .filter((todo) => {
+      if (todoFilter === "quick") {
+        return todo.quickAction || todo.priority === "critical";
+      }
+      if (selectedGroup) {
+        return selectedGroup.todoIds.includes(todo.id);
+      }
+      return true;
+    });
 
   const projectById = new Map(projects.map((project) => [project.id, project]));
   const missionById = new Map(missions.map((mission) => [mission.id, mission]));
@@ -80,34 +108,62 @@ export function MasterChecklistPanel({
   const moneyCount = activeTodos.filter((todo) => todo.moneyRelated).length;
   const waitingCount = activeTodos.filter((todo) => todo.waitingOnPersonId).length;
 
-  const contextForTodo = (todo: TodoRecord) => {
-    if (!todo.projectId) {
-      return { id: "standalone", label: "Standalone" };
+  const rankedTodoIds = new Set(rankedTodos.map((todo) => todo.id));
+  const groupTodos = (group: SelectorChecklistContextGroup, seenTodoIds?: Set<string>) =>
+    group.todoIds
+      .map((todoId) => todoById.get(todoId) ?? null)
+      .filter((todo): todo is TodoRecord => todo !== null && rankedTodoIds.has(todo.id))
+      .filter((todo) => {
+        if (!seenTodoIds) {
+          return true;
+        }
+        if (seenTodoIds.has(todo.id)) {
+          return false;
+        }
+        seenTodoIds.add(todo.id);
+        return true;
+      });
+
+  const groupedTodos = (() => {
+    if (selectedGroup) {
+      const todosForGroup = groupTodos(selectedGroup);
+      return todosForGroup.length > 0
+        ? [{ id: selectedGroup.id, label: selectedGroup.label, todos: todosForGroup }]
+        : [];
     }
 
-    const project = projectById.get(todo.projectId);
-    if (!project) {
-      return { id: `project:${todo.projectId}`, label: "Project unavailable" };
+    const seenTodoIds = new Set<string>();
+    const groups: ChecklistGroup[] = [];
+    for (const group of contextGroups) {
+      const todosForGroup = groupTodos(group, seenTodoIds);
+      if (todosForGroup.length > 0) {
+        groups.push({ id: group.id, label: group.label, todos: todosForGroup });
+      }
+      if (seenTodoIds.size >= 8) {
+        break;
+      }
     }
 
-    const mission = project.missionId ? missionById.get(project.missionId) : null;
-    return {
-      id: project.id,
-      label: mission ? `${mission.title} / ${project.title}` : project.title,
-    };
-  };
-
-  const groupedTodos = rankedTodos.slice(0, 8).reduce<ChecklistGroup[]>((groups, todo) => {
-    const context = contextForTodo(todo);
-    const existingGroup = groups.find((group) => group.id === context.id);
-    if (existingGroup) {
-      existingGroup.todos.push(todo);
-      return groups;
+    const remainingTodos = rankedTodos
+      .slice(0, 8)
+      .filter((todo) => !seenTodoIds.has(todo.id));
+    if (remainingTodos.length > 0) {
+      groups.push({ id: "other", label: "Other Active", todos: remainingTodos });
     }
-
-    groups.push({ ...context, todos: [todo] });
     return groups;
-  }, []);
+  })();
+
+  const groupFilterOptions = contextGroups.slice(0, 12);
+  const emptyTitle = selectedGroup
+    ? `No ${selectedGroup.label.toLowerCase()} todos`
+    : todoFilter === "quick"
+      ? "No quick or urgent todos"
+      : "No active todos";
+  const emptyDetail = selectedGroup
+    ? "This context is clear right now. Switch filters to review the broader active stack."
+    : todoFilter === "quick"
+      ? "Critical and quick-action todos will collect here when they are available."
+      : "Capture a todo in Talk to Praxis or use the manual form drawer when needed.";
 
   const renderTodoContextBadges = (projectId: string | null) => {
     if (!projectId) {
@@ -176,6 +232,19 @@ export function MasterChecklistPanel({
         >
           Quick/Urgent
         </button>
+        {groupFilterOptions.map((group) => {
+          const filterId = `${groupFilterPrefix}${group.id}`;
+          return (
+            <button
+              key={group.id}
+              type="button"
+              className={todoFilter === filterId ? "is-filter-active" : ""}
+              onClick={() => setTodoFilter(filterId)}
+            >
+              {group.label} ({group.count})
+            </button>
+          );
+        })}
       </div>
       {rankedTodos.length > 0 ? (
         <div className="checklist-groups">
@@ -215,12 +284,8 @@ export function MasterChecklistPanel({
         </div>
       ) : (
         <EmptyState
-          title={todoFilter === "quick" ? "No quick or urgent todos" : "No active todos"}
-          detail={
-            todoFilter === "quick"
-              ? "Critical and quick-action todos will collect here when they are available."
-              : "Capture a todo in Talk to Praxis or use the manual form drawer when needed."
-          }
+          title={emptyTitle}
+          detail={emptyDetail}
         >
           <button type="button" onClick={openCapture}>
             Capture Todo

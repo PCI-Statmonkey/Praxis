@@ -13,7 +13,9 @@ import type {
   GoogleOAuthSettings,
   OutlookOAuthSettings,
   SettingsSnapshot,
+  PresenceSettings,
   UpdateAiSettingsInput,
+  UpdatePresenceSettingsInput,
   UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   SlackSettings,
@@ -22,7 +24,11 @@ import type {
   UpdateOutlookOAuthSettingsInput,
   UpdateSlackSettingsInput,
 } from "../shared/settingsModel";
-import { normalizeAiSettings, normalizeUiSettings } from "../shared/settingsModel";
+import {
+  normalizeAiSettings,
+  normalizePresenceSettings,
+  normalizeUiSettings,
+} from "../shared/settingsModel";
 import {
   DEFAULT_CALENDAR_AUTO_SYNC_SETTINGS,
   normalizeCalendarAutoSyncSettings,
@@ -76,6 +82,7 @@ const calendarAutoSyncSettingsKey = "calendar_auto_sync";
 const aiSettingsKey = "ai_model_policy";
 const aiApiIntegrationOwnerId = "ai_api";
 const uiSettingsKey = "ui";
+const presenceSettingsKey = "presence";
 const googleOAuthSettingsKey = "google_oauth";
 const googleOAuthIntegrationOwnerId = "google_calendar";
 const outlookOAuthSettingsKey = "outlook_oauth";
@@ -220,6 +227,21 @@ export const getUiSettings = (): UiSettings => {
   }
 };
 
+export const getPresenceSettings = (): PresenceSettings => {
+  const row = getPraxisDatabase()
+    .prepare("SELECT value_json FROM settings WHERE key = ?")
+    .get(presenceSettingsKey) as { value_json: string } | undefined;
+  if (!row) {
+    return normalizePresenceSettings();
+  }
+
+  try {
+    return normalizePresenceSettings(JSON.parse(row.value_json) as Partial<PresenceSettings>);
+  } catch {
+    return normalizePresenceSettings();
+  }
+};
+
 export const getGoogleOAuthSettings = (): GoogleOAuthSettings => {
   const row = getPraxisDatabase()
     .prepare("SELECT value_json FROM settings WHERE key = ?")
@@ -269,6 +291,7 @@ export const getSettingsSnapshot = (): SettingsSnapshot => ({
   outlookOAuth: getOutlookOAuthSettings(),
   ai: getAiSettings(),
   ui: getUiSettings(),
+  presence: getPresenceSettings(),
   slack: getSlackSettings(),
 });
 
@@ -554,6 +577,27 @@ export const updateUiSettings = (input: UpdateUiSettingsInput) => {
        ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
     )
     .run(uiSettingsKey, JSON.stringify(next), timestamp);
+
+  return getSettingsSnapshot();
+};
+
+export const updatePresenceSettings = (input: UpdatePresenceSettingsInput) => {
+  const timestamp = nowIso();
+  const next = normalizePresenceSettings(
+    {
+      ...input,
+      updatedAt: timestamp,
+    },
+    getPresenceSettings()
+  );
+
+  getPraxisDatabase()
+    .prepare(
+      `INSERT INTO settings (key, value_json, updated_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json, updated_at = excluded.updated_at`
+    )
+    .run(presenceSettingsKey, JSON.stringify(next), timestamp);
 
   return getSettingsSnapshot();
 };

@@ -224,11 +224,18 @@ export type AiSettings = {
 };
 
 export type UiTimeFormat = "standard" | "military";
+export type PresenceMode = "active" | "paused" | "quiet_until";
 
 export type UiSettings = {
   fontScalePercent: number;
   timeFormat: UiTimeFormat;
   closeToTrayEnabled: boolean;
+};
+
+export type PresenceSettings = {
+  mode: PresenceMode;
+  quietUntil: string | null;
+  updatedAt: string | null;
 };
 
 export type UpdateAiSettingsInput = {
@@ -245,6 +252,11 @@ export type UpdateUiSettingsInput = {
   fontScalePercent?: number;
   timeFormat?: UiTimeFormat;
   closeToTrayEnabled?: boolean;
+};
+
+export type UpdatePresenceSettingsInput = {
+  mode?: PresenceMode;
+  quietUntil?: string | null;
 };
 
 export type CheckOllamaModelAvailabilityInput = {
@@ -311,10 +323,27 @@ export const DEFAULT_UI_SETTINGS: UiSettings = {
   closeToTrayEnabled: false,
 };
 
+export const DEFAULT_PRESENCE_SETTINGS: PresenceSettings = {
+  mode: "active",
+  quietUntil: null,
+  updatedAt: null,
+};
+
 const uiTimeFormats = new Set<UiTimeFormat>(["standard", "military"]);
+const presenceModes = new Set<PresenceMode>(["active", "paused", "quiet_until"]);
 
 export const isUiTimeFormat = (value: unknown): value is UiTimeFormat =>
   typeof value === "string" && uiTimeFormats.has(value as UiTimeFormat);
+export const isPresenceMode = (value: unknown): value is PresenceMode =>
+  typeof value === "string" && presenceModes.has(value as PresenceMode);
+
+const normalizeIsoDateOrNull = (value: unknown) => {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return null;
+  }
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+};
 
 export const normalizeUiSettings = (
   input: Partial<UiSettings | UpdateUiSettingsInput> = {},
@@ -342,6 +371,48 @@ export const normalizeUiSettings = (
 
 export const uiFontScaleCssValue = (settings: Partial<UiSettings | UpdateUiSettingsInput>) =>
   `${normalizeUiSettings(settings).fontScalePercent / 100}`;
+
+export const normalizePresenceSettings = (
+  input: Partial<PresenceSettings | UpdatePresenceSettingsInput> = {},
+  fallback: PresenceSettings = DEFAULT_PRESENCE_SETTINGS
+): PresenceSettings => {
+  const mode = isPresenceMode(input.mode) ? input.mode : fallback.mode;
+  const quietUntil =
+    input.quietUntil === undefined
+      ? fallback.quietUntil
+      : normalizeIsoDateOrNull(input.quietUntil);
+  const updatedAt =
+    "updatedAt" in input && input.updatedAt !== undefined
+      ? normalizeIsoDateOrNull(input.updatedAt)
+      : fallback.updatedAt;
+
+  return {
+    mode: mode === "quiet_until" && !quietUntil ? "active" : mode,
+    quietUntil: mode === "quiet_until" ? quietUntil : null,
+    updatedAt,
+  };
+};
+
+export const resolvePresenceSettings = (
+  settings: PresenceSettings,
+  now: Date | string | number = new Date()
+): PresenceSettings => {
+  const normalized = normalizePresenceSettings(settings);
+  const nowDate = now instanceof Date ? now : new Date(now);
+  if (
+    normalized.mode === "quiet_until" &&
+    normalized.quietUntil &&
+    !Number.isNaN(nowDate.getTime()) &&
+    Date.parse(normalized.quietUntil) <= nowDate.getTime()
+  ) {
+    return {
+      ...normalized,
+      mode: "active",
+      quietUntil: null,
+    };
+  }
+  return normalized;
+};
 
 export const formatPraxisTime = (
   value: Date | string | number,
@@ -443,6 +514,7 @@ export type SettingsSnapshot = {
   outlookOAuth: OutlookOAuthSettings;
   ai: AiSettings;
   ui: UiSettings;
+  presence: PresenceSettings;
   slack: SlackSettings;
 };
 

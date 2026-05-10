@@ -108,15 +108,17 @@
 ### Persistent Presence Depends On AI Review
 
 - Priority: Medium
-- Impact: Planning is complete, but tray/background lifetime and Rainmeter export are not implemented yet.
-- Likely Fix: Start from `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md`; implement tray/background lifetime first, then pause/quiet state, then read-only Rainmeter JSON export.
+- Status: Partially resolved
+- Impact: Tray/background lifetime and persisted pause/quiet state are implemented. Rainmeter export and notification/nudge behavior are not implemented yet.
+- Likely Fix: Start from `docs/PERSISTENT_PRESENCE_RAINMETER_PLAN.md`; implement read-only Rainmeter JSON export after service health and presence copy are stable.
 - Related: `docs/Roadmap.md`, `docs/MISSION_PLAN.md`, `docs/ARCHITECTURE.md`
 
 ### Checklist Grouping And Context Memory Are Still Selector Work
 
 - Priority: Medium
-- Impact: Checklist currently groups only the top active todos by project/mission context, and memory-backed documents appear as a generic Today list.
-- Likely Fix: Start from `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md`; add pure selector contracts for checklist context groups and memory context lanes before changing broad JSX.
+- Status: Partially resolved
+- Impact: Checklist now consumes shared context groups as filter lanes. Memory-backed documents still appear as a generic Today list.
+- Likely Fix: Start from `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md`; replace Today's simple memory document list with contextual memory lanes.
 - Related: `docs/CHECKLIST_CONTEXT_MEMORY_PLAN.md`, `praxis-desktop/src/components/MasterChecklistPanel.tsx`, `praxis-desktop/src/components/TodayTimelinePanel.tsx`, `praxis-desktop/shared/storage/hybridStorage.ts`
 
 ### Quick-Action Ranking Is Still Basic

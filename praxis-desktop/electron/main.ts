@@ -84,6 +84,7 @@ import type {
   CreateEmailConnectionInput,
   DeleteEmailConnectionInput,
   UpdateAiSettingsInput,
+  UpdatePresenceSettingsInput,
   UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateCalendarConnectionInput,
@@ -93,6 +94,7 @@ import type {
   UpdateSlackSettingsInput,
   UiSettings,
 } from '../shared/settingsModel'
+import { resolvePresenceSettings } from '../shared/settingsModel'
 import type {
   AcceptEmailSuggestionInput,
   ArchiveEmailSuggestionInput,
@@ -152,7 +154,9 @@ import {
   updateOutlookOAuthSettings,
   updateSlackSettings,
   getUiSettings,
+  getPresenceSettings,
   getCalendarAutoSyncSettings,
+  updatePresenceSettings,
 } from './settingsRepository'
 import { checkOllamaModelAvailability } from './ollamaProbe'
 import {
@@ -398,17 +402,58 @@ const showMainWindow = () => {
   win.focus()
 }
 
+const formatPresenceTrayLabel = () => {
+  const presence = resolvePresenceSettings(getPresenceSettings())
+  if (presence.mode === 'paused') {
+    return 'Paused'
+  }
+  if (presence.mode === 'quiet_until' && presence.quietUntil) {
+    return `Quiet until ${new Date(presence.quietUntil).toLocaleTimeString([], {
+      hour: 'numeric',
+      minute: '2-digit',
+    })}`
+  }
+  return 'Active'
+}
+
+const updatePresenceFromTray = (input: UpdatePresenceSettingsInput) => {
+  updatePresenceSettings(input)
+  updateTrayMenu()
+}
+
 const updateTrayMenu = () => {
   if (!tray) {
     return
   }
 
+  const presence = resolvePresenceSettings(getPresenceSettings())
+  const quietUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+  tray.setToolTip(`PRAXIS - ${formatPresenceTrayLabel()}`)
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
         label: 'Open PRAXIS',
         click: showMainWindow,
       },
+      {
+        label: `Presence: ${formatPresenceTrayLabel()}`,
+        enabled: false,
+      },
+      {
+        label: 'Pause nudges',
+        enabled: presence.mode !== 'paused',
+        click: () => updatePresenceFromTray({ mode: 'paused' }),
+      },
+      {
+        label: 'Resume nudges',
+        enabled: presence.mode !== 'active',
+        click: () => updatePresenceFromTray({ mode: 'active' }),
+      },
+      {
+        label: 'Quiet for 1 hour',
+        click: () => updatePresenceFromTray({ mode: 'quiet_until', quietUntil }),
+      },
+      { type: 'separator' },
       {
         label: 'Sync Calendars Now',
         click: () => {
@@ -434,7 +479,6 @@ const createTray = () => {
   }
 
   tray = new Tray(appIconPath)
-  tray.setToolTip('PRAXIS')
   tray.on('click', showMainWindow)
   updateTrayMenu()
 }
@@ -825,6 +869,14 @@ app.whenReady().then(() => {
     updateTrayMenu()
     return snapshot
   })
+  ipcMain.handle(
+    'settings:updatePresence',
+    async (_event, input: UpdatePresenceSettingsInput) => {
+      const snapshot = updatePresenceSettings(input)
+      updateTrayMenu()
+      return snapshot
+    }
+  )
   ipcMain.handle(
     'settings:checkOllamaModelAvailability',
     async (_event, input: CheckOllamaModelAvailabilityInput) =>

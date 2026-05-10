@@ -150,7 +150,7 @@
 - [x] Define notification and nudge boundaries after AI Task Review can explain priority and risk
 - [x] Define a read-only, privacy-safe Rainmeter snapshot/export contract for ambient desktop display
 - [x] Keep Rainmeter and wallpaper display out of direct write paths
-- [ ] Implement Windows tray/background lifetime
+- [x] Implement Windows tray/background lifetime and persisted pause/quiet presence state
 - [ ] Implement read-only Rainmeter snapshot export
 
 ## Stage 8 - Voice and Arrival Ritual

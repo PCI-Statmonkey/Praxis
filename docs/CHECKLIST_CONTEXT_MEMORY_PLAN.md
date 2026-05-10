@@ -111,10 +111,10 @@ Phase 1: Pure selectors
 
 Phase 2: Checklist UI
 
-- Update `MasterChecklistPanel` to consume selector groups.
-- Add filter tabs for the group lanes.
-- Preserve existing edit/status/delete actions.
-- Keep Command mode compact.
+- Done: update `MasterChecklistPanel` to consume selector groups.
+- Done: add filter tabs for the group lanes.
+- Done: preserve existing edit/status/delete actions.
+- Done: keep Command mode compact.
 
 Phase 3: Context-memory UI
 

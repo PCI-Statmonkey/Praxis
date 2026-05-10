@@ -118,6 +118,7 @@ import type {
   OllamaModelAvailabilityResult,
   SettingsSnapshot,
   UpdateAiSettingsInput,
+  UpdatePresenceSettingsInput,
   UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateCalendarConnectionInput,
@@ -256,6 +257,7 @@ declare global {
         ) => Promise<SettingsSnapshot>;
         updateAISettings: (input: UpdateAiSettingsInput) => Promise<SettingsSnapshot>;
         updateUISettings: (input: UpdateUiSettingsInput) => Promise<SettingsSnapshot>;
+        updatePresence: (input: UpdatePresenceSettingsInput) => Promise<SettingsSnapshot>;
         checkOllamaModelAvailability: (
           input: CheckOllamaModelAvailabilityInput
         ) => Promise<OllamaModelAvailabilityResult>;

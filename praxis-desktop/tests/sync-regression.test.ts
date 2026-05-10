@@ -13,11 +13,14 @@ import {
   canSyncConnection,
   connectActionLabel,
   DEFAULT_AI_SETTINGS,
+  DEFAULT_PRESENCE_SETTINGS,
   DEFAULT_UI_SETTINGS,
   formatPraxisTime,
   isActivelySyncing,
   normalizeAiSettings,
+  normalizePresenceSettings,
   normalizeUiSettings,
+  resolvePresenceSettings,
   selectCalendarConnectionsByProvider,
   selectEmailConnectionsByProvider,
   serviceConnectionErrorMessage,
@@ -324,6 +327,7 @@ const dashboardSettingsSnapshot = {
   },
   ai: DEFAULT_AI_SETTINGS,
   ui: DEFAULT_UI_SETTINGS,
+  presence: DEFAULT_PRESENCE_SETTINGS,
   slack: {
     operatorChannelId: null,
     proactiveMirroringEnabled: false,
@@ -452,6 +456,44 @@ assert.deepEqual(
 assert.equal(uiFontScaleCssValue({ fontScalePercent: 106 }), "1.06");
 assert.equal(formatPraxisTime("2026-04-24T14:30:00", "standard"), "2:30 PM");
 assert.equal(formatPraxisTime("2026-04-24T14:30:00", "military"), "14:30");
+assert.deepEqual(normalizePresenceSettings(), DEFAULT_PRESENCE_SETTINGS);
+assert.deepEqual(normalizePresenceSettings({ mode: "paused" }), {
+  mode: "paused",
+  quietUntil: null,
+  updatedAt: null,
+});
+assert.deepEqual(
+  normalizePresenceSettings({
+    mode: "quiet_until",
+    quietUntil: "2026-04-24T15:30:00-04:00",
+    updatedAt: "2026-04-24T14:30:00.000Z",
+  }),
+  {
+    mode: "quiet_until",
+    quietUntil: "2026-04-24T19:30:00.000Z",
+    updatedAt: "2026-04-24T14:30:00.000Z",
+  }
+);
+assert.deepEqual(normalizePresenceSettings({ mode: "quiet_until", quietUntil: "not-a-date" }), {
+  mode: "active",
+  quietUntil: null,
+  updatedAt: null,
+});
+assert.deepEqual(
+  resolvePresenceSettings(
+    {
+      mode: "quiet_until",
+      quietUntil: "2026-04-24T15:00:00.000Z",
+      updatedAt: null,
+    },
+    "2026-04-24T15:00:01.000Z"
+  ),
+  {
+    mode: "active",
+    quietUntil: null,
+    updatedAt: null,
+  }
+);
 
 assert.deepEqual(
   parseOllamaModelTags({

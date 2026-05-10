@@ -23,6 +23,7 @@ import type {
 } from "../shared/projectTemplateProposals";
 import {
   DEFAULT_AI_SETTINGS,
+  DEFAULT_PRESENCE_SETTINGS,
   DEFAULT_UI_SETTINGS,
   UI_FONT_SCALE_MAX_PERCENT,
   UI_FONT_SCALE_MIN_PERCENT,
@@ -36,6 +37,7 @@ import type {
   OllamaModelAvailabilityResult,
   SettingsSnapshot,
   UpdateAiSettingsInput,
+  UpdatePresenceSettingsInput,
   UpdateUiSettingsInput,
   UpdateCalendarAutoSyncSettingsInput,
   UpdateGoogleOAuthSettingsInput,
@@ -126,6 +128,7 @@ const EMPTY_SETTINGS: SettingsSnapshot = {
   },
   ai: DEFAULT_AI_SETTINGS,
   ui: DEFAULT_UI_SETTINGS,
+  presence: DEFAULT_PRESENCE_SETTINGS,
   slack: {
     operatorChannelId: null,
     proactiveMirroringEnabled: false,
@@ -878,6 +881,16 @@ export default function SettingsApp() {
     );
   };
 
+  const updatePresenceSettings = async (input: UpdatePresenceSettingsInput) => {
+    const nextSettings = await window.praxis.settings.updatePresence(input);
+    setSettingsSnapshot(nextSettings);
+    const nextMode =
+      nextSettings.presence.mode === "quiet_until"
+        ? `quiet until ${nextSettings.presence.quietUntil ? formatPraxisTime(nextSettings.presence.quietUntil, currentTimeFormat) : "later"}`
+        : nextSettings.presence.mode;
+    setStatus(`Presence saved: ${nextMode}.`);
+  };
+
   const checkOllamaModelAvailability = async () => {
     const modelName = settingsSnapshot.ai.localModelName;
 
@@ -1048,6 +1061,10 @@ export default function SettingsApp() {
   const currentTimeFormat = uiSettingsForm.timeFormat ?? DEFAULT_UI_SETTINGS.timeFormat;
   const closeToTrayEnabled =
     uiSettingsForm.closeToTrayEnabled ?? DEFAULT_UI_SETTINGS.closeToTrayEnabled;
+  const currentPresence = settingsSnapshot.presence ?? DEFAULT_PRESENCE_SETTINGS;
+  const quietUntilLabel = currentPresence.quietUntil
+    ? formatPraxisTime(currentPresence.quietUntil, currentTimeFormat)
+    : null;
   const allPersonContactSuggestions = buildPersonContactSuggestions(snapshot.people, emailSnapshot.messages);
   const activePersonContactSuggestions: PersonContactSuggestion[] = [];
   const dismissedPersonContactSuggestions: Array<
@@ -1329,6 +1346,50 @@ export default function SettingsApp() {
                   Background sync stays active until you quit from the tray or app menu.
                 </span>
               </label>
+              <div className="appearance-presence-panel">
+                <div className="checklist-group-header">
+                  <strong>Presence</strong>
+                  <span className="badge">
+                    {currentPresence.mode === "quiet_until"
+                      ? quietUntilLabel
+                        ? `quiet until ${quietUntilLabel}`
+                        : "quiet"
+                      : currentPresence.mode}
+                  </span>
+                </div>
+                <p className="brief-path">
+                  Presence affects nudges and tray status only. Sync stays controlled by calendar
+                  and email settings.
+                </p>
+                <div className="filter-actions">
+                  <button
+                    type="button"
+                    className={currentPresence.mode === "active" ? "is-filter-active" : ""}
+                    onClick={() => void updatePresenceSettings({ mode: "active" })}
+                  >
+                    Active
+                  </button>
+                  <button
+                    type="button"
+                    className={currentPresence.mode === "paused" ? "is-filter-active" : ""}
+                    onClick={() => void updatePresenceSettings({ mode: "paused" })}
+                  >
+                    Pause nudges
+                  </button>
+                  <button
+                    type="button"
+                    className={currentPresence.mode === "quiet_until" ? "is-filter-active" : ""}
+                    onClick={() =>
+                      void updatePresenceSettings({
+                        mode: "quiet_until",
+                        quietUntil: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+                      })
+                    }
+                  >
+                    Quiet 1 hour
+                  </button>
+                </div>
+              </div>
               <div className="appearance-scale-row">
                 <p className="brief-path">{currentFontScalePercent}% scale</p>
                 <button

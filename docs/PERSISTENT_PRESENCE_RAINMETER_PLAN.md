@@ -14,7 +14,8 @@ surfaces are display-only outputs, not command surfaces.
   Plan, and local time blocks.
 - AI Review can now explain priority/risk through deterministic, Ollama, or configured API model
   ranking while preserving the read-only boundary.
-- Pause/quiet mode, notification, and Rainmeter export contracts remain planned but not implemented.
+- Pause/quiet state now persists in settings and appears in Settings plus the Windows tray.
+- Notification and Rainmeter export contracts remain planned but not implemented.
 
 ## Product Boundary
 
@@ -36,7 +37,7 @@ Implementation target:
 - Done: preserve command-line maintenance modes such as `--storage-check`, `--memory-reindex`, and
   companion commands as true one-shot commands that never create tray state.
 - Done: keep calendar/email/slack runtime alive only when the app is intentionally resident.
-- Later: add pause/resume nudge controls after a persisted presence state exists.
+- Done: add pause/resume/quiet tray controls after persisted presence state exists.
 
 Acceptance:
 
@@ -48,12 +49,12 @@ Acceptance:
 
 Add a small presence state model:
 
-- `active`: normal status and optional nudges.
-- `quiet_until`: background stays alive, but notifications are suppressed until a timestamp.
-- `paused`: background stays alive for sync and tray status, but no nudges.
+- Done: `active`: normal status and optional nudges.
+- Done: `quiet_until`: background stays alive, but notifications are suppressed until a timestamp.
+- Done: `paused`: background stays alive for sync and tray status, but no nudges.
 - `degraded`: sync/storage/AI provider health needs operator attention.
 
-Store state in SQLite settings. Do not use markdown memory for runtime presence state.
+State is stored in SQLite settings. Do not use markdown memory for runtime presence state.
 
 Acceptance:
 

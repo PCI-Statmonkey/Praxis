@@ -301,7 +301,7 @@ export default function App() {
   const [showFocusDetails, setShowFocusDetails] = useState(false);
   const [showBriefDetails, setShowBriefDetails] = useState(false);
   const [status, setStatus] = useState("Loading Praxis work model...");
-  const [todoFilter, setTodoFilter] = useState<"all" | "quick">("all");
+  const [todoFilter, setTodoFilter] = useState<string>("all");
   const [showStatusReport, setShowStatusReport] = useState(true);
   const [editingMission, setEditingMission] = useState<MissionRecord | null>(null);
   const [editingProject, setEditingProject] = useState<ProjectRecord | null>(null);
@@ -1222,6 +1222,11 @@ export default function App() {
         projects={snapshot.projects}
         missions={snapshot.missions}
         people={snapshot.people}
+        topMoveTodoId={
+          dailyBrief.recommendedMove.item?.entityKind === "todo"
+            ? dailyBrief.recommendedMove.item.id
+            : null
+        }
         openCapture={() => setActivePanel("morningPlan")}
         todoFilter={todoFilter}
         setTodoFilter={setTodoFilter}

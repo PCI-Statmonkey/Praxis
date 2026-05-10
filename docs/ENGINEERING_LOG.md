@@ -1,5 +1,32 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Checklist UI And Presence State
+
+### Closed
+
+- Wired `MasterChecklistPanel` to consume shared checklist context groups as filterable lanes while keeping All Active and Quick/Urgent filters.
+- Preserved existing todo status, edit, and delete actions inside the context-grouped checklist UI.
+- Added persisted presence settings for `active`, `paused`, and `quiet_until` modes.
+- Added Settings controls and Windows tray controls for active, paused, resume, and quiet-for-one-hour presence state.
+- Updated tray tooltip/status copy to reflect effective presence state.
+- Confirmed live Google/Outlook create-only publish QA remains blocked on operator-present OAuth/consent and real provider event verification.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA.
+- Replace Today's simple memory document list with context lanes.
+- Add read-only Rainmeter snapshot export after presence state and service health agree on public status copy.
+
 ## 2026-05-10 - Tray Presence And Context Selectors
 
 ### Closed

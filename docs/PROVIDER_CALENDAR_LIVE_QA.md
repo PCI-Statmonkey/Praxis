@@ -51,3 +51,6 @@ If the provider returns a safe failure:
 Pending operator-present live run. Automated verification can prove the preview/confirm contracts and
 safe failure handling, but it cannot prove provider consent or real event appearance without creating
 real calendar events.
+
+2026-05-10 update: still blocked on operator-present execution. This run must not be performed
+silently because it can refresh OAuth consent and create real Google/Outlook events.
