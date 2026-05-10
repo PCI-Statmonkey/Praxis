@@ -61,3 +61,7 @@ memory lanes and read-only Rainmeter export without touching provider calendars.
 Final 2026-05-10 update for this slice: still blocked on operator-present execution. Rainmeter
 snapshot polish and AI Review lane highlighting were completed without refreshing OAuth consent,
 calling provider publish endpoints, or creating provider calendar events.
+
+Service-presence 2026-05-10 update: still blocked on operator-present execution. Service-health
+presence integration, notification boundary planning, and the Rainmeter skin draft did not call
+provider publish endpoints or create provider calendar events.

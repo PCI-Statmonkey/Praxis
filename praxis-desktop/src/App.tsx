@@ -16,11 +16,13 @@ import type {
 import type { DailyBrief, FocusReport } from "../shared/dailyBrief";
 import type { EmailSnapshot } from "../shared/emailModel";
 import {
+  DEFAULT_PRESENCE_SETTINGS,
   DEFAULT_UI_SETTINGS,
   formatPraxisTime,
   uiFontScaleCssValue,
   type UiTimeFormat,
 } from "../shared/settingsModel";
+import { buildPresenceDisplayStatus } from "../shared/presenceStatus";
 import type {
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalSaveInput,
@@ -828,6 +830,18 @@ export default function App() {
   );
   const serviceHealthItems = selectServiceHealthItems(serviceSnapshot, formatDateTime);
   const dashboardReadiness = selectDashboardReadiness(serviceHealthItems);
+  const serviceAttentionCount = serviceHealthItems.filter(
+    (item) => item.state === "problem" || item.state === "setup" || item.state === "loading"
+  ).length;
+  const currentPresenceSettings = serviceSnapshot.settings?.presence ?? DEFAULT_PRESENCE_SETTINGS;
+  const presenceStatus = buildPresenceDisplayStatus({
+    presence: currentPresenceSettings,
+    serviceAttentionCount,
+    now: currentTime,
+    quietUntilLabel: currentPresenceSettings.quietUntil
+      ? formatDateTime(currentPresenceSettings.quietUntil)
+      : null,
+  });
   const basePlanningDate = dailyBrief.localDate || formatLocalDate(new Date());
   const planningTargetDate = planningDateOverride ?? basePlanningDate;
   const planningDay = buildPlanningDayView({
@@ -1045,11 +1059,11 @@ export default function App() {
             Checklist
           </button>
         </div>
-        <div className="top-nav-node">
+        <div className={`top-nav-node is-${presenceStatus.state}`}>
           <span className="node-dot" aria-hidden="true" />
           <span>
-            <strong>Home Node</strong>
-            <small>{dashboardReadiness.title.toLowerCase()}</small>
+            <strong>{presenceStatus.label}</strong>
+            <small>{presenceStatus.detail}</small>
           </span>
         </div>
       </nav>

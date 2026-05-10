@@ -53,7 +53,8 @@ Add a small presence state model:
 - Done: `active`: normal status and optional nudges.
 - Done: `quiet_until`: background stays alive, but notifications are suppressed until a timestamp.
 - Done: `paused`: background stays alive for sync and tray status, but no nudges.
-- `degraded`: sync/storage/AI provider health needs operator attention.
+- Done: `attention`: sync/storage/provider health needs operator attention while local work remains
+  available.
 
 State is stored in SQLite settings. Do not use markdown memory for runtime presence state.
 
@@ -62,6 +63,10 @@ Acceptance:
 - Mission Control, tray tooltip, and Rainmeter snapshot agree on the presence state.
 - Quiet mode survives restart.
 - Degraded state uses sanitized service-health copy only.
+
+Implementation status: done for display integration. The persisted operator setting remains
+`active`, `paused`, or `quiet_until`; PRAXIS derives a public `attention` presence state from
+sanitized service health for the app header, tray tooltip, and Rainmeter snapshot.
 
 ## Phase 3: Notification Boundaries
 
@@ -80,6 +85,9 @@ Rules:
 - Snooze is local runtime state, not a work graph mutation.
 - Do not include raw email subject/body, provider account refs, sync errors, secrets, or local file
   paths in notification text.
+
+Planning status: done in `docs/NOTIFICATION_BOUNDARY_PLAN.md`. Implementation remains pending until
+the operator chooses notification delivery and quiet-window controls.
 
 ## Phase 4: Rainmeter Snapshot
 
@@ -151,7 +159,7 @@ Privacy rules:
 
 Only after Rainmeter snapshot is stable:
 
-- Design a simple ambient wallpaper/Rainmeter skin around the snapshot.
+- Done: draft a simple ambient Rainmeter skin around the snapshot in `docs/rainmeter/Praxis/`.
 - Show top move, next appointment, due/waiting counts, and presence state.
 - Open PRAXIS for action; do not embed action controls in the skin.
 

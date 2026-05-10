@@ -9,6 +9,7 @@ import {
   normalizeOutlookCalendarEvent,
 } from "../shared/calendarProviderNormalization";
 import { buildRainmeterSnapshot } from "../shared/rainmeterSnapshot";
+import { buildPresenceDisplayStatus } from "../shared/presenceStatus";
 import {
   authLabel,
   canSyncConnection,
@@ -494,6 +495,22 @@ assert.deepEqual(
     quietUntil: null,
     updatedAt: null,
   }
+);
+assert.equal(
+  buildPresenceDisplayStatus({
+    presence: DEFAULT_PRESENCE_SETTINGS,
+    serviceAttentionCount: 2,
+    now: "2026-04-24T15:00:00.000Z",
+  }).state,
+  "attention"
+);
+assert.equal(
+  buildPresenceDisplayStatus({
+    presence: { mode: "paused", quietUntil: null, updatedAt: null },
+    serviceAttentionCount: 2,
+    now: "2026-04-24T15:00:00.000Z",
+  }).state,
+  "paused"
 );
 const rainmeterSnapshot = buildRainmeterSnapshot({
   now: "2026-04-24T14:30:00.000Z",

@@ -96,6 +96,7 @@ import type {
   UiSettings,
 } from '../shared/settingsModel'
 import { resolvePresenceSettings } from '../shared/settingsModel'
+import { buildPresenceDisplayStatus } from '../shared/presenceStatus'
 import type {
   AcceptEmailSuggestionInput,
   ArchiveEmailSuggestionInput,
@@ -404,23 +405,38 @@ const showMainWindow = () => {
   win.focus()
 }
 
-const formatPresenceTrayLabel = () => {
-  const presence = resolvePresenceSettings(getPresenceSettings())
-  if (presence.mode === 'paused') {
-    return 'Paused'
-  }
-  if (presence.mode === 'quiet_until' && presence.quietUntil) {
-    return `Quiet until ${new Date(presence.quietUntil).toLocaleTimeString([], {
-      hour: 'numeric',
-      minute: '2-digit',
-    })}`
-  }
-  return 'Active'
+const integrationNeedsAttention = (integration: ReturnType<typeof getCompanionSnapshot>['integrations'][number]) =>
+  integration.enabled &&
+  (integration.authStatus !== 'ready' ||
+    integration.syncStatus === 'blocked' ||
+    integration.syncStatus === 'error')
+
+const getTrayServiceAttentionCount = () =>
+  getCompanionSnapshot().integrations.filter(integrationNeedsAttention).length
+
+const formatQuietUntilTrayLabel = (quietUntil: string | null) =>
+  quietUntil
+    ? new Date(quietUntil).toLocaleTimeString([], {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    : null
+
+const buildTrayPresenceStatus = () => {
+  const presence = getPresenceSettings()
+  return buildPresenceDisplayStatus({
+    presence,
+    serviceAttentionCount: getTrayServiceAttentionCount(),
+    quietUntilLabel: formatQuietUntilTrayLabel(presence.quietUntil),
+  })
 }
+
+const formatPresenceTrayLabel = () => buildTrayPresenceStatus().label.replace(/^PRAXIS /, '')
 
 const updatePresenceFromTray = (input: UpdatePresenceSettingsInput) => {
   updatePresenceSettings(input)
   updateTrayMenu()
+  writeRainmeterSnapshot()
 }
 
 const updateTrayMenu = () => {
@@ -430,7 +446,8 @@ const updateTrayMenu = () => {
 
   const presence = resolvePresenceSettings(getPresenceSettings())
   const quietUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString()
-  tray.setToolTip(`PRAXIS - ${formatPresenceTrayLabel()}`)
+  const trayPresenceStatus = buildTrayPresenceStatus()
+  tray.setToolTip(`${trayPresenceStatus.label} - ${trayPresenceStatus.detail}`)
   tray.setContextMenu(
     Menu.buildFromTemplate([
       {
@@ -459,7 +476,10 @@ const updateTrayMenu = () => {
       {
         label: 'Sync Calendars Now',
         click: () => {
-          void autoSyncReadyCalendars('user_request', broadcastCalendarAutoSyncUpdate)
+          void autoSyncReadyCalendars('user_request', broadcastCalendarAutoSyncUpdate).finally(() => {
+            updateTrayMenu()
+            writeRainmeterSnapshot()
+          })
         },
       },
       {

@@ -1,5 +1,33 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Service Presence And Notification Boundaries
+
+### Closed
+
+- Kept Google/Outlook create-only publish live QA gated behind operator-present OAuth/consent because it creates real provider calendar events.
+- Added a shared derived presence display status that preserves persisted `active`, `paused`, and `quiet_until` settings while deriving `attention` from sanitized service health.
+- Wired service-health attention presence into the app header, Windows tray tooltip/menu label, and Rainmeter snapshot presence fields.
+- Kept paused and quiet presence ahead of service attention so operator suppression settings remain authoritative.
+- Added notification/nudge boundaries in `docs/NOTIFICATION_BOUNDARY_PLAN.md`.
+- Added a simple display-only Rainmeter skin draft under `docs/rainmeter/Praxis/` that binds to the read-only snapshot `skin` fields.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `npm run rainmeter:snapshot` passed and wrote the ignored runtime JSON under `memory/runtime/rainmeter/`, with public presence derived as `attention` from sanitized service health.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA.
+- Add notification delivery Settings controls before implementing OS notifications.
+- Package/test the Rainmeter skin on an operator Windows desktop after snapshot path selection.
+
 ## 2026-05-10 - Rainmeter Polish And AI Review Lane Highlights
 
 ### Closed

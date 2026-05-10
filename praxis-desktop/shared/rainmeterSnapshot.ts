@@ -1,6 +1,9 @@
 import type { CompanionSnapshot } from "./companionSnapshot";
+import {
+  buildPresenceDisplayStatus,
+  type PresenceDisplayState,
+} from "./presenceStatus";
 import type { PresenceSettings } from "./settingsModel";
-import { resolvePresenceSettings } from "./settingsModel";
 
 export type RainmeterSnapshot = {
   schemaVersion: "praxis.rainmeter.v1";
@@ -13,7 +16,7 @@ export type RainmeterSnapshot = {
     directStorageAccess: false;
   };
   presence: {
-    state: PresenceSettings["mode"];
+    state: PresenceDisplayState;
     label: string;
     detail: string;
   };
@@ -87,26 +90,6 @@ const dayDelta = (value: string | null, now: Date) => {
   return Math.round((target.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
 };
 
-const presenceLabel = (presence: PresenceSettings) => {
-  if (presence.mode === "paused") {
-    return "PRAXIS paused";
-  }
-  if (presence.mode === "quiet_until") {
-    return "PRAXIS quiet";
-  }
-  return "PRAXIS active";
-};
-
-const presenceDetail = (presence: PresenceSettings) => {
-  if (presence.mode === "paused") {
-    return "Nudges paused; sync can stay active.";
-  }
-  if (presence.mode === "quiet_until" && presence.quietUntil) {
-    return `Quiet until ${presence.quietUntil}.`;
-  }
-  return "Plan, review, and context are available.";
-};
-
 const integrationNeedsAttention = (integration: CompanionSnapshot["integrations"][number]) =>
   integration.enabled &&
   (integration.authStatus !== "ready" ||
@@ -129,7 +112,6 @@ export const buildRainmeterSnapshot = ({
 }: BuildRainmeterSnapshotInput): RainmeterSnapshot => {
   const nowDate = now instanceof Date ? now : new Date(now);
   const safeNow = Number.isNaN(nowDate.getTime()) ? new Date() : nowDate;
-  const effectivePresence = resolvePresenceSettings(presence, safeNow);
   const workItems = companionSnapshot.today.workItems;
   const overdue = workItems.filter((item) => {
     const delta = dayDelta(item.dueAt, safeNow);
@@ -139,11 +121,11 @@ export const buildRainmeterSnapshot = ({
   const attentionCount = companionSnapshot.integrations.filter(integrationNeedsAttention).length;
   const nextAppointment = companionSnapshot.today.appointments[0] ?? null;
   const topMove = companionSnapshot.topMove;
-  const presenceSummary = {
-    state: effectivePresence.mode,
-    label: presenceLabel(effectivePresence),
-    detail: presenceDetail(effectivePresence),
-  };
+  const presenceSummary = buildPresenceDisplayStatus({
+    presence,
+    serviceAttentionCount: attentionCount,
+    now: safeNow,
+  });
   const topMoveSummary = topMove
     ? {
         title: sanitizeDisplayText(topMove.title),
