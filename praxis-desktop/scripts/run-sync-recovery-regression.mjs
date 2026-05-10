@@ -13,6 +13,7 @@ const testFiles = [
   "email-suggestion-extraction.test.ts",
   "person-contact-suggestion.test.ts",
   "person-identity.test.ts",
+  "presence-notifications.test.ts",
 ];
 
 await rm(outDir, { recursive: true, force: true });

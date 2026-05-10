@@ -70,3 +70,7 @@ Notification-settings 2026-05-10 update: still held at the explicit operator-con
 Notification Settings controls were implemented without calling provider publish endpoints or
 creating provider calendar events. To complete live QA, the operator still needs to choose the
 target provider/calendar/test block and confirm that a real event may be created.
+
+Notification-candidates 2026-05-10 update: still held at the explicit operator-confirmation
+boundary. Notification candidate selection, local snooze state, and click-through routing were
+implemented without calling provider publish endpoints or creating provider calendar events.

@@ -243,6 +243,32 @@ body::before {
   text-transform: uppercase;
 }
 
+.notification-candidate-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(244, 198, 109, 0.28);
+  border-radius: 8px;
+  background: rgba(244, 198, 109, 0.08);
+  padding: 10px 12px;
+}
+
+.notification-candidate-strip div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.notification-candidate-strip strong,
+.notification-candidate-strip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .service-health-card strong {
   color: var(--text);
   font-size: 0.86rem;

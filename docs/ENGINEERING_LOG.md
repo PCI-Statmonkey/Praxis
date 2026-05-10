@@ -1,5 +1,32 @@
 # ENGINEERING LOG
 
+## 2026-05-10 - Notification Candidates And Click-Through
+
+### Closed
+
+- Added a pure notification candidate selector for overdue work, waiting-on work, Review Inbox candidates, missed local planned blocks, and service attention.
+- Added notification suppression logic for disabled notifications, paused presence, quiet-until presence, and the daily quiet window.
+- Added local notification snooze state in the app shell, persisted to renderer local storage.
+- Added an in-app notification candidate strip with `Open` click-through routing and `Snooze 1h`.
+- Routed notification candidates to Plan, Checklist, Today/Review Inbox, or Settings without creating, completing, publishing, sending, archiving, deleting, or editing anything.
+- Kept Google/Outlook create-only publish live QA at the explicit operator-confirmation boundary; no provider publish endpoints were called and no provider calendar events were created.
+
+### Verification
+
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed.
+- `npm run test:assistant` passed.
+- `npm run test:sync` passed, including presence notification candidate/snooze/quiet-window coverage.
+- `npm run build:app` passed with existing Vite dynamic/static import warnings.
+- `npm run storage:check` passed with `ok: true`, `error: 0`, and `warning: 0`.
+- `git diff --check` passed with CRLF warnings only.
+
+### Follow-Up
+
+- Run operator-present Google/Outlook create-only publish QA after provider/calendar/test-block confirmation.
+- Implement OS notification delivery using the candidate selector and existing suppression/snooze state.
+- Resume Rainmeter packaging/live desktop testing after Rainmeter is installed.
+
 ## 2026-05-10 - Notification Settings And Provider QA Preflight
 
 ### Closed

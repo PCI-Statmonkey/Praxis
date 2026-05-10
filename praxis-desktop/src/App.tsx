@@ -23,6 +23,14 @@ import {
   type UiTimeFormat,
 } from "../shared/settingsModel";
 import { buildPresenceDisplayStatus } from "../shared/presenceStatus";
+import {
+  buildPresenceNotificationCandidates,
+  filterSnoozedNotificationCandidates,
+  notificationDeliverySuppressionReason,
+  snoozeNotificationCandidate,
+  type PresenceNotificationCandidate,
+  type PresenceNotificationSnoozeState,
+} from "../shared/presenceNotifications";
 import type {
   ProjectTemplateProposalActionInput,
   ProjectTemplateProposalSaveInput,
@@ -96,6 +104,8 @@ type SettingsWindowTab =
   | "people"
   | "templates"
   | "storage";
+
+const NOTIFICATION_SNOOZE_STORAGE_KEY = "praxis.notificationSnoozes.v1";
 
 type ManualChatImportForm = {
   sourceSystem: ChatImportSourceSystem;
@@ -313,6 +323,15 @@ export default function App() {
   const [editingPerson, setEditingPerson] = useState<PersonRecord | null>(null);
   const [timeBlocks, setTimeBlocks] = useState<TimeBlockRecord[]>([]);
   const [timeBlockPublishes, setTimeBlockPublishes] = useState<TimeBlockPublishRecord[]>([]);
+  const [notificationSnoozes, setNotificationSnoozes] =
+    useState<PresenceNotificationSnoozeState>(() => {
+      try {
+        const stored = window.localStorage.getItem(NOTIFICATION_SNOOZE_STORAGE_KEY);
+        return stored ? (JSON.parse(stored) as PresenceNotificationSnoozeState) : {};
+      } catch {
+        return {};
+      }
+    });
   const [planningDateOverride, setPlanningDateOverride] = useState<string | null>(null);
   const [missionForm, setMissionForm] = useState<CreateMissionInput>(() => emptyMissionForm());
   const [projectForm, setProjectForm] = useState<CreateProjectInput>(() => emptyProjectForm());
@@ -472,6 +491,13 @@ export default function App() {
 
     return () => window.clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      NOTIFICATION_SNOOZE_STORAGE_KEY,
+      JSON.stringify(notificationSnoozes)
+    );
+  }, [notificationSnoozes]);
 
   useEffect(() => {
     const unsubscribe = window.praxis.calendar.onAutoSyncUpdated((update) => {
@@ -834,6 +860,7 @@ export default function App() {
     (item) => item.state === "problem" || item.state === "setup" || item.state === "loading"
   ).length;
   const currentPresenceSettings = serviceSnapshot.settings?.presence ?? DEFAULT_PRESENCE_SETTINGS;
+  const currentUiSettings = serviceSnapshot.settings?.ui ?? DEFAULT_UI_SETTINGS;
   const presenceStatus = buildPresenceDisplayStatus({
     presence: currentPresenceSettings,
     serviceAttentionCount,
@@ -842,6 +869,27 @@ export default function App() {
       ? formatDateTime(currentPresenceSettings.quietUntil)
       : null,
   });
+  const notificationSuppressionReason = notificationDeliverySuppressionReason({
+    settings: currentUiSettings,
+    presence: currentPresenceSettings,
+    now: currentTime,
+  });
+  const notificationCandidates = buildPresenceNotificationCandidates({
+    todos: snapshot.todos,
+    deadlines: snapshot.deadlines,
+    reviewInboxItems,
+    timeBlocks,
+    serviceHealthItems,
+    now: currentTime,
+  });
+  const activeNotificationCandidates = notificationSuppressionReason
+    ? []
+    : filterSnoozedNotificationCandidates(
+        notificationCandidates,
+        notificationSnoozes,
+        currentTime
+      );
+  const topNotificationCandidate = activeNotificationCandidates[0] ?? null;
   const basePlanningDate = dailyBrief.localDate || formatLocalDate(new Date());
   const planningTargetDate = planningDateOverride ?? basePlanningDate;
   const planningDay = buildPlanningDayView({
@@ -893,6 +941,36 @@ export default function App() {
     } catch {
       setStatus("Praxis could not open Settings.");
     }
+  };
+  const routeNotificationCandidate = async (candidate: PresenceNotificationCandidate) => {
+    if (candidate.targetSurface === "plan") {
+      setActivePanel("plan");
+      setStatus(`Opened Plan for notification: ${candidate.title}.`);
+      return;
+    }
+    if (candidate.targetSurface === "checklist") {
+      setActivePanel("masterChecklist");
+      setStatus(`Opened Checklist for notification: ${candidate.title}.`);
+      return;
+    }
+    if (candidate.targetSurface === "review_inbox" || candidate.targetSurface === "today") {
+      setActivePanel("todayTimeline");
+      setShowStatusReport(true);
+      setStatus(`Opened Today for notification: ${candidate.title}.`);
+      return;
+    }
+    try {
+      await window.praxis.settings.openWindow();
+      setStatus(`Opened Settings for notification: ${candidate.title}.`);
+    } catch {
+      setStatus("Praxis could not open Settings.");
+    }
+  };
+  const snoozeNotification = (candidate: PresenceNotificationCandidate) => {
+    setNotificationSnoozes((current) =>
+      snoozeNotificationCandidate(current, candidate, 60, currentTime)
+    );
+    setStatus(`Snoozed ${candidate.title.toLowerCase()} for 1 hour.`);
   };
 
   const acceptEmailSuggestion = async (suggestionId: string, mode: "todo" | "project") => {
@@ -1083,6 +1161,25 @@ export default function App() {
           </button>
         ))}
       </section>
+      {topNotificationCandidate ? (
+        <section className="notification-candidate-strip" aria-label="Presence notification candidate">
+          <div>
+            <strong>{topNotificationCandidate.title}</strong>
+            <span>{topNotificationCandidate.body}</span>
+          </div>
+          <div className="inline-actions">
+            <button
+              type="button"
+              onClick={() => void routeNotificationCandidate(topNotificationCandidate)}
+            >
+              Open
+            </button>
+            <button type="button" onClick={() => snoozeNotification(topNotificationCandidate)}>
+              Snooze 1h
+            </button>
+          </div>
+        </section>
+      ) : null}
       <PlanSurfacePanel
         isActive={activePanel === "command" || activePanel === "plan"}
         planningDay={planningDay}
