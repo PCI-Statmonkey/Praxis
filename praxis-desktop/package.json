@@ -17,6 +17,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test:assistant": "node scripts/run-assistant-regression.mjs",
     "test:sync": "node scripts/run-sync-recovery-regression.mjs",
+    "test:home-node-networking": "node scripts/run-home-node-networking-regression.mjs",
     "test": "npm run test:assistant && npm run test:sync",
     "calendar:google:preflight": "node scripts/google-calendar-preflight.mjs",
     "memory:reindex": "npm run build:app && electron dist-electron/main.js --memory-reindex",

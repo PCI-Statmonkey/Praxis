@@ -13,6 +13,7 @@ dist-ssr
 release
 .assistant-test-dist
 .sync-test-dist
+.home-node-networking-test-dist
 *.local
 
 # Editor directories and files
