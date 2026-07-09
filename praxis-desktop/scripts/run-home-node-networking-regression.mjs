@@ -8,6 +8,7 @@ const outDir = path.join(projectRoot, ".home-node-networking-test-dist");
 const testFiles = [
   "home-node-networking-closeout.test.ts",
   "home-node-local-pairing-lifecycle.test.ts",
+  "home-node-pending-confirmation-lifecycle.test.ts",
 ];
 
 await rm(outDir, { recursive: true, force: true });
