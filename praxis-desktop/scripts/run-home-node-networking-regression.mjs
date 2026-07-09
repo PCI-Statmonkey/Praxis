@@ -5,7 +5,10 @@ import { build } from "esbuild";
 
 const projectRoot = process.cwd();
 const outDir = path.join(projectRoot, ".home-node-networking-test-dist");
-const testFiles = ["home-node-networking-closeout.test.ts"];
+const testFiles = [
+  "home-node-networking-closeout.test.ts",
+  "home-node-local-pairing-lifecycle.test.ts",
+];
 
 await rm(outDir, { recursive: true, force: true });
 await mkdir(outDir, { recursive: true });
