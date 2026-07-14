@@ -10,6 +10,8 @@ const testFiles = [
   "home-node-local-pairing-lifecycle.test.ts",
   "home-node-pending-confirmation-lifecycle.test.ts",
   "home-node-companion-safe-master-snapshot.test.ts",
+  "home-node-companion-session-envelope.test.ts",
+  "home-node-networking-setup-closeout.test.ts",
 ];
 
 await rm(outDir, { recursive: true, force: true });
