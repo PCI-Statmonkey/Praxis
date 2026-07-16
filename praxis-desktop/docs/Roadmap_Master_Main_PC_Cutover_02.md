@@ -52,6 +52,15 @@ Do not rely on copied OAuth/API/Slack encrypted secrets working on the main PC. 
 - File count and total size for app data and memory folders.
 - Confirmation that Praxis was closed during the copy.
 
+### Source Machine Backup Evidence
+
+- Backup folder path: `C:\Users\chawk_c4\Desktop\praxis-cutover-20260716-173438`
+- Backup timestamp: `20260716-173438`
+- App data backup: `1346` files, `112785922` bytes
+- Memory backup: `2` files, `1925` bytes
+- Verified key contents: `praxis.sqlite`, `memory\runtime`, and `memory\templates`
+- Praxis closed during copy: no `praxis` or `electron` process was running before backup.
+
 ## Done Criteria
 
 - A restorable backup exists before anything is changed on the main PC.
