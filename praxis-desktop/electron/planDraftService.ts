@@ -12,7 +12,6 @@ import {
   generateOllamaDraftPlanCandidate,
   type OllamaDraftPlanGenerateResult,
 } from "./ollamaClient";
-import { getAiSettings } from "./settingsRepository";
 
 export type BuildPlanDraftResponseWithOllamaInput = GenerateDraftPlanRequest & {
   settings?: Partial<AiSettings>;
@@ -84,13 +83,4 @@ export const buildPlanDraftResponseWithOllama = async ({
     fallbackReason: null,
     writeBoundary: draftPlan.writeBoundary,
   };
-};
-
-export const generateLocalPlanDraft = async (
-  input: GenerateDraftPlanRequest
-): Promise<GenerateDraftPlanResult> => {
-  return buildPlanDraftResponseWithOllama({
-    ...input,
-    settings: getAiSettings(),
-  });
 };

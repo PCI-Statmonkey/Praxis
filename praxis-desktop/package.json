@@ -19,6 +19,7 @@
     "test:sync": "node scripts/run-sync-recovery-regression.mjs",
     "test:home-node-networking": "node scripts/run-home-node-networking-regression.mjs",
     "test": "npm run test:assistant && npm run test:sync",
+    "main-pc:preflight": "node scripts/run-main-pc-cutover-preflight.mjs",
     "calendar:google:preflight": "node scripts/google-calendar-preflight.mjs",
     "memory:reindex": "npm run build:app && electron dist-electron/main.js --memory-reindex",
     "memory:repair": "npm run build:app && electron dist-electron/main.js --memory-repair",

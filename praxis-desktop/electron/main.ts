@@ -132,7 +132,7 @@ import {
   getTimeBlockSnapshot,
   updateTimeBlock,
 } from './timeBlockRepository'
-import { generateLocalPlanDraft } from './planDraftService'
+import { generateLocalPlanDraft } from './localPlanDraftRuntime'
 import { generateDailyBrief, generateFocusReport } from './dailyBrief'
 import { generateAppointmentReport } from './appointmentReport'
 import { importCalendarEvents } from './calendarImport'
@@ -176,9 +176,9 @@ import {
 } from './emailAutoSync'
 import { routeAssistantRequest } from './assistantRouter'
 import {
-  buildLocalAIReviewResponse,
   toAssistantAIReviewGenerateResult,
 } from './aiReviewService'
+import { buildLocalAIReviewResponse } from './localAiReviewRuntime'
 import {
   resolveAssistantContextReply,
   storeAssistantContext,

@@ -25,8 +25,6 @@ import {
   type AiApiClientConfig,
   type AiApiReviewGenerateResult,
 } from "./aiApiClient";
-import { buildLocalAIReviewContextPacket } from "./aiReviewContext";
-import { getAiApiClientConfig, getAiSettings } from "./settingsRepository";
 
 export type AIReviewResponse = {
   mode: AssistantAIReviewMode;
@@ -860,14 +858,3 @@ export const buildLocalAIReviewResponseFromSources = (
     packet: sources.buildPacket(),
     settings: sources.getSettings(),
   });
-
-export const buildLocalAIReviewResponse = async (
-  mode: AssistantAIReviewMode
-): Promise<AIReviewResponse> => {
-  return buildAIReviewResponseWithConfiguredModel({
-    mode,
-    packet: buildLocalAIReviewContextPacket(),
-    settings: getAiSettings(),
-    apiConfig: getAiApiClientConfig(),
-  });
-};
